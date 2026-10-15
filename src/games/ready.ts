@@ -5,7 +5,6 @@
 
 export const READY_GAMES = {
   'quelle-note': { slug: 'quelle-note', title: 'Quelle est la note ?' },
-  harmonies: { slug: 'harmonies', title: 'Les harmonies' },
 } as const
 
 export type ReadyGame = (typeof READY_GAMES)[keyof typeof READY_GAMES]

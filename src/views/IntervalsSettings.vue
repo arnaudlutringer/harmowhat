@@ -46,7 +46,6 @@ import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
-import { afterSettings } from '@/games/ready'
 import { LEVELS, parseSettings, PRECISIONS, QUESTION_COUNTS, type Level, type Precision } from '@/games/intervals'
 
 const STORAGE_KEY = 'harmowhat.harmonies.settings'
@@ -73,8 +72,8 @@ function start() {
   } catch {
     // Stockage indisponible : on joue quand même.
   }
-  // Pas de diapason pendant les questions : il est proposé sur l'écran « Je suis prêt ».
-  router.push(afterSettings('harmonies', true, `questions=${settings.questions}&level=${settings.level}&precision=${settings.precision}`))
+  // Pas besoin de diapason pour reconnaître un intervalle : on lance directement le jeu.
+  router.push(`/games/harmonies/jouer?questions=${settings.questions}&level=${settings.level}&precision=${settings.precision}`)
 }
 </script>
 

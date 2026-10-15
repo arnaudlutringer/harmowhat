@@ -12,7 +12,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/accords', component: () => import('@/views/ChordsGame.vue') },
   { path: '/games/quelle-note/jouer', component: () => import('@/views/NameTheNoteGame.vue') },
   { path: '/games/harmonies', component: () => import('@/views/IntervalsSettings.vue') },
-  { path: '/games/:game(quelle-note|harmonies)/pret', component: () => import('@/views/ReadyPage.vue') },
+  { path: '/games/:game(quelle-note)/pret', component: () => import('@/views/ReadyPage.vue') },
   { path: '/games/harmonies/jouer', component: () => import('@/views/IntervalsGame.vue') },
 ]
 
