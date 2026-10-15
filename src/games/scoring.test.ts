@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pointsLeft, QuestionClock, REPLAY_PENALTY, START_POINTS, summarize, TUNING_FORK_PENALTY } from './scoring'
+import { MIN_POINTS, pointsLeft, QuestionClock, REPLAY_PENALTY, START_POINTS, summarize, TUNING_FORK_PENALTY } from './scoring'
 
 function fakeClock() {
   let t = 0
@@ -8,12 +8,13 @@ function fakeClock() {
 }
 
 describe('Points par question', () => {
-  it('part de 1000 et perd 1 point toutes les 10 ms (0 au bout de 10 s), sans descendre sous 0', () => {
+  it('part de 1000 et perd 1 point toutes les 10 ms, sans descendre sous 100', () => {
     expect(pointsLeft(0, 0)).toBe(START_POINTS)
     expect(pointsLeft(2500, 0)).toBe(750)
     expect(pointsLeft(2500, 200)).toBe(550)
-    expect(pointsLeft(10000, 0)).toBe(0)
-    expect(pointsLeft(15000, 0)).toBe(0)
+    expect(pointsLeft(9000, 0)).toBe(MIN_POINTS)
+    expect(pointsLeft(15000, 0)).toBe(MIN_POINTS)
+    expect(pointsLeft(1000, 1500)).toBe(MIN_POINTS)
   })
 
   it('ne décompte rien avant la première écoute', () => {

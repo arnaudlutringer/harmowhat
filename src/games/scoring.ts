@@ -1,16 +1,17 @@
 /**
  * Points d'une question : 1000 au départ, moins 1 toutes les 10 millisecondes à partir de la
- * fin de la première écoute (donc 0 au bout de 10 s), moins 100 par réécoute ou par coup de
- * diapason. Jamais en dessous de 0.
+ * fin de la première écoute (donc 100 au bout de 9 s), moins 100 par réécoute ou par coup de
+ * diapason. Jamais en dessous de 100 : une bonne réponse rapporte toujours un minimum.
  */
 
 export const START_POINTS = 1000
+export const MIN_POINTS = 100
 export const POINTS_PER_MS = 0.1
 export const REPLAY_PENALTY = 100
 export const TUNING_FORK_PENALTY = 100
 
 export function pointsLeft(elapsedMs: number, penalties: number): number {
-  return Math.max(0, Math.round(START_POINTS - elapsedMs * POINTS_PER_MS - penalties))
+  return Math.max(MIN_POINTS, Math.round(START_POINTS - elapsedMs * POINTS_PER_MS - penalties))
 }
 
 /** Chronomètre d'une question : démarre à la fin de la première écoute, s'arrête à la réponse. */
