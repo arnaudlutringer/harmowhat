@@ -2,13 +2,15 @@
   <ion-page>
     <ion-content class="ion-padding">
       <div class="top">
-        <img class="logo" src="/logo.svg" alt="" />
-        <h1>HarmoWhat</h1>
-        <ion-button fill="clear" router-link="/parametres" aria-label="Paramètres" title="Paramètres">
-          <ion-icon slot="icon-only" :icon="settingsOutline" />
-        </ion-button>
         <ion-button fill="clear" router-link="/infos" aria-label="Informations" title="Informations">
           <ion-icon slot="icon-only" :icon="informationCircleOutline" />
+        </ion-button>
+        <div class="brand">
+          <img class="logo" src="/logo.svg" alt="" />
+          <h1>HarmoWhat</h1>
+        </div>
+        <ion-button fill="clear" router-link="/parametres" aria-label="Paramètres" title="Paramètres">
+          <ion-icon slot="icon-only" :icon="settingsOutline" />
         </ion-button>
       </div>
       <p class="intro">Teste ton oreille avec des mini-jeux de 20 questions.</p>
@@ -77,6 +79,7 @@ h1 {
 }
 .intro {
   color: var(--ion-color-medium);
+  text-align: center;
 }
 .games {
   display: grid;
@@ -115,17 +118,20 @@ ion-card-content {
   font-weight: 700;
 }
 /* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
+/* Infos en haut à gauche, Paramètres en haut à droite, logo et titre centrés entre les deux. */
 .top {
   display: flex;
+  align-items: flex-start;
+}
+.brand {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
 }
-.top h1 {
-  flex: 1;
-}
 .logo {
-  width: 36px;
-  height: 36px;
-  margin-right: 10px;
+  width: 64px;
+  height: 64px;
 }
 .top ion-button {
   --color: var(--ion-color-primary);
