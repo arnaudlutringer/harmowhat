@@ -6,8 +6,42 @@ import { currentInstrument, rangeFor, type Instrument } from '@/audio/instrument
 export const CHORD_LOW = 57
 export const CHORD_HIGH = 81
 export const CHORD_SIZE = 3
-/** Nombre de notes proposées (dont les 3 bonnes). */
-export const CHOICE_COUNT = 8
+
+export type Level = 'debutant' | 'normal' | 'expert'
+
+export interface LevelConfig {
+  label: string
+  description: string
+  /** Accords parfaits (majeurs ou mineurs) seulement, plutôt que 3 notes au hasard. */
+  triadsOnly: boolean
+  /** Nombre de notes proposées (dont les 3 bonnes). */
+  choices: number
+}
+
+export const LEVELS: Record<Level, LevelConfig> = {
+  debutant: { label: 'Débutant', description: 'Accords parfaits, majeurs ou mineurs. 6 notes proposées.', triadsOnly: true, choices: 6 },
+  normal: { label: 'Normal', description: 'Trois notes au hasard. 8 notes proposées.', triadsOnly: false, choices: 8 },
+  expert: { label: 'Expert', description: 'Trois notes au hasard. 10 notes proposées.', triadsOnly: false, choices: 10 },
+}
+
+export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+
+export interface ChordSettings {
+  questions: number
+  level: Level
+}
+
+export const DEFAULT_SETTINGS: ChordSettings = { questions: 20, level: 'normal' }
+
+/** Lit des réglages depuis une source non fiable (URL, stockage), avec repli sur les valeurs par défaut. */
+export function parseSettings(raw: { questions?: unknown; level?: unknown }): ChordSettings {
+  const questions = Number(raw.questions)
+  const level = String(raw.level)
+  return {
+    questions: (QUESTION_COUNTS as readonly number[]).includes(questions) ? questions : DEFAULT_SETTINGS.questions,
+    level: level in LEVELS ? (level as Level) : DEFAULT_SETTINGS.level,
+  }
+}
 
 export interface ChordQuestion {
   /** Les notes de l'accord, de la plus grave à la plus aiguë. */
@@ -34,10 +68,17 @@ function distinctNotes(count: number, { low, high }: { low: number; high: number
   return [...picked]
 }
 
-export function createChordQuestion(inst: Instrument = currentInstrument()): ChordQuestion {
+/** Accord parfait majeur ou mineur, à l'état fondamental, dans la tessiture. */
+function triad({ low, high }: { low: number; high: number }): number[] {
+  const root = randomInt(low, Math.max(low, high - 7))
+  return [root, root + (Math.random() < 0.5 ? 3 : 4), root + 7]
+}
+
+export function createChordQuestion(level: Level = 'normal', inst: Instrument = currentInstrument()): ChordQuestion {
+  const cfg = LEVELS[level]
   const range = chordRange(inst)
-  const notes = distinctNotes(CHORD_SIZE, range).sort(ascending)
-  const others = distinctNotes(CHOICE_COUNT - CHORD_SIZE, range, notes)
+  const notes = (cfg.triadsOnly && range.high - range.low >= 7 ? triad(range) : distinctNotes(CHORD_SIZE, range)).sort(ascending)
+  const others = distinctNotes(cfg.choices - CHORD_SIZE, range, notes)
   const choices = shuffle([...notes, ...others]).sort(ascending)
   return { notes, choices, spelled: Object.fromEntries(choices.map((m) => [m, spell(m, randomSpelling())])) }
 }

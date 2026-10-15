@@ -26,10 +26,11 @@ describe('Instruments', () => {
         expect(midi).toBeGreaterThanOrEqual(Math.max(low, inst.low))
         expect(midi).toBeLessThanOrEqual(Math.min(high, inst.high))
       }
-      for (const n of createChordQuestion(inst).choices) {
-        expect(n).toBeGreaterThanOrEqual(inst.low)
-        expect(n).toBeLessThanOrEqual(inst.high)
-      }
+      for (const level of ['debutant', 'normal', 'expert'] as const)
+        for (const n of createChordQuestion(level, inst).choices) {
+          expect(n).toBeGreaterThanOrEqual(inst.low)
+          expect(n).toBeLessThanOrEqual(inst.high)
+        }
     }
   })
 

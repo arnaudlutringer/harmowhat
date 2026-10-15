@@ -3,7 +3,8 @@
     title="Les accords"
     prompt="Quelles sont les 3 notes de l'accord ?"
     :quiz="quiz"
-    :board="{ game: 'accords', level: SINGLE_LEVEL, questions: quiz.total }"
+    :board="{ game: 'accords', level: settings.level, questions: settings.questions }"
+    settings-href="/games/accords"
     swipe-to-next
   >
     <template #player>
@@ -40,6 +41,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
 import ChordStaff from '@/components/ChordStaff.vue'
@@ -47,11 +49,17 @@ import FlipPlayer from '@/components/FlipPlayer.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { playChord, playPiano } from '@/audio/engine'
 import { spelledName } from '@/music/spelling'
-import { CHORD_SIZE, createChordQuestion, isCorrect } from '@/games/chords'
-import { SINGLE_LEVEL } from '@/games/highScores'
+import { CHORD_SIZE, createChordQuestion, isCorrect, parseSettings } from '@/games/chords'
+
+const settings = parseSettings(useRoute().query)
 
 // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
-const quiz = useQuiz({ createQuestion: createChordQuestion, play: (q) => playChord(q.notes), advanceDelay: null })
+const quiz = useQuiz({
+  total: settings.questions,
+  createQuestion: () => createChordQuestion(settings.level),
+  play: (q) => playChord(q.notes),
+  advanceDelay: null,
+})
 const q = computed(() => quiz.question.value)
 const selected = ref<number[]>([])
 const revealed = computed(() => quiz.feedback.value !== null)

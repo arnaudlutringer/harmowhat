@@ -3,7 +3,8 @@
     title="Grave ou aigu ?"
     prompt="Plus grave ou plus aigu que le La3 du diapason ?"
     :quiz="quiz"
-    :board="{ game: 'grave-ou-aigu', level: SINGLE_LEVEL, questions: quiz.total }"
+    :board="{ game: 'grave-ou-aigu', level: settings.level, questions: settings.questions }"
+    settings-href="/games/grave-ou-aigu"
   >
     <div class="choices">
       <ion-button size="large" :disabled="!quiz.canAnswer.value" @click="choose('grave')">GRAVE</ion-button>
@@ -13,16 +14,22 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
 import { A440, noteName } from '@/music/notes'
-import { currentInstrument, randomInstrumentNote } from '@/audio/instruments'
-import { SINGLE_LEVEL } from '@/games/highScores'
+import { createHighLowQuestion, parseSettings } from '@/games/highLow'
 
-// La référence est le La3 du diapason ; on ne tire jamais le La3 lui-même.
-const quiz = useQuiz({ createQuestion: () => randomInstrumentNote(currentInstrument(), [A440]), play: (note) => playPiano(note) })
+const settings = parseSettings(useRoute().query)
+
+// La référence est le La3 du diapason ; la note jouée en est plus ou moins éloignée selon le niveau.
+const quiz = useQuiz({
+  total: settings.questions,
+  createQuestion: () => createHighLowQuestion(settings.level),
+  play: (note) => playPiano(note),
+})
 
 function choose(guess: 'grave' | 'aigu') {
   const note = quiz.question.value

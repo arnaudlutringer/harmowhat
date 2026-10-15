@@ -2,6 +2,8 @@ import { afterSettings } from './ready'
 import { LEVELS as NOTE_LEVELS, QUESTION_COUNTS as NOTE_COUNTS } from './nameTheNote'
 import { LEVELS as INTERVAL_LEVELS, PRECISIONS, QUESTION_COUNTS as INTERVAL_COUNTS } from './intervals'
 import { LEVELS as READ_LEVELS, QUESTION_COUNTS as READ_COUNTS } from './readNote'
+import { LEVELS as HIGH_LOW_LEVELS, QUESTION_COUNTS as HIGH_LOW_COUNTS } from './highLow'
+import { LEVELS as CHORD_LEVELS, QUESTION_COUNTS as CHORD_COUNTS } from './chords'
 
 /**
  * Meilleurs scores : un classement par jeu, par niveau et par nombre de questions,
@@ -27,8 +29,6 @@ export interface ScoreEntry {
 
 export const MAX_ENTRIES = 10
 export const MAX_NAME_LENGTH = 10
-/** Niveau des jeux qui n'en ont qu'un. */
-export const SINGLE_LEVEL = 'unique'
 
 interface GameInfo {
   title: string
@@ -38,13 +38,21 @@ interface GameInfo {
 }
 
 export const GAMES: Record<GameId, GameInfo> = {
-  'grave-ou-aigu': { title: 'Grave ou aigu ?', levels: [{ id: SINGLE_LEVEL, label: 'Niveau unique' }], questionCounts: [20] },
+  'grave-ou-aigu': {
+    title: 'Grave ou aigu ?',
+    levels: Object.entries(HIGH_LOW_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: HIGH_LOW_COUNTS,
+  },
   'quelle-note': {
     title: 'Quelle est la note ?',
     levels: Object.entries(NOTE_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: NOTE_COUNTS,
   },
-  accords: { title: 'Les accords', levels: [{ id: SINGLE_LEVEL, label: 'Niveau unique' }], questionCounts: [20] },
+  accords: {
+    title: 'Les accords',
+    levels: Object.entries(CHORD_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: CHORD_COUNTS,
+  },
   // Aux harmonies, la précision fait partie du niveau : « Normal · Précise » n'est pas comparable à « Normal · Simple ».
   harmonies: {
     title: 'Les harmonies',
@@ -103,8 +111,7 @@ export function playHref({ game, level, questions }: Board): string {
     const [lvl, precision] = level.split('-')
     return `/games/harmonies/jouer?questions=${questions}&level=${lvl}&precision=${precision}`
   }
-  if (game === 'lecture-note') return `/games/lecture-note/jouer?questions=${questions}&level=${level}`
-  return `/games/${game}`
+  return `/games/${game}/jouer?questions=${questions}&level=${level}`
 }
 
 /** Page des scores d'un classement, avec éventuellement le rang à mettre en avant. */
@@ -117,10 +124,23 @@ const NAME_KEY = 'harmowhat.player'
 
 const boardKey = ({ game, level, questions }: Board) => `${game}|${level}|${questions}`
 
+/**
+ * Les anciens classements « niveau unique » (Grave ou aigu ?, Les accords, avant leurs réglages)
+ * correspondent au niveau Normal : on les y range, en gardant les 10 meilleurs.
+ */
+export function migrateScores(all: Record<string, ScoreEntry[]>): Record<string, ScoreEntry[]> {
+  const out: Record<string, ScoreEntry[]> = {}
+  for (const [key, list] of Object.entries(all)) {
+    const target = key.replace('|unique|', '|normal|')
+    out[target] = out[target] ? [...out[target], ...list].sort((a, b) => b.points - a.points).slice(0, MAX_ENTRIES) : list
+  }
+  return out
+}
+
 function loadAll(): Record<string, ScoreEntry[]> {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-    return raw && typeof raw === 'object' ? raw : {}
+    return raw && typeof raw === 'object' ? migrateScores(raw) : {}
   } catch {
     return {}
   }
