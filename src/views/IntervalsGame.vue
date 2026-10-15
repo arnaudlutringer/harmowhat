@@ -24,8 +24,8 @@
         <span class="label">{{ choice.label }}</span>
         <ion-icon
           v-if="choice.direction"
-          class="direction"
-          :icon="choice.direction === 'up' ? trendingUp : trendingDown"
+          :class="['direction', choice.direction]"
+          :icon="arrowForward"
           :aria-label="choice.direction === 'up' ? 'ascendant' : 'descendant'"
         />
       </ion-button>
@@ -37,7 +37,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonButton, IonIcon } from '@ionic/vue'
-import { trendingDown, trendingUp } from 'ionicons/icons'
+import { arrowForward } from 'ionicons/icons'
 import GameShell from '@/components/GameShell.vue'
 import ChordStaff from '@/components/ChordStaff.vue'
 import FlipPlayer from '@/components/FlipPlayer.vue'
@@ -104,12 +104,16 @@ function colorFor(id: string) {
 .choices ion-button::part(native) {
   padding: 6px 8px;
 }
-.label {
-  flex: 1;
-}
 .direction {
-  font-size: 32px;
-  margin-left: 6px;
+  font-size: 20px;
+  margin-left: 4px;
   flex: none;
+}
+/* Flèche droite inclinée : vers le haut/droite en montant, vers le bas/droite en descendant. */
+.direction.up {
+  transform: rotate(-45deg);
+}
+.direction.down {
+  transform: rotate(45deg);
 }
 </style>
