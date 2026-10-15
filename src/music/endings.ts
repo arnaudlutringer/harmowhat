@@ -86,6 +86,8 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   trumpet: ['te-deum', 'taps'],
   accordion: ['skaters', 'over-the-waves', 'blue-danube'],
   guitar: ['romance'],
+  flute: ['spring'],
+  'electric-guitar': ['bella-ciao'],
 }
 
 export function endingsFor(instrument: InstrumentId): Ending[] {

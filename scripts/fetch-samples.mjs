@@ -16,10 +16,12 @@ export const RANGES = {
   trumpet: [52, 82],
   accordion: [53, 93],
   guitar: [40, 83],
+  flute: [60, 96],
+  'electric-guitar': [40, 86],
 }
 
 /** Nom de l'instrument dans Musyng Kite, quand il diffère de notre identifiant. */
-const SOUNDFONT_NAMES = { guitar: 'acoustic_guitar_nylon' }
+const SOUNDFONT_NAMES = { guitar: 'acoustic_guitar_nylon', 'electric-guitar': 'electric_guitar_clean' }
 
 /** Une note toutes les tierces mineures, plus la plus aiguë (comme sampleMidis). */
 export function sampleMidis([low, high]) {
