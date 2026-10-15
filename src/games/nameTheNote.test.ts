@@ -29,6 +29,9 @@ describe('Quelle est la note ?', () => {
       expect(new Set(q.choices).size).toBe(cfg.choices)
       expect(q.choices).toContain(q.answer)
       if (cfg.naturalsOnly) expect(q.choices.some((c) => /[♯♭]/.test(c))).toBe(false)
+      // Dans l'ordre de la gamme, de Do à Si.
+      const pcs = q.choices.map(pitchClass)
+      expect(pcs).toEqual([...pcs].sort((a, b) => a - b))
     }
   })
 

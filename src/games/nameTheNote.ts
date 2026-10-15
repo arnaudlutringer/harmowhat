@@ -68,7 +68,10 @@ export interface Question {
   answer: string
   /** Nom complet de la note jouée, dans la même orthographe (ex. "Si♭3"). */
   fullName: string
-  /** Propositions : chaque note n'apparaît qu'une fois, en dièse ou en bémol (jamais La♯ et Si♭ ensemble). */
+  /**
+   * Propositions, dans l'ordre de la gamme (de Do à Si) : chaque note n'apparaît qu'une fois,
+   * en dièse ou en bémol (jamais La♯ et Si♭ ensemble).
+   */
   choices: string[]
   picked?: string
 }
@@ -93,6 +96,8 @@ export function createQuestion(level: Level, inst: Instrument = currentInstrumen
   const pool = Array.from({ length: 12 }, (_, pc) => pc).filter((pc) => pc !== answerPc && (!cfg.naturalsOnly || !isBlackKey(pc)))
   const others = shuffle(pool)
     .slice(0, cfg.choices - 1)
-    .map((pc) => spelledPitchName(spell(pc, randomSpelling())))
-  return { midi, answer, fullName: spelledName(played), choices: shuffle([answer, ...others]) }
+    .map((pc) => ({ pc, name: spelledPitchName(spell(pc, randomSpelling())) }))
+  // Propositions rangées dans l'ordre de la gamme (de Do à Si), de la plus grave à la plus aiguë.
+  const choices = [{ pc: answerPc, name: answer }, ...others].sort((a, b) => a.pc - b.pc).map((c) => c.name)
+  return { midi, answer, fullName: spelledName(played), choices }
 }
