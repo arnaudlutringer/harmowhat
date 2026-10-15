@@ -7,6 +7,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/home', component: HomePage },
   { path: '/parametres', component: () => import('@/views/SettingsPage.vue') },
   { path: '/infos', component: () => import('@/views/InfoPage.vue') },
+  { path: '/hall-of-fame', component: () => import('@/views/HallOfFamePage.vue') },
+  { path: '/scores/:game', component: () => import('@/views/ScoresPage.vue') },
   { path: '/games/grave-ou-aigu', component: () => import('@/views/HighLowGame.vue') },
   { path: '/games/quelle-note', component: () => import('@/views/NameTheNoteSettings.vue') },
   { path: '/games/accords', component: () => import('@/views/ChordsGame.vue') },

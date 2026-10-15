@@ -3,6 +3,7 @@
     title="Les accords"
     prompt="Quelles sont les 3 notes de l'accord ?"
     :quiz="quiz"
+    :board="{ game: 'accords', level: SINGLE_LEVEL, questions: quiz.total }"
     swipe-to-next
   >
     <template #player>
@@ -57,6 +58,7 @@ import { usePlaying } from '@/composables/usePlaying'
 import { playChord, playPiano } from '@/audio/engine'
 import { spelledName } from '@/music/spelling'
 import { CHORD_SIZE, createChordQuestion, isCorrect } from '@/games/chords'
+import { SINGLE_LEVEL } from '@/games/highScores'
 
 // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
 const quiz = useQuiz({ createQuestion: createChordQuestion, play: (q) => playChord(q.notes), advanceDelay: null })

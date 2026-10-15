@@ -21,6 +21,10 @@
           <ion-card-content>{{ game.description }}</ion-card-content>
         </ion-card>
       </div>
+      <ion-button class="hall" expand="block" router-link="/hall-of-fame">
+        <ion-icon slot="start" :icon="trophyOutline" />
+        Hall of fame
+      </ion-button>
     </ion-content>
   </ion-page>
 </template>
@@ -29,7 +33,7 @@
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonPage,
 } from '@ionic/vue'
-import { informationCircleOutline, settingsOutline } from 'ionicons/icons'
+import { informationCircleOutline, settingsOutline, trophyOutline } from 'ionicons/icons'
 
 const games = [
   {
@@ -104,6 +108,11 @@ ion-card-content {
   font-size: 30px;
   margin-bottom: 6px;
   text-shadow: none;
+}
+.hall {
+  margin: 20px 0 0;
+  --border-radius: 0;
+  font-weight: 700;
 }
 /* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
 .top {

@@ -6,6 +6,7 @@
         v-if="quiz.finished.value"
         :results="quiz.results.value"
         :total="quiz.total"
+        :board="board"
         :settings-href="settingsHref"
         @restart="quiz.restart"
       />
@@ -71,6 +72,7 @@ import { play, volumeHigh } from 'ionicons/icons'
 import TuningForkButton from './TuningForkButton.vue'
 import GameResult from './GameResult.vue'
 import type { useQuiz } from '@/composables/useQuiz'
+import type { Board } from '@/games/highScores'
 import { onMounted, ref } from 'vue'
 import { preloadPiano, stopAll } from '@/audio/engine'
 
@@ -78,6 +80,8 @@ const props = defineProps<{
   title: string
   prompt: string
   quiz: ReturnType<typeof useQuiz<unknown>>
+  /** Classement des meilleurs scores de la partie (jeu, niveau, nombre de questions). */
+  board: Board
   /** Écran de réglages du jeu, s'il en a un. */
   settingsHref?: string
   /** Après une réponse, passer à la question suivante en glissant le doigt de droite à gauche. */

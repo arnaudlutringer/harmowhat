@@ -3,6 +3,7 @@
     title="Quelle est la note ?"
     :prompt="`Quelle note as-tu entendue ? (niveau ${LEVELS[settings.level].label.toLowerCase()})`"
     :quiz="quiz"
+    :board="{ game: 'quelle-note', level: settings.level, questions: settings.questions }"
     settings-href="/games/quelle-note"
     :no-tuning-fork="settings.level === 'expert'"
   >

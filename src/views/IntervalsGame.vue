@@ -3,6 +3,7 @@
     title="Les harmonies"
     :prompt="`Quel est l'intervalle entre les deux notes ?`"
     :quiz="quiz"
+    :board="{ game: 'harmonies', level: `${settings.level}-${settings.precision}`, questions: settings.questions }"
     settings-href="/games/harmonies"
     swipe-to-next
     no-tuning-fork

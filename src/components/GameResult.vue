@@ -4,6 +4,24 @@
     <h1>{{ summary.points }} <small>pts</small></h1>
     <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
 
+    <!-- Le score entre au classement : on propose d'enregistrer le nom du joueur. -->
+    <form v-if="record" class="record" @submit.prevent="saveRecord">
+      <strong>🏅 Tu entres dans les meilleurs scores !</strong>
+      <ion-input
+        v-model="playerName"
+        :maxlength="MAX_NAME_LENGTH"
+        label="Ton nom"
+        label-placement="stacked"
+        fill="outline"
+        placeholder="10 caractères au plus"
+        autocapitalize="words"
+        @ion-input="nameError = false"
+      />
+      <p v-if="nameError" class="error">Indique ton nom pour enregistrer ton score.</p>
+      <ion-button type="submit" expand="block">Enregistrer</ion-button>
+      <ion-button fill="clear" size="small" @click="record = false">Ne pas enregistrer</ion-button>
+    </form>
+
     <ol class="notes" aria-label="Détail des réponses">
       <li
         v-for="(r, i) in results"
@@ -33,8 +51,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from 'vue'
-import { IonButton, IonIcon } from '@ionic/vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
 import { musicalNote, musicalNotes, stop } from 'ionicons/icons'
 import { playSequence, stopAll, tierForScore } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
@@ -42,11 +60,33 @@ import { summarize, type QuestionResult } from '@/games/scoring'
 import { detune } from '@/music/furElise'
 import { endingFor } from '@/music/endings'
 import { selectedInstrument } from '@/audio/instruments'
+import {
+  cleanName, getScores, lastPlayerName, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
+} from '@/games/highScores'
 
-const props = defineProps<{ results: QuestionResult[]; total: number; settingsHref?: string }>()
+const props = defineProps<{ results: QuestionResult[]; total: number; board: Board; settingsHref?: string }>()
 const emit = defineEmits<{ restart: [] }>()
 
 const summary = computed(() => summarize(props.results))
+
+// Meilleurs scores : si la partie entre au classement, le joueur peut y inscrire son nom.
+const router = useIonRouter()
+const record = ref(qualifies(getScores(props.board), summary.value.points))
+const playerName = ref(lastPlayerName())
+const nameError = ref(false)
+
+function saveRecord() {
+  const name = cleanName(playerName.value)
+  if (!name) {
+    nameError.value = true
+    return
+  }
+  const { points, correct } = summary.value
+  const rank = saveScore(props.board, { name, points, correct, date: new Date().toISOString() })
+  record.value = false
+  stopAll()
+  router.push(scoresHref(props.board, rank))
+}
 const tier = computed(() => tierForScore(summary.value.correct, props.total))
 const copy = computed(
   () =>
@@ -127,6 +167,24 @@ h1 small {
 }
 p {
   margin-bottom: 24px;
+}
+.record {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 24px;
+  padding: 16px;
+  background: var(--hw-button);
+  box-shadow: 0 2px 0 rgba(108, 92, 231, 0.35), 0 4px 10px rgba(45, 48, 71, 0.08);
+  text-align: left;
+}
+.record strong {
+  color: var(--ion-color-primary);
+}
+.record .error {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ion-color-danger);
 }
 .elise {
   margin-top: 24px;
