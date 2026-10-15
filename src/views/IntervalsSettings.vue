@@ -1,0 +1,110 @@
+<template>
+  <ion-page>
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/home" text="" />
+        </ion-buttons>
+        <ion-title>Les harmonies</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <div class="settings hw-square">
+        <h2>Nombre de questions</h2>
+        <ion-segment v-model="questions">
+          <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">
+            <ion-label>{{ n }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+
+        <h2>Difficulté</h2>
+        <ion-radio-group v-model="level">
+          <ion-item v-for="(cfg, key) in LEVELS" :key="key" lines="full">
+            <ion-radio :value="key" justify="space-between">
+              <ion-label class="ion-text-wrap">
+                <strong>{{ cfg.label }}</strong>
+                <p>{{ cfg.description }}</p>
+              </ion-label>
+            </ion-radio>
+          </ion-item>
+        </ion-radio-group>
+
+        <h2>Précision</h2>
+        <ion-radio-group v-model="precision">
+          <ion-item v-for="(cfg, key) in PRECISIONS" :key="key" lines="full">
+            <ion-radio :value="key" justify="space-between">
+              <ion-label class="ion-text-wrap">
+                <strong>{{ cfg.label }}</strong>
+                <p>{{ cfg.description }}</p>
+              </ion-label>
+            </ion-radio>
+          </ion-item>
+        </ion-radio-group>
+
+        <ion-button expand="block" size="large" class="start" @click="start">Commencer</ion-button>
+      </div>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import {
+  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup,
+  IonSegment, IonSegmentButton, IonTitle, IonToolbar, useIonRouter,
+} from '@ionic/vue'
+import { afterSettings } from '@/games/ready'
+import { LEVELS, parseSettings, PRECISIONS, QUESTION_COUNTS, type Level, type Precision } from '@/games/intervals'
+
+const STORAGE_KEY = 'harmowhat.harmonies.settings'
+
+// On repropose les derniers réglages choisis.
+function loadSaved() {
+  try {
+    return parseSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}'))
+  } catch {
+    return parseSettings({})
+  }
+}
+
+const saved = loadSaved()
+const questions = ref<number>(saved.questions)
+const level = ref<Level>(saved.level)
+const precision = ref<Precision>(saved.precision)
+const router = useIonRouter()
+
+function start() {
+  const settings = { questions: questions.value, level: level.value, precision: precision.value }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+  } catch {
+    // Stockage indisponible : on joue quand même.
+  }
+  // Pas de diapason pendant les questions : il est proposé sur l'écran « Je suis prêt ».
+  router.push(afterSettings('harmonies', true, `questions=${settings.questions}&level=${settings.level}&precision=${settings.precision}`))
+}
+</script>
+
+<style scoped>
+.settings {
+  max-width: 480px;
+  margin: 0 auto;
+}
+h2 {
+  font-size: 18px;
+  margin: 24px 0 12px;
+}
+ion-radio {
+  width: 100%;
+}
+ion-radio::part(label) {
+  white-space: normal;
+}
+ion-label p {
+  color: var(--ion-color-medium);
+}
+.start {
+  margin-top: 32px;
+}
+</style>

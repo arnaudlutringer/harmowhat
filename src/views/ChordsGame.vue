@@ -1,0 +1,158 @@
+<template>
+  <game-shell
+    title="Les accords"
+    prompt="Quelles sont les 3 notes de l'accord ?"
+    :quiz="quiz"
+    swipe-to-next
+  >
+    <template #player>
+      <flip-player :quiz="quiz" what="l'accord">
+        <chord-staff :notes="q.notes.map((m) => q.spelled[m])" :label="`Accord ${chordName}`" />
+      </flip-player>
+    </template>
+
+    <div class="choices">
+      <div v-for="midi in q.choices" :key="midi" class="choice" :class="stateFor(midi)">
+        <button
+          class="pick"
+          :aria-pressed="selected.includes(midi)"
+          :disabled="!quiz.canAnswer.value"
+          @click="toggle(midi)"
+        >
+          {{ name(midi) }}
+        </button>
+        <button
+          class="listen"
+          :class="{ 'is-playing': notePlayer.current.value === midi }"
+          :aria-label="`Écouter ${name(midi)}`"
+          @click="notePlayer.track(playPiano(midi, { duration: 1.5 }), midi)"
+        >
+          <ion-icon :icon="volumeHigh" />
+        </button>
+      </div>
+    </div>
+
+    <ion-button
+      v-if="!revealed"
+      expand="block"
+      size="large"
+      class="validate"
+      :disabled="selected.length !== CHORD_SIZE || !quiz.canAnswer.value"
+      @click="validate"
+    >
+      Valider ({{ selected.length }}/{{ CHORD_SIZE }})
+    </ion-button>
+  </game-shell>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { IonButton, IonIcon } from '@ionic/vue'
+import { volumeHigh } from 'ionicons/icons'
+import GameShell from '@/components/GameShell.vue'
+import ChordStaff from '@/components/ChordStaff.vue'
+import FlipPlayer from '@/components/FlipPlayer.vue'
+import { useQuiz } from '@/composables/useQuiz'
+import { usePlaying } from '@/composables/usePlaying'
+import { playChord, playPiano } from '@/audio/engine'
+import { spelledName } from '@/music/spelling'
+import { CHORD_SIZE, createChordQuestion, isCorrect } from '@/games/chords'
+
+// Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
+const quiz = useQuiz({ createQuestion: createChordQuestion, play: (q) => playChord(q.notes), advanceDelay: null })
+const notePlayer = usePlaying<number>()
+const q = computed(() => quiz.question.value)
+const selected = ref<number[]>([])
+const revealed = computed(() => quiz.feedback.value !== null)
+const name = (midi: number) => spelledName(q.value.spelled[midi])
+const chordName = computed(() => q.value.notes.map(name).join(', '))
+
+watch(q, () => (selected.value = []))
+
+function toggle(midi: number) {
+  const i = selected.value.indexOf(midi)
+  if (i >= 0) selected.value.splice(i, 1)
+  else if (selected.value.length < CHORD_SIZE) selected.value.push(midi)
+}
+
+function validate() {
+  const ok = isCorrect(selected.value, q.value.notes)
+  quiz.answer(ok, ok ? 'Bien entendu !' : `C'était ${chordName.value}.`)
+  void quiz.listen()
+}
+
+// Après validation : bonnes notes en vert, erreurs en rouge, notes oubliées entourées.
+function stateFor(midi: number) {
+  const isSelected = selected.value.includes(midi)
+  if (!revealed.value) return { selected: isSelected }
+  const inChord = q.value.notes.includes(midi)
+  return { right: inChord && isSelected, wrong: !inChord && isSelected, missed: inChord && !isSelected }
+}
+</script>
+
+<style scoped>
+.choice .listen.is-playing {
+  animation: none;
+}
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.choice {
+  display: flex;
+  overflow: hidden;
+  border: 2px solid var(--hw-button);
+  background: var(--hw-button);
+  box-shadow: 0 2px 0 rgba(108, 92, 231, 0.35), 0 4px 10px rgba(45, 48, 71, 0.08);
+}
+.choice button {
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--hw-button-text);
+}
+.pick {
+  flex: 1;
+  padding: 14px 8px;
+  font-weight: 600;
+}
+.pick:disabled {
+  cursor: default;
+}
+.listen {
+  width: 48px;
+  border-left: 1px solid rgba(108, 92, 231, 0.25) !important;
+  display: grid;
+  place-items: center;
+}
+.choice.selected .pick {
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+}
+.choice.right {
+  border-color: var(--ion-color-success);
+}
+.choice.right .pick {
+  background: var(--ion-color-success);
+  color: var(--ion-color-success-contrast);
+}
+.choice.wrong {
+  border-color: var(--ion-color-danger);
+}
+.choice.wrong .pick {
+  background: var(--ion-color-danger);
+  color: var(--ion-color-danger-contrast);
+}
+.choice.missed {
+  border-color: var(--ion-color-success);
+  border-style: dashed;
+}
+.choice.missed .pick {
+  color: var(--ion-color-success);
+}
+.validate {
+  margin-top: 20px;
+}
+</style>

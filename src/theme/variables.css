@@ -1,0 +1,89 @@
+/*
+ * Palette « Partition pop » : fond crème clair, en-tête violet, une couleur vive par jeu,
+ * boutons blancs à angles droits, bouton de lecture rond violet (corail pendant le son).
+ */
+:root {
+  --ion-color-primary: #6c5ce7;
+  --ion-color-primary-rgb: 108, 92, 231;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #5f51cb;
+  --ion-color-primary-tint: #7b6ce9;
+
+  --ion-color-secondary: #ff7675;
+  --ion-color-secondary-rgb: 255, 118, 117;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #e06867;
+  --ion-color-secondary-tint: #ff8483;
+
+  --ion-color-success: #00a884;
+  --ion-color-success-rgb: 0, 168, 132;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #009474;
+  --ion-color-success-tint: #1ab190;
+
+  --ion-color-danger: #e84855;
+  --ion-color-danger-rgb: 232, 72, 85;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #cc3f4b;
+  --ion-color-danger-tint: #ea5a66;
+
+  --ion-background-color: #fff7ec;
+  --ion-background-color-rgb: 255, 247, 236;
+  --ion-text-color: #2d3047;
+  --ion-text-color-rgb: 45, 48, 71;
+  --ion-item-background: transparent;
+
+  /* En-tête : une seule ligne, violet, texte blanc. */
+  --ion-toolbar-background: #6c5ce7;
+  --ion-toolbar-color: #ffffff;
+
+  /* Boutons des jeux : blancs, texte violet, angles droits. */
+  --hw-button: #ffffff;
+  --hw-button-active: #efecff;
+  --hw-button-text: #4b3fc4;
+
+  /* Une couleur par jeu, sur l'accueil. */
+  --hw-game-1: #ff7675;
+  --hw-game-2: #0984e3;
+  --hw-game-3: #00a884;
+  --hw-game-4: #e17055;
+}
+
+ion-toolbar {
+  --min-height: 48px;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+ion-title {
+  font-size: 18px;
+}
+ion-progress-bar {
+  --progress-background: var(--ion-color-secondary);
+  --background: rgba(var(--ion-color-secondary-rgb), 0.2);
+}
+
+.hw-square ion-button {
+  --border-radius: 0;
+  --background: var(--hw-button);
+  --background-activated: var(--hw-button-active);
+  --background-hover: var(--hw-button-active);
+  --background-focused: var(--hw-button-active);
+  --border-color: var(--hw-button);
+  --color: var(--hw-button-text);
+  --box-shadow: 0 2px 0 rgba(108, 92, 231, 0.35), 0 4px 10px rgba(45, 48, 71, 0.08);
+  font-weight: 600;
+}
+
+/* Bouton de lecture : rond, violet. */
+.hw-square .play {
+  border-radius: 50%;
+  border: none;
+  background: var(--ion-color-primary);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(108, 92, 231, 0.35);
+  cursor: pointer;
+}

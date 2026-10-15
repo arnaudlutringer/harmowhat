@@ -1,0 +1,9 @@
+Salamander Grand Piano V3 (échantillons de vélocité 8, MP3)
+Auteur : Alexander Holm
+Licence : Creative Commons Attribution 3.0 (CC BY 3.0)
+https://creativecommons.org/licenses/by/3.0/
+Source : https://archive.org/details/SalamanderGrandPianoV3
+Conversion MP3 : paquet npm @audio-samples/piano-mp3-velocity8
+
+Les fichiers sont renommés par numéro MIDI (21 = La0/A0 ... 108 = Do8/C8),
+un échantillon toutes les tierces mineures.

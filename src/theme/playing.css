@@ -1,0 +1,21 @@
+/* Effet « en cours de lecture » : halo qui pulse et couleur secondaire, retiré à la fin du son. */
+@keyframes hw-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--ion-color-secondary-rgb), 0.6);
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+  100% {
+    box-shadow: 0 0 0 22px rgba(var(--ion-color-secondary-rgb), 0);
+    transform: scale(1);
+  }
+}
+
+.is-playing {
+  background: var(--ion-color-secondary) !important;
+  color: var(--ion-color-secondary-contrast) !important;
+  animation: hw-pulse 0.9s ease-out infinite;
+  transition: background 0.2s, color 0.2s;
+}
