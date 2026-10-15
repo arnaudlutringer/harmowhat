@@ -15,9 +15,9 @@
                 </ion-label>
               </ion-radio>
             </ion-item>
-            <!-- Musique de fin de partie pour cet instrument : un ou plusieurs morceaux au choix. -->
-            <div class="endings" role="radiogroup" :aria-label="`Musique de fin au ${inst.label.toLowerCase()}`">
-              <span class="endings-label">Musique de fin</span>
+            <!-- Musique de fin de partie, pour l'instrument sélectionné seulement : un ou plusieurs morceaux au choix. -->
+            <div v-if="inst.id === selectedInstrument" class="endings" role="radiogroup" :aria-label="`Musique préférée : ${inst.label}`">
+              <span class="endings-label">Musique préférée</span>
               <button
                 v-for="e in endingsFor(inst.id)"
                 :key="e.id"
@@ -50,10 +50,11 @@ import { usePlaying } from '@/composables/usePlaying'
 import { A440, noteName } from '@/music/notes'
 import { chooseEnding, chosenEndings, endingFor, endingsFor, type Ending } from '@/music/endings'
 
-// Le joueur entend tout de suite le nouvel instrument (La3 du diapason).
+// Le joueur entend tout de suite le nouvel instrument (La3 du diapason) ; sa première musique de fin est choisie.
 function choose(id: InstrumentId) {
   stopAll()
   setInstrument(id)
+  chooseEnding(id, endingsFor(id)[0].id)
   void playPiano(A440, { duration: 1.5 })
   void preloadPiano().catch(() => undefined)
 }
