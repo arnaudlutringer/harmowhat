@@ -24,14 +24,26 @@
           </ion-segment-button>
         </ion-segment>
 
-        <ol v-if="entries.length" class="table">
-          <li v-for="(e, i) in entries" :key="i" :class="{ me: i === highlight }">
-            <span class="rank">{{ medal(i) }}</span>
-            <span class="name">{{ e.name }}</span>
-            <span class="detail">{{ e.correct }}/{{ board.questions }}</span>
-            <strong class="points">{{ e.points }}</strong>
-          </li>
-        </ol>
+        <template v-if="entries.length">
+          <!-- Podium : le deuxième à gauche, le premier au centre (plus haut), le troisième à droite. -->
+          <div class="podium">
+            <div v-for="i in [1, 0, 2]" :key="i" class="step" :class="[`place-${i + 1}`, { me: i === highlight, vacant: !entries[i] }]">
+              <span class="medal" aria-hidden="true">{{ MEDALS[i] }}</span>
+              <span class="name">{{ entries[i]?.name ?? '—' }}</span>
+              <strong v-if="entries[i]" class="points">{{ entries[i].points }} pts.</strong>
+              <div class="block">{{ i + 1 }}</div>
+            </div>
+          </div>
+
+          <!-- À partir du quatrième : un tableau. -->
+          <ol v-if="entries.length > 3" class="table" start="4">
+            <li v-for="(e, i) in entries.slice(3)" :key="i" :class="{ me: i + 3 === highlight }">
+              <span class="rank">{{ i + 4 }}</span>
+              <span class="name">{{ e.name }}</span>
+              <strong class="points">{{ e.points }} pts.</strong>
+            </li>
+          </ol>
+        </template>
         <p v-else class="empty">Pas encore de score ici. À toi de jouer !</p>
 
         <ion-button expand="block" size="large" @click="replay">Rejouer</ion-button>
@@ -71,7 +83,7 @@ watch(board, load)
 onIonViewWillEnter(load)
 load()
 
-const medal = (i: number) => ['🥇', '🥈', '🥉'][i] ?? `${i + 1}`
+const MEDALS = ['🥇', '🥈', '🥉']
 
 function replay() {
   router.push(playHref(board))
@@ -98,10 +110,71 @@ h2 {
 .level {
   margin-bottom: 12px;
 }
+.podium {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 28px 0 24px;
+}
+.step {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.step .medal {
+  font-size: 30px;
+}
+.step .name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.step .points {
+  margin: 2px 0 6px;
+  color: var(--ion-color-primary);
+  font-variant-numeric: tabular-nums;
+}
+.step .block {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(45, 48, 71, 0.15);
+}
+/* Or au centre, plus haut ; argent à gauche ; bronze à droite. */
+.place-1 .block {
+  height: 110px;
+  background: #f0b429;
+}
+.place-2 .block {
+  height: 80px;
+  background: #a0aec0;
+}
+.place-3 .block {
+  height: 60px;
+  background: #cd8a4f;
+}
+.step.vacant {
+  opacity: 0.4;
+}
+.step.me .name {
+  color: var(--ion-color-primary);
+}
+.step.me .block {
+  outline: 3px solid var(--ion-color-primary);
+  outline-offset: 2px;
+}
 .table {
   list-style: none;
   padding: 0;
-  margin: 20px 0 28px;
+  margin: -8px 0 28px;
 }
 .table li {
   display: flex;
@@ -117,17 +190,14 @@ h2 {
 .rank {
   width: 28px;
   text-align: center;
-  font-size: 18px;
+  color: var(--ion-color-medium);
+  font-weight: 600;
 }
-.name {
+.table .name {
   flex: 1;
 }
-.detail {
-  color: var(--ion-color-medium);
-  font-size: 14px;
-}
-.points {
-  min-width: 56px;
+.table .points {
+  min-width: 72px;
   text-align: right;
   color: var(--ion-color-primary);
   font-variant-numeric: tabular-nums;

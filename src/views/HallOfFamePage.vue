@@ -9,7 +9,7 @@
           <ion-item v-for="g in games" :key="g.id" button detail :router-link="scoresHref(g.board)">
             <ion-label>
               <strong>{{ g.title }}</strong>
-              <p v-if="g.best">Record : {{ g.best.points }} pts par {{ g.best.name }}</p>
+              <p v-if="g.best">Record : {{ g.best.points }} pts. par {{ g.best.name }}</p>
               <p v-else>Pas encore de score</p>
             </ion-label>
           </ion-item>
