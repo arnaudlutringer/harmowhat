@@ -32,7 +32,7 @@
           <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
           <div class="progress">
             <span>Question {{ quiz.number.value }} / {{ quiz.total }}</span>
-            <span class="total" :class="{ bump: landed }">Total : {{ quiz.totalPoints.value }} pts</span>
+            <span class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
           </div>
           <!-- Points gagnés à la question : « +350pts » en biais, qui s'envole des points de la question vers le total (1,5 s). -->
           <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}pts</strong>
@@ -93,23 +93,32 @@ const props = defineProps<{
 }>()
 
 // À chaque réponse qui rapporte des points (sauf la première, où le total ne fait que démarrer),
-// le gain s'envole vers le total en 1,5 s ; le total « saute » quand il l'atteint.
+// le gain s'envole vers le total en 1,5 s ; le total « saute » et n'augmente qu'au moment où il l'atteint.
 const GAIN_DURATION = 1500
 const GAIN_LANDING = 1250
 const gain = ref<{ id: number; points: number } | null>(null)
 const landed = ref(false)
+/** Total affiché : il suit le vrai total, mais attend l'arrivée du gain quand celui-ci s'envole. */
+const shownTotal = ref(props.quiz.totalPoints.value)
 let gainTimers: ReturnType<typeof setTimeout>[] = []
 const clearGainTimers = () => gainTimers.forEach(clearTimeout)
 watch(
   () => props.quiz.results.value.length,
   (n, before) => {
     const last = props.quiz.results.value[n - 1]
-    if (n <= before || n === 1 || !last || last.points <= 0) return
+    if (n <= before || n === 1 || !last || last.points <= 0) {
+      // Pas d'envol (nouvelle partie, première question, mauvaise réponse) : le total est à jour tout de suite.
+      shownTotal.value = props.quiz.totalPoints.value
+      return
+    }
     clearGainTimers()
     gain.value = { id: n, points: last.points }
     landed.value = false
     gainTimers = [
-      setTimeout(() => (landed.value = true), GAIN_LANDING),
+      setTimeout(() => {
+        landed.value = true
+        shownTotal.value = props.quiz.totalPoints.value
+      }, GAIN_LANDING),
       setTimeout(() => {
         gain.value = null
         landed.value = false
@@ -118,6 +127,11 @@ watch(
   },
 )
 onBeforeUnmount(clearGainTimers)
+// Envol interrompu (ex. nouvelle partie) : le total affiché ne doit pas rester en retard.
+watch(
+  () => props.quiz.finished.value,
+  () => (shownTotal.value = props.quiz.totalPoints.value),
+)
 
 // Glissement horizontal vers la gauche : au moins 60 px, plus horizontal que vertical.
 const swipeStart = ref<{ x: number; y: number } | null>(null)
