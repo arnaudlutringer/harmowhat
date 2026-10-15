@@ -1,5 +1,5 @@
 import { A440 } from '@/music/notes'
-import { currentInstrument, fitToRange, nearestSample as nearestInstrumentSample, sampleMidis } from '@/audio/instruments'
+import { currentInstrument, fitToRange, nearestSample as nearestInstrumentSample, sampleMidis, type Instrument } from '@/audio/instruments'
 
 /**
  * Moteur audio : de vrais enregistrements de l'instrument choisi par le joueur
@@ -26,13 +26,12 @@ function audio(): { ctx: AudioContext; out: GainNode } {
   return { ctx, out: master! }
 }
 
-function nearestSample(midi: number): number {
-  const inst = currentInstrument()
+function nearestSample(midi: number, inst: Instrument = currentInstrument()): number {
   return nearestInstrumentSample(inst, fitToRange(inst, midi))
 }
 
-function loadSample(sample: number): Promise<AudioBuffer> {
-  const key = `${currentInstrument().id}/${sample}`
+function loadSample(sample: number, inst: Instrument = currentInstrument()): Promise<AudioBuffer> {
+  const key = `${inst.id}/${sample}`
   let p = buffers.get(key)
   if (!p) {
     const { ctx } = audio()
@@ -47,7 +46,7 @@ function loadSample(sample: number): Promise<AudioBuffer> {
 
 /** Charge tous les échantillons (à appeler tôt pour éviter un délai au premier clic). */
 export function preloadPiano(): Promise<void> {
-  return Promise.all(sampleMidis(currentInstrument()).map(loadSample)).then(() => undefined)
+  return Promise.all(sampleMidis(currentInstrument()).map((s) => loadSample(s))).then(() => undefined)
 }
 
 interface PlayOptions {
@@ -60,14 +59,15 @@ interface PlayOptions {
   /** Durée du fondu de sortie, en secondes. */
   fadeOut?: number
   velocity?: number
+  /** Instrument qui joue (par défaut celui choisi par le joueur). */
+  instrument?: Instrument
 }
 
 function schedule(buffer: AudioBuffer, sample: number, midi: number, at: number, o: PlayOptions): Voice {
   const { ctx, out } = audio()
-  const { duration = 2.5, fadeIn = 0, fadeOut = 0.4, velocity = 0.8 } = o
+  const { duration = 2.5, fadeIn = 0, fadeOut = 0.4, velocity = 0.8, instrument: inst = currentInstrument() } = o
   const src = ctx.createBufferSource()
   src.buffer = buffer
-  const inst = currentInstrument()
   src.playbackRate.value = Math.pow(2, (fitToRange(inst, midi) - sample) / 12)
   const g = ctx.createGain()
   const peak = velocity * inst.gain
@@ -165,16 +165,29 @@ export interface Playback {
   stop: () => void
 }
 
-/** Joue une séquence de notes, `unit` étant la durée d'une unité en secondes. */
-export async function playSequence(notes: readonly SequenceNote[], unit: number, velocity = 0.55): Promise<Playback> {
+/**
+ * Joue une séquence de notes, `unit` étant la durée d'une unité en secondes,
+ * avec l'instrument choisi par le joueur ou celui indiqué.
+ */
+export async function playSequence(
+  notes: readonly SequenceNote[],
+  unit: number,
+  velocity = 0.55,
+  instrument: Instrument = currentInstrument(),
+): Promise<Playback> {
   const gen = generation
-  const loaded = await Promise.all(notes.map(({ midi }) => loadSample(nearestSample(midi))))
+  const loaded = await Promise.all(notes.map(({ midi }) => loadSample(nearestSample(midi, instrument), instrument)))
   if (gen !== generation) return { duration: 0, stop() {} }
   const { ctx } = audio()
   const t0 = ctx.currentTime + 0.05
   const voices = notes.map((n, i) => {
     const duration = Math.max(0.3, n.len * unit + 0.15)
-    return schedule(loaded[i], nearestSample(n.midi), n.midi, t0 + n.at * unit, { duration, fadeOut: Math.min(0.4, duration / 2), velocity: n.velocity ?? velocity })
+    return schedule(loaded[i], nearestSample(n.midi, instrument), n.midi, t0 + n.at * unit, {
+      duration,
+      fadeOut: Math.min(0.4, duration / 2),
+      velocity: n.velocity ?? velocity,
+      instrument,
+    })
   })
   return {
     duration: Math.max(0, ...notes.map(({ at, len }) => at + len)) * unit + 0.2,

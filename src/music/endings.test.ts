@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { endingFor } from './endings'
+import { endingFor, endingsFor, ENDINGS, INSTRUMENT_ENDINGS } from './endings'
 import { INSTRUMENTS, type InstrumentId } from '@/audio/instruments'
 import { pitchClassName } from './notes'
 
@@ -11,6 +11,39 @@ describe('Musique de fin', () => {
     expect(endingFor('guitar').title).toBe('Romance (Jeux interdits)')
     expect(endingFor('piano').title).toBe('La Lettre à Élise')
     expect(endingFor('cello').title).toBe('La Lettre à Élise')
+  })
+
+  it('propose plusieurs morceaux au piano et joue celui choisi, s’il est proposé pour l’instrument', () => {
+    expect(endingsFor('piano').map((e) => e.title)).toEqual(['La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque'])
+    expect(endingFor('piano', { piano: 'moonlight' }).id).toBe('moonlight')
+    expect(endingFor('violin', { violin: 'moonlight' }).id).toBe('spring')
+    expect(endingFor('piano', {}).id).toBe('elise')
+    for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) expect(INSTRUMENT_ENDINGS[id].length).toBeGreaterThan(0)
+  })
+
+  it('Sonate au clair de lune : arpèges de do♯ mineur en doubles croches, accords sforzando, une dizaine de secondes', () => {
+    const { notes, unit } = ENDINGS.moonlight
+    const right = notes.filter((n) => n.at < 8 && n.midi >= 44 && n.at % 1 === 0 && n.at % 2 === 1)
+    expect(right.map((n) => pitchClassName(n.midi))).toEqual(['Sol♯', 'Mi', 'Do♯', 'Sol♯'])
+    expect(notes.filter((n) => n.at === 28).length).toBe(6)
+    const end = Math.max(...notes.map((n) => n.at + n.len)) * unit
+    expect(end).toBeGreaterThan(9)
+    expect(end).toBeLessThan(11)
+    for (const n of notes) {
+      expect(n.midi).toBeGreaterThanOrEqual(INSTRUMENTS.piano.low)
+      expect(n.midi).toBeLessThanOrEqual(INSTRUMENTS.piano.high)
+    }
+  })
+
+  it('Marche turque : si la sol♯ la do, ré do si do, mi…, cadence sur le mi, une dizaine de secondes', () => {
+    const { notes, unit } = ENDINGS['turkish-march']
+    const melody = notes.filter((n) => n.midi >= 68 && n.at < 20 && n.at % 1 === 0)
+    expect(melody.slice(0, 10).map((n) => pitchClassName(n.midi))).toEqual(['Si', 'La', 'Sol♯', 'La', 'Do', 'Ré', 'Do', 'Si', 'Do', 'Mi'])
+    const last = notes.filter((n) => n.at === Math.max(...notes.map((x) => x.at)))
+    expect(last.every((n) => pitchClassName(n.midi) === 'Mi')).toBe(true)
+    const end = Math.max(...notes.map((n) => n.at + n.len)) * unit
+    expect(end).toBeGreaterThan(8.5)
+    expect(end).toBeLessThan(11)
   })
 
   /** Fin du morceau en secondes, et toutes les notes dans la tessiture de l'instrument. */
