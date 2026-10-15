@@ -66,6 +66,13 @@ const games = [
     title: 'Les harmonies',
     description: "Deux notes l'une après l'autre : trouve l'intervalle (tierce, quinte, sixte…).",
   },
+  {
+    path: '/games/lecture-note',
+    color: 'var(--hw-game-5)',
+    emoji: '👀',
+    title: 'Lecture de note',
+    description: "Une note sur une portée, en clé de sol, de fa ou d'ut : quelle est cette note ?",
+  },
 ]
 </script>
 

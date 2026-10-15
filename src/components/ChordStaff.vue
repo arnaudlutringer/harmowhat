@@ -8,11 +8,14 @@ import { Accidental, Formatter, Renderer, Stave, StaveNote, Voice } from 'vexflo
 import { clefFor } from '@/games/chords'
 import { vexAccidental, vexKeyOf, type SpelledNote } from '@/music/spelling'
 
-/** `melodic` : les notes l'une après l'autre (intervalle), sinon ensemble (accord). */
-const props = defineProps<{ notes: SpelledNote[]; melodic?: boolean; label?: string }>()
+/**
+ * `melodic` : les notes l'une après l'autre (intervalle), sinon ensemble (accord).
+ * `clef` : clé VexFlow imposée (treble, bass, alto…) ; par défaut, sol ou fa selon le registre.
+ */
+const props = defineProps<{ notes: SpelledNote[]; melodic?: boolean; label?: string; clef?: string }>()
 const host = ref<HTMLDivElement>()
 
-/** Dessine les notes sur une portée, avec une clé de sol ou de fa selon le registre. */
+/** Dessine les notes sur une portée, avec la clé imposée ou une clé de sol ou de fa selon le registre. */
 async function draw() {
   const el = host.value
   if (!el) return
@@ -23,7 +26,7 @@ async function draw() {
   const renderer = new Renderer(el, Renderer.Backends.SVG)
   renderer.resize(width, 150)
   const context = renderer.getContext()
-  const clef = clefFor(props.notes.map((n) => n.midi))
+  const clef = props.clef ?? clefFor(props.notes.map((n) => n.midi))
   const stave = new Stave(10, 20, width - 20).addClef(clef)
   stave.setContext(context).draw()
 
@@ -50,7 +53,7 @@ async function draw() {
 }
 
 onMounted(draw)
-watch(() => props.notes, draw)
+watch(() => [props.notes, props.clef], draw)
 </script>
 
 <style scoped>

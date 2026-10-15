@@ -1,13 +1,14 @@
 import { afterSettings } from './ready'
 import { LEVELS as NOTE_LEVELS, QUESTION_COUNTS as NOTE_COUNTS } from './nameTheNote'
 import { LEVELS as INTERVAL_LEVELS, PRECISIONS, QUESTION_COUNTS as INTERVAL_COUNTS } from './intervals'
+import { LEVELS as READ_LEVELS, QUESTION_COUNTS as READ_COUNTS } from './readNote'
 
 /**
  * Meilleurs scores : un classement par jeu, par niveau et par nombre de questions,
  * mémorisé sur l'appareil. Seuls les 10 meilleurs sont gardés.
  */
 
-export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies'
+export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note'
 
 /** Un classement : le jeu, le niveau (identifiant) et le nombre de questions. */
 export interface Board {
@@ -51,6 +52,11 @@ export const GAMES: Record<GameId, GameInfo> = {
       Object.entries(PRECISIONS).map(([precision, p]) => ({ id: `${level}-${precision}`, label: `${cfg.label} · ${p.label}` })),
     ),
     questionCounts: INTERVAL_COUNTS,
+  },
+  'lecture-note': {
+    title: 'Lecture de note',
+    levels: Object.entries(READ_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: READ_COUNTS,
   },
 }
 
@@ -97,6 +103,7 @@ export function playHref({ game, level, questions }: Board): string {
     const [lvl, precision] = level.split('-')
     return `/games/harmonies/jouer?questions=${questions}&level=${lvl}&precision=${precision}`
   }
+  if (game === 'lecture-note') return `/games/lecture-note/jouer?questions=${questions}&level=${level}`
   return `/games/${game}`
 }
 
