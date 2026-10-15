@@ -17,7 +17,8 @@ describe('Musique de fin', () => {
     for (const e of Object.values(ENDINGS)) {
       const end = Math.max(...e.notes.map((n) => n.at + n.len)) * e.unit
       expect(end).toBeLessThanOrEqual(10 + 1e-9)
-      expect(end).toBeGreaterThan(8.5)
+      // Une phrase complète peut finir un peu avant (ex. la Danse macabre, dont le violon se tait ensuite).
+      expect(end).toBeGreaterThan(7.5)
     }
     expect(firstSeconds([{ midi: 60, at: 0, len: 4 }, { midi: 62, at: 5, len: 1 }], 2.5)).toEqual([{ midi: 60, at: 0, len: 4 }])
     expect(firstSeconds([{ midi: 60, at: 3, len: 4 }], 2.5)).toEqual([{ midi: 60, at: 3, len: 1 }])
@@ -55,6 +56,10 @@ describe('Musique de fin', () => {
     expect(first('paganini-24', 6)).toEqual(['La', 'La', 'La', 'Do', 'Si', 'La'])
     expect(first('mountain-king', 7)).toEqual(['Si', 'Do♯', 'Ré', 'Mi', 'Fa♯', 'Ré', 'Fa♯'])
     expect(INSTRUMENT_ENDINGS['electric-guitar']).toEqual(['rising-sun', 'paganini-24', 'mountain-king'])
+    expect(first('mendelssohn', 5)).toEqual(['Si', 'Si', 'Si', 'Sol', 'Mi'])
+    // Danse macabre : la et mi♭ (triton) ensemble, puis ré et la.
+    expect(first('danse-macabre', 4)).toEqual(['La', 'Ré♯', 'Ré', 'La'])
+    expect(INSTRUMENT_ENDINGS.violin).toEqual(['spring', 'mendelssohn', 'danse-macabre'])
   })
 
   it('Taps à la trompette : sol sol do, sol do mi, dans les 10 premières secondes', () => {

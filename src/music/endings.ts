@@ -17,6 +17,8 @@ import { BADINERIE, BADINERIE_SIXTEENTH } from './badinerie'
 import { RISING_SUN, RISING_SUN_BEAT } from './risingSun'
 import { PAGANINI_24, PAGANINI_SIXTEENTH } from './paganini24'
 import { MOUNTAIN_KING, MOUNTAIN_KING_EIGHTH } from './mountainKing'
+import { MENDELSSOHN, MENDELSSOHN_BEAT } from './mendelssohn'
+import { DANSE_MACABRE, DANSE_MACABRE_BEAT } from './danseMacabre'
 import { SPRING, SPRING_BEAT } from './vivaldiSpring'
 import { SKATERS, SKATERS_BEAT } from './skatersWaltz'
 import { BELLA_CIAO, BELLA_CIAO_EIGHTH } from './bellaCiao'
@@ -51,6 +53,7 @@ export type EndingId =
   | 'skaters' | 'over-the-waves' | 'blue-danube'
   | 'morning' | 'faune' | 'badinerie'
   | 'rising-sun' | 'paganini-24' | 'mountain-king'
+  | 'mendelssohn' | 'danse-macabre'
   | 'spring' | 'bella-ciao' | 'romance'
 
 const PIECES: Record<EndingId, Ending> = {
@@ -87,6 +90,8 @@ const PIECES: Record<EndingId, Ending> = {
     notes: MOUNTAIN_KING,
     unit: MOUNTAIN_KING_EIGHTH,
   },
+  mendelssohn: { id: 'mendelssohn', title: 'Concerto pour violon', composer: 'Mendelssohn', notes: MENDELSSOHN, unit: MENDELSSOHN_BEAT },
+  'danse-macabre': { id: 'danse-macabre', title: 'Danse macabre', composer: 'Saint-Saëns', notes: DANSE_MACABRE, unit: DANSE_MACABRE_BEAT },
   taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
@@ -100,7 +105,7 @@ for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSecon
 /** Morceaux proposés pour chaque instrument ; le premier est celui par défaut. */
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   piano: ['elise', 'moonlight', 'turkish-march'],
-  violin: ['spring'],
+  violin: ['spring', 'mendelssohn', 'danse-macabre'],
   cello: ['bach-prelude', 'swan', 'dvorak'],
   clarinet: ['bella-ciao'],
   trumpet: ['te-deum', 'taps'],
