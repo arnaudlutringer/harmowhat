@@ -4,15 +4,31 @@ import type { InstrumentId } from '@/audio/instruments'
 import { FUR_ELISE, FUR_ELISE_SIXTEENTH } from './furElise'
 import { MOONLIGHT, MOONLIGHT_SIXTEENTH } from './moonlight'
 import { TURKISH_MARCH, TURKISH_MARCH_SIXTEENTH } from './turkishMarch'
+import { BACH_PRELUDE, BACH_PRELUDE_SIXTEENTH } from './bachPrelude'
+import { TAPS, TAPS_EIGHTH } from './taps'
+import { SWAN, SWAN_BEAT } from './swan'
+import { DVORAK_CONCERTO, DVORAK_BEAT } from './dvorakConcerto'
+import { TE_DEUM, TE_DEUM_BEAT } from './teDeum'
+import { OVER_THE_WAVES, OVER_THE_WAVES_BEAT } from './overTheWaves'
+import { BLUE_DANUBE, BLUE_DANUBE_BEAT } from './blueDanube'
 import { SPRING, SPRING_BEAT } from './vivaldiSpring'
 import { SKATERS, SKATERS_BEAT } from './skatersWaltz'
 import { BELLA_CIAO, BELLA_CIAO_EIGHTH } from './bellaCiao'
 import { ROMANCE, ROMANCE_BEAT } from './romance'
 
 /**
- * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (une dizaine de
- * secondes chacun), et le joueur choisit le sien dans les Paramètres.
+ * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
+ * secondes de chacun), et le joueur choisit le sien dans les Paramètres.
  */
+
+/** Durée maximale d'une musique de fin, en secondes. */
+export const ENDING_SECONDS = 10
+
+/** Garde les 10 premières secondes : les notes qui commencent après sont retirées, celles qui débordent raccourcies. */
+export function firstSeconds(notes: readonly SequenceNote[], unit: number, seconds = ENDING_SECONDS): SequenceNote[] {
+  const end = seconds / unit
+  return notes.filter((n) => n.at < end).map((n) => ({ ...n, len: Math.min(n.len, end - n.at) }))
+}
 export interface Ending {
   id: EndingId
   title: string
@@ -22,9 +38,14 @@ export interface Ending {
   unit: number
 }
 
-export type EndingId = 'elise' | 'moonlight' | 'turkish-march' | 'spring' | 'skaters' | 'bella-ciao' | 'romance'
+export type EndingId =
+  | 'elise' | 'moonlight' | 'turkish-march'
+  | 'bach-prelude' | 'swan' | 'dvorak'
+  | 'te-deum' | 'taps'
+  | 'skaters' | 'over-the-waves' | 'blue-danube'
+  | 'spring' | 'bella-ciao' | 'romance'
 
-export const ENDINGS: Record<EndingId, Ending> = {
+const PIECES: Record<EndingId, Ending> = {
   elise: { id: 'elise', title: 'La Lettre à Élise', composer: 'Beethoven', notes: FUR_ELISE, unit: FUR_ELISE_SIXTEENTH },
   moonlight: { id: 'moonlight', title: 'Sonate au clair de lune (3ᵉ mvt)', composer: 'Beethoven', notes: MOONLIGHT, unit: MOONLIGHT_SIXTEENTH },
   'turkish-march': {
@@ -34,20 +55,36 @@ export const ENDINGS: Record<EndingId, Ending> = {
     notes: TURKISH_MARCH,
     unit: TURKISH_MARCH_SIXTEENTH,
   },
+  'bach-prelude': {
+    id: 'bach-prelude',
+    title: 'Prélude de la Suite n° 1',
+    composer: 'Bach',
+    notes: BACH_PRELUDE,
+    unit: BACH_PRELUDE_SIXTEENTH,
+  },
+  swan: { id: 'swan', title: 'Le Cygne', composer: 'Saint-Saëns', notes: SWAN, unit: SWAN_BEAT },
+  dvorak: { id: 'dvorak', title: 'Concerto pour violoncelle', composer: 'Dvořák', notes: DVORAK_CONCERTO, unit: DVORAK_BEAT },
+  'te-deum': { id: 'te-deum', title: 'Te Deum, Prélude', composer: 'Charpentier', notes: TE_DEUM, unit: TE_DEUM_BEAT },
+  'over-the-waves': { id: 'over-the-waves', title: 'Sobre las olas', composer: 'Rosas', notes: OVER_THE_WAVES, unit: OVER_THE_WAVES_BEAT },
+  'blue-danube': { id: 'blue-danube', title: 'Le Beau Danube bleu', composer: 'Strauss', notes: BLUE_DANUBE, unit: BLUE_DANUBE_BEAT },
+  taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
   'bella-ciao': { id: 'bella-ciao', title: 'Bella ciao', composer: 'chant populaire italien', notes: BELLA_CIAO, unit: BELLA_CIAO_EIGHTH },
   romance: { id: 'romance', title: 'Romance (Jeux interdits)', composer: 'Anonyme', notes: ROMANCE, unit: ROMANCE_BEAT },
 }
 
+export const ENDINGS = { ...PIECES }
+for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSeconds(e.notes, e.unit) }
+
 /** Morceaux proposés pour chaque instrument ; le premier est celui par défaut. */
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   piano: ['elise', 'moonlight', 'turkish-march'],
   violin: ['spring'],
-  cello: ['elise'],
+  cello: ['bach-prelude', 'swan', 'dvorak'],
   clarinet: ['bella-ciao'],
-  trumpet: ['elise'],
-  accordion: ['skaters'],
+  trumpet: ['te-deum', 'taps'],
+  accordion: ['skaters', 'over-the-waves', 'blue-danube'],
   guitar: ['romance'],
 }
 

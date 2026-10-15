@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { endingFor, endingsFor, ENDINGS, INSTRUMENT_ENDINGS } from './endings'
+import { endingFor, endingsFor, ENDINGS, firstSeconds, INSTRUMENT_ENDINGS } from './endings'
 import { INSTRUMENTS, type InstrumentId } from '@/audio/instruments'
 import { pitchClassName } from './notes'
 
@@ -10,7 +10,58 @@ describe('Musique de fin', () => {
     expect(endingFor('clarinet').title).toBe('Bella ciao')
     expect(endingFor('guitar').title).toBe('Romance (Jeux interdits)')
     expect(endingFor('piano').title).toBe('La Lettre à Élise')
-    expect(endingFor('cello').title).toBe('La Lettre à Élise')
+    expect(endingFor('cello').title).toBe('Prélude de la Suite n° 1')
+  })
+
+  it('ne joue que les 10 premières secondes de chaque morceau', () => {
+    for (const e of Object.values(ENDINGS)) {
+      const end = Math.max(...e.notes.map((n) => n.at + n.len)) * e.unit
+      expect(end).toBeLessThanOrEqual(10 + 1e-9)
+      expect(end).toBeGreaterThan(8.5)
+    }
+    expect(firstSeconds([{ midi: 60, at: 0, len: 4 }, { midi: 62, at: 5, len: 1 }], 2.5)).toEqual([{ midi: 60, at: 0, len: 4 }])
+    expect(firstSeconds([{ midi: 60, at: 3, len: 4 }], 2.5)).toEqual([{ midi: 60, at: 3, len: 1 }])
+  })
+
+  it('chaque morceau reste dans la tessiture de son instrument', () => {
+    for (const id of Object.keys(INSTRUMENTS) as InstrumentId[])
+      for (const e of endingsFor(id))
+        for (const n of e.notes) {
+          expect(n.midi, `${e.title} (${id})`).toBeGreaterThanOrEqual(INSTRUMENTS[id].low)
+          expect(n.midi, `${e.title} (${id})`).toBeLessThanOrEqual(INSTRUMENTS[id].high)
+        }
+  })
+
+  it('violoncelle, trompette et accordéon proposent chacun plusieurs morceaux', () => {
+    expect(INSTRUMENT_ENDINGS.cello).toEqual(['bach-prelude', 'swan', 'dvorak'])
+    expect(INSTRUMENT_ENDINGS.trumpet).toEqual(['te-deum', 'taps'])
+    expect(INSTRUMENT_ENDINGS.accordion).toEqual(['skaters', 'over-the-waves', 'blue-danube'])
+  })
+
+  it('premières notes des nouveaux morceaux', () => {
+    // La mélodie se distingue de l'accompagnement par son volume.
+    const first = (id: keyof typeof ENDINGS, count: number) =>
+      ENDINGS[id].notes.filter((n) => (n.velocity ?? 1) >= 0.5).slice(0, count).map((n) => pitchClassName(n.midi))
+    expect(first('swan', 6)).toEqual(['Sol', 'Fa♯', 'Si', 'Mi', 'Ré', 'Sol'])
+    expect(first('dvorak', 4)).toEqual(['Si', 'Do♯', 'Ré', 'Si'])
+    expect(first('te-deum', 6)).toEqual(['La', 'Ré', 'Ré', 'Mi', 'Fa♯', 'Ré'])
+    expect(first('over-the-waves', 4)).toEqual(['Si', 'La♯', 'Si', 'Ré'])
+    expect(first('blue-danube', 4)).toEqual(['Ré', 'Ré', 'Fa♯', 'La'])
+  })
+
+  it('Taps à la trompette : sol sol do, sol do mi, dans les 10 premières secondes', () => {
+    const { notes } = ENDINGS.taps
+    expect(notes.map((n) => pitchClassName(n.midi))).toEqual(['Sol', 'Sol', 'Do', 'Sol', 'Do', 'Mi'])
+    for (const n of notes) {
+      expect(n.midi).toBeGreaterThanOrEqual(INSTRUMENTS.trumpet.low)
+      expect(n.midi).toBeLessThanOrEqual(INSTRUMENTS.trumpet.high)
+    }
+  })
+
+  it('Prélude de Bach : sol ré si la si ré si ré, sur la corde de sol à vide', () => {
+    const { notes } = ENDINGS['bach-prelude']
+    expect(notes.slice(0, 8).map((n) => pitchClassName(n.midi))).toEqual(['Sol', 'Ré', 'Si', 'La', 'Si', 'Ré', 'Si', 'Ré'])
+    expect(notes[0].midi).toBe(INSTRUMENTS.cello.low + 7)
   })
 
   it('propose plusieurs morceaux au piano et joue celui choisi, s’il est proposé pour l’instrument', () => {
@@ -79,7 +130,6 @@ describe('Musique de fin', () => {
   it('Bella ciao : couplet en sol mineur, une dizaine de secondes', () => {
     const { notes } = endingFor('clarinet')
     expect(notes.slice(0, 5).map((n) => pitchClassName(n.midi))).toEqual(['Ré', 'Sol', 'La', 'La♯', 'Sol'])
-    expect(pitchClassName(notes[notes.length - 1].midi)).toBe('Sol')
     const end = check('clarinet')
     expect(end).toBeGreaterThan(9)
     expect(end).toBeLessThan(12)
@@ -99,6 +149,6 @@ describe('Musique de fin', () => {
   })
 
   it('existe pour chaque instrument', () => {
-    for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) expect(endingFor(id).notes.length).toBeGreaterThan(10)
+    for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) expect(endingFor(id).notes.length).toBeGreaterThan(5)
   })
 })
