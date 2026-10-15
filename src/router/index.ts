@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import HomePage from '@/views/HomePage.vue'
+import { isTutorialDone } from '@/tutorial'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/home' },
   { path: '/home', component: HomePage },
+  { path: '/tutoriel', component: () => import('@/views/TutorialPage.vue') },
   { path: '/parametres', component: () => import('@/views/SettingsPage.vue') },
   { path: '/infos', component: () => import('@/views/InfoPage.vue') },
   { path: '/hall-of-fame', component: () => import('@/views/HallOfFamePage.vue') },
@@ -22,7 +24,12 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/lecture-note/jouer', component: () => import('@/views/ReadNoteGame.vue') },
 ]
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
+
+// Première ouverture : le tutoriel passe avant l'accueil.
+router.beforeEach((to) => (to.path === '/home' && !isTutorialDone() ? '/tutoriel' : true))
+
+export default router
