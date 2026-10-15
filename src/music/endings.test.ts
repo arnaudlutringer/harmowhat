@@ -7,7 +7,7 @@ describe('Musique de fin', () => {
   it('joue le Printemps au violon, les Patineurs à l’accordéon, Bella ciao à la clarinette, la Lettre à Élise sinon', () => {
     expect(endingFor('violin').title).toBe('Le Printemps')
     expect(endingFor('accordion').title).toBe('Les Patineurs')
-    expect(endingFor('clarinet').title).toBe('Bella ciao')
+    expect(endingFor('clarinet').title).toBe('Rhapsody in Blue')
     expect(endingFor('guitar').title).toBe('Romance (Jeux interdits)')
     expect(endingFor('piano').title).toBe('La Lettre à Élise')
     expect(endingFor('cello').title).toBe('Prélude de la Suite n° 1')
@@ -17,8 +17,9 @@ describe('Musique de fin', () => {
     for (const e of Object.values(ENDINGS)) {
       const end = Math.max(...e.notes.map((n) => n.at + n.len)) * e.unit
       expect(end).toBeLessThanOrEqual(10 + 1e-9)
-      // Une phrase complète peut finir un peu avant (ex. la Danse macabre, dont le violon se tait ensuite).
-      expect(end).toBeGreaterThan(7.5)
+      // Une phrase complète peut finir un peu avant (ex. la Danse macabre, dont le violon se tait ensuite,
+      // ou la Rhapsody in Blue, qui s'arrête sur le si♭ tenu après la montée de la clarinette).
+      expect(end).toBeGreaterThan(5)
     }
     expect(firstSeconds([{ midi: 60, at: 0, len: 4 }, { midi: 62, at: 5, len: 1 }], 2.5)).toEqual([{ midi: 60, at: 0, len: 4 }])
     expect(firstSeconds([{ midi: 60, at: 3, len: 4 }], 2.5)).toEqual([{ midi: 60, at: 3, len: 1 }])
@@ -60,6 +61,11 @@ describe('Musique de fin', () => {
     // Danse macabre : la et mi♭ (triton) ensemble, puis ré et la.
     expect(first('danse-macabre', 4)).toEqual(['La', 'Ré♯', 'Ré', 'La'])
     expect(INSTRUMENT_ENDINGS.violin).toEqual(['spring', 'mendelssohn', 'danse-macabre'])
+    expect(first('hava-nagila', 5)).toEqual(['Ré', 'Ré', 'Fa♯', 'Ré♯', 'Ré'])
+    // Rhapsody in Blue : le trille fa-sol, puis la montée jusqu'au si♭ tenu.
+    expect(first('rhapsody', 2)).toEqual(['Fa', 'Sol'])
+    expect(pitchClassName(ENDINGS.rhapsody.notes[ENDINGS.rhapsody.notes.length - 1].midi)).toBe('La♯')
+    expect(INSTRUMENT_ENDINGS.clarinet).toEqual(['rhapsody', 'hava-nagila', 'bella-ciao'])
   })
 
   it('Taps à la trompette : sol sol do, sol do mi, dans les 10 premières secondes', () => {
@@ -141,9 +147,9 @@ describe('Musique de fin', () => {
   })
 
   it('Bella ciao : couplet en sol mineur, une dizaine de secondes', () => {
-    const { notes } = endingFor('clarinet')
+    const { notes, unit } = ENDINGS['bella-ciao']
     expect(notes.slice(0, 5).map((n) => pitchClassName(n.midi))).toEqual(['Ré', 'Sol', 'La', 'La♯', 'Sol'])
-    const end = check('clarinet')
+    const end = Math.max(...notes.map((n) => n.at + n.len)) * unit
     expect(end).toBeGreaterThan(9)
     expect(end).toBeLessThan(12)
   })

@@ -19,6 +19,8 @@ import { PAGANINI_24, PAGANINI_SIXTEENTH } from './paganini24'
 import { MOUNTAIN_KING, MOUNTAIN_KING_EIGHTH } from './mountainKing'
 import { MENDELSSOHN, MENDELSSOHN_BEAT } from './mendelssohn'
 import { DANSE_MACABRE, DANSE_MACABRE_BEAT } from './danseMacabre'
+import { RHAPSODY_IN_BLUE, RHAPSODY_BEAT } from './rhapsodyInBlue'
+import { HAVA_NAGILA, HAVA_NAGILA_EIGHTH } from './havaNagila'
 import { SPRING, SPRING_BEAT } from './vivaldiSpring'
 import { SKATERS, SKATERS_BEAT } from './skatersWaltz'
 import { BELLA_CIAO, BELLA_CIAO_EIGHTH } from './bellaCiao'
@@ -54,6 +56,7 @@ export type EndingId =
   | 'morning' | 'faune' | 'badinerie'
   | 'rising-sun' | 'paganini-24' | 'mountain-king'
   | 'mendelssohn' | 'danse-macabre'
+  | 'rhapsody' | 'hava-nagila'
   | 'spring' | 'bella-ciao' | 'romance'
 
 const PIECES: Record<EndingId, Ending> = {
@@ -92,6 +95,8 @@ const PIECES: Record<EndingId, Ending> = {
   },
   mendelssohn: { id: 'mendelssohn', title: 'Concerto pour violon', composer: 'Mendelssohn', notes: MENDELSSOHN, unit: MENDELSSOHN_BEAT },
   'danse-macabre': { id: 'danse-macabre', title: 'Danse macabre', composer: 'Saint-Saëns', notes: DANSE_MACABRE, unit: DANSE_MACABRE_BEAT },
+  rhapsody: { id: 'rhapsody', title: 'Rhapsody in Blue', composer: 'Gershwin', notes: RHAPSODY_IN_BLUE, unit: RHAPSODY_BEAT },
+  'hava-nagila': { id: 'hava-nagila', title: 'Hava Nagila', composer: 'Traditionnel', notes: HAVA_NAGILA, unit: HAVA_NAGILA_EIGHTH },
   taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
@@ -107,7 +112,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   piano: ['elise', 'moonlight', 'turkish-march'],
   violin: ['spring', 'mendelssohn', 'danse-macabre'],
   cello: ['bach-prelude', 'swan', 'dvorak'],
-  clarinet: ['bella-ciao'],
+  clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao'],
   trumpet: ['te-deum', 'taps'],
   accordion: ['skaters', 'over-the-waves', 'blue-danube'],
   guitar: ['romance'],
