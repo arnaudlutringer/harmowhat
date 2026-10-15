@@ -66,8 +66,9 @@ const games = [
 <style scoped>
 h1 {
   margin: 0;
-  font-size: 26px;
-  font-weight: 800;
+  font-family: 'Dancing Script', cursive;
+  font-size: 34px;
+  font-weight: 700;
   color: var(--ion-color-primary);
 }
 .intro {
