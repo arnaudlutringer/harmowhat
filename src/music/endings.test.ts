@@ -17,8 +17,7 @@ describe('Musique de fin', () => {
     for (const e of Object.values(ENDINGS)) {
       const end = Math.max(...e.notes.map((n) => n.at + n.len)) * e.unit
       expect(end).toBeLessThanOrEqual(10 + 1e-9)
-      // Une phrase complète peut finir un peu avant (ex. la Danse macabre, dont le violon se tait ensuite,
-      // ou la Rhapsody in Blue, qui s'arrête sur le si♭ tenu après la montée de la clarinette).
+      // Une phrase complète peut finir avant (ex. l'appel de Rhapsody in Blue, la Danse macabre).
       expect(end).toBeGreaterThan(5)
     }
     expect(firstSeconds([{ midi: 60, at: 0, len: 4 }, { midi: 62, at: 5, len: 1 }], 2.5)).toEqual([{ midi: 60, at: 0, len: 4 }])
@@ -62,10 +61,14 @@ describe('Musique de fin', () => {
     expect(first('danse-macabre', 4)).toEqual(['La', 'Ré♯', 'Ré', 'La'])
     expect(INSTRUMENT_ENDINGS.violin).toEqual(['spring', 'mendelssohn', 'danse-macabre'])
     expect(first('hava-nagila', 5)).toEqual(['Ré', 'Ré', 'Fa♯', 'Ré♯', 'Ré'])
-    // Rhapsody in Blue : le trille fa-sol, puis la montée jusqu'au si♭ tenu.
+    // Rhapsody in Blue : trille fa–sol, puis la montée jusqu'au si♭ aigu.
     expect(first('rhapsody', 2)).toEqual(['Fa', 'Sol'])
     expect(pitchClassName(ENDINGS.rhapsody.notes[ENDINGS.rhapsody.notes.length - 1].midi)).toBe('La♯')
     expect(INSTRUMENT_ENDINGS.clarinet).toEqual(['rhapsody', 'hava-nagila', 'bella-ciao'])
+    expect(first('greensleeves', 6)).toEqual(['Sol', 'La♯', 'Do', 'Ré', 'Ré♯', 'Ré'])
+    expect(first('gran-vals', 4)).toEqual(['Ré', 'Mi', 'Mi', 'Fa♯'])
+    expect(first('asturias', 8)).toEqual(['Mi', 'Si', 'Si', 'Si', 'Do', 'Si', 'La', 'Si'])
+    expect(INSTRUMENT_ENDINGS.guitar).toEqual(['romance', 'gran-vals', 'greensleeves', 'asturias'])
   })
 
   it('Taps à la trompette : sol sol do, sol do mi, dans les 10 premières secondes', () => {
