@@ -41,13 +41,16 @@ describe('Musique de fin', () => {
   it('premières notes des nouveaux morceaux', () => {
     // La mélodie se distingue de l'accompagnement par son volume.
     const first = (id: keyof typeof ENDINGS, count: number) =>
-      ENDINGS[id].notes.filter((n) => (n.velocity ?? 1) >= 0.5).slice(0, count).map((n) => pitchClassName(n.midi))
+      ENDINGS[id].notes.filter((n) => (n.velocity ?? 1) >= 0.4).slice(0, count).map((n) => pitchClassName(n.midi))
     expect(first('swan', 6)).toEqual(['Sol', 'Fa♯', 'Si', 'Mi', 'Ré', 'Sol'])
     expect(first('dvorak', 4)).toEqual(['Si', 'Do♯', 'Ré', 'Si'])
     expect(first('te-deum', 6)).toEqual(['La', 'Ré', 'Ré', 'Mi', 'Fa♯', 'Ré'])
     expect(first('over-the-waves', 4)).toEqual(['Si', 'La♯', 'Si', 'Ré'])
     expect(first('blue-danube', 4)).toEqual(['Ré', 'Ré', 'Fa♯', 'La'])
-  })
+    expect(first('morning', 6)).toEqual(['Si', 'Sol♯', 'Fa♯', 'Mi', 'Fa♯', 'Sol♯'])
+    expect(first('faune', 7)).toEqual(['Do♯', 'Do', 'Si', 'La♯', 'La', 'Sol♯', 'Sol'])
+    expect(first('badinerie', 6)).toEqual(['Si', 'Ré', 'Si', 'Fa♯', 'Si', 'Fa♯'])
+    expect(INSTRUMENT_ENDINGS.flute).toEqual(['morning', 'faune', 'badinerie'])  })
 
   it('Taps à la trompette : sol sol do, sol do mi, dans les 10 premières secondes', () => {
     const { notes } = ENDINGS.taps

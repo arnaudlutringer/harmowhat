@@ -11,6 +11,9 @@ import { DVORAK_CONCERTO, DVORAK_BEAT } from './dvorakConcerto'
 import { TE_DEUM, TE_DEUM_BEAT } from './teDeum'
 import { OVER_THE_WAVES, OVER_THE_WAVES_BEAT } from './overTheWaves'
 import { BLUE_DANUBE, BLUE_DANUBE_BEAT } from './blueDanube'
+import { MORNING_MOOD, MORNING_EIGHTH } from './morningMood'
+import { FAUNE, FAUNE_EIGHTH } from './faune'
+import { BADINERIE, BADINERIE_SIXTEENTH } from './badinerie'
 import { SPRING, SPRING_BEAT } from './vivaldiSpring'
 import { SKATERS, SKATERS_BEAT } from './skatersWaltz'
 import { BELLA_CIAO, BELLA_CIAO_EIGHTH } from './bellaCiao'
@@ -43,6 +46,7 @@ export type EndingId =
   | 'bach-prelude' | 'swan' | 'dvorak'
   | 'te-deum' | 'taps'
   | 'skaters' | 'over-the-waves' | 'blue-danube'
+  | 'morning' | 'faune' | 'badinerie'
   | 'spring' | 'bella-ciao' | 'romance'
 
 const PIECES: Record<EndingId, Ending> = {
@@ -67,6 +71,9 @@ const PIECES: Record<EndingId, Ending> = {
   'te-deum': { id: 'te-deum', title: 'Te Deum, Prélude', composer: 'Charpentier', notes: TE_DEUM, unit: TE_DEUM_BEAT },
   'over-the-waves': { id: 'over-the-waves', title: 'Sobre las olas', composer: 'Rosas', notes: OVER_THE_WAVES, unit: OVER_THE_WAVES_BEAT },
   'blue-danube': { id: 'blue-danube', title: 'Le Beau Danube bleu', composer: 'Strauss', notes: BLUE_DANUBE, unit: BLUE_DANUBE_BEAT },
+  morning: { id: 'morning', title: 'Au matin (Peer Gynt)', composer: 'Grieg', notes: MORNING_MOOD, unit: MORNING_EIGHTH },
+  faune: { id: 'faune', title: 'Prélude à l’après-midi d’un faune', composer: 'Debussy', notes: FAUNE, unit: FAUNE_EIGHTH },
+  badinerie: { id: 'badinerie', title: 'Badinerie', composer: 'Bach', notes: BADINERIE, unit: BADINERIE_SIXTEENTH },
   taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
@@ -86,7 +93,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   trumpet: ['te-deum', 'taps'],
   accordion: ['skaters', 'over-the-waves', 'blue-danube'],
   guitar: ['romance'],
-  flute: ['spring'],
+  flute: ['morning', 'faune', 'badinerie'],
   'electric-guitar': ['bella-ciao'],
 }
 
