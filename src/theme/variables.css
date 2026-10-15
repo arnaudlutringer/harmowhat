@@ -37,6 +37,9 @@
   --ion-text-color-rgb: 45, 48, 71;
   --ion-item-background: transparent;
 
+  /* Police ronde et ludique ; les signes ♯ et ♭, absents de Fredoka, viennent de la police système. */
+  --ion-font-family: 'Fredoka Variable', system-ui, sans-serif;
+
   /* Boutons des jeux : blancs, texte violet, angles droits. */
   --hw-button: #ffffff;
   --hw-button-active: #efecff;
@@ -47,6 +50,12 @@
   --hw-game-2: #0984e3;
   --hw-game-3: #00a884;
   --hw-game-4: #e17055;
+}
+
+/* Les boutons et champs HTML (hors composants Ionic) prennent aussi la police de l'appli. */
+button,
+input {
+  font-family: inherit;
 }
 
 /* Pas d'en-tête : le contenu laisse lui-même la place à la barre d'état du téléphone. */

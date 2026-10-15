@@ -10,7 +10,8 @@ import '@ionic/vue/css/typography.css'
 import '@ionic/vue/css/padding.css'
 import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
-// Police manuscrite du titre, embarquée pour fonctionner hors ligne.
+// Polices embarquées pour fonctionner hors ligne : Fredoka pour toute l'appli, Dancing Script pour le titre.
+import '@fontsource-variable/fredoka'
 import '@fontsource/dancing-script/700.css'
 import './theme/variables.css'
 import './theme/playing.css'
