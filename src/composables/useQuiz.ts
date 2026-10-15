@@ -31,11 +31,14 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
   const finished = ref(false)
   const results = ref<QuestionResult[]>([])
   const points = ref(0)
+  /** Compte à rebours avant la première question (3, 2, 1), null le reste du temps. */
+  const countdown = ref<number | null>(null)
   const sound = usePlaying()
   let clock = new QuestionClock()
   let plays = 0
   let timer: ReturnType<typeof setTimeout> | undefined
   let clockTimer: ReturnType<typeof setTimeout> | undefined
+  let countdownTimer: ReturnType<typeof setTimeout> | undefined
   let frame: number | undefined
 
   const number = computed(() => index.value + 1)
@@ -97,7 +100,24 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
     if (advanceDelay !== null) timer = setTimeout(next, advanceDelay)
   }
 
-  function startQuestion() {
+  /** Affiche 3, 2, 1 (une seconde chacun), puis joue la première question. */
+  function startCountdown() {
+    clearTimeout(countdownTimer)
+    countdown.value = 3
+    const step = () => {
+      if (countdown.value === null) return
+      if (countdown.value > 1) {
+        countdown.value--
+        countdownTimer = setTimeout(step, 1000)
+      } else {
+        countdown.value = null
+        void listen()
+      }
+    }
+    countdownTimer = setTimeout(step, 1000)
+  }
+
+  function startQuestion(first = false) {
     stopTicking()
     clearTimeout(clockTimer)
     stopAll()
@@ -107,7 +127,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
     question.value = createQuestion()
     hasListened.value = false
     feedback.value = null
-    void listen()
+    if (first) startCountdown()
+    else void listen()
   }
 
   function next() {
@@ -128,25 +149,26 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
     index.value = 0
     results.value = []
     finished.value = false
-    startQuestion()
+    startQuestion(true)
   }
 
   if (getCurrentInstance()) {
-    // La première question est jouée dès l'arrivée sur l'écran.
+    // La première question est jouée dès la fin du compte à rebours.
     onMounted(() => {
       points.value = clock.points
-      void listen()
+      startCountdown()
     })
     onBeforeUnmount(() => {
       clearTimeout(timer)
       clearTimeout(clockTimer)
+      clearTimeout(countdownTimer)
       stopTicking()
       stopAll()
     })
   }
 
   return {
-    total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer,
+    total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
     playing: sound.playing, listen, penalizeTuningFork, answer, next, restart,
   }
 }

@@ -10,6 +10,11 @@
         @restart="quiz.restart"
       />
 
+      <div v-else-if="quiz.countdown.value !== null" class="countdown" aria-live="assertive">
+        <p>Prêt ?</p>
+        <span :key="quiz.countdown.value" class="count">{{ quiz.countdown.value }}</span>
+      </div>
+
       <div
         v-else
         class="game hw-square"
@@ -133,6 +138,36 @@ useBackButton(20, (processNextHandler) => {
 </script>
 
 <style scoped>
+/* Compte à rebours avant la première question : un grand chiffre qui apparaît à chaque seconde. */
+.countdown {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.countdown p {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: var(--ion-color-medium);
+}
+.count {
+  font-size: 160px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ion-color-primary);
+  animation: pop 1s ease-out;
+}
+@keyframes pop {
+  0% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 .game {
   display: flex;
   flex-direction: column;
