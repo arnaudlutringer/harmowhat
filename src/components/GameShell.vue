@@ -32,8 +32,10 @@
           <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
           <div class="progress">
             <span>Question {{ quiz.number.value }} / {{ quiz.total }}</span>
-            <span>Total : {{ quiz.totalPoints.value }} pts</span>
+            <span class="total" :class="{ bump: landed }">Total : {{ quiz.totalPoints.value }} pts</span>
           </div>
+          <!-- Points gagnés à la question : « +350pts » en biais, qui s'envole des points de la question vers le total (1,5 s). -->
+          <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}pts</strong>
         </div>
 
         <p class="prompt">{{ prompt }}</p>
@@ -73,7 +75,7 @@ import TuningForkButton from './TuningForkButton.vue'
 import GameResult from './GameResult.vue'
 import type { useQuiz } from '@/composables/useQuiz'
 import type { Board } from '@/games/highScores'
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { preloadPiano, stopAll } from '@/audio/engine'
 
 const props = defineProps<{
@@ -89,6 +91,33 @@ const props = defineProps<{
   /** Pas de diapason pendant les questions (mode expert, jeu des intervalles). */
   noTuningFork?: boolean
 }>()
+
+// À chaque réponse qui rapporte des points (sauf la première, où le total ne fait que démarrer),
+// le gain s'envole vers le total en 1,5 s ; le total « saute » quand il l'atteint.
+const GAIN_DURATION = 1500
+const GAIN_LANDING = 1250
+const gain = ref<{ id: number; points: number } | null>(null)
+const landed = ref(false)
+let gainTimers: ReturnType<typeof setTimeout>[] = []
+const clearGainTimers = () => gainTimers.forEach(clearTimeout)
+watch(
+  () => props.quiz.results.value.length,
+  (n, before) => {
+    const last = props.quiz.results.value[n - 1]
+    if (n <= before || n === 1 || !last || last.points <= 0) return
+    clearGainTimers()
+    gain.value = { id: n, points: last.points }
+    landed.value = false
+    gainTimers = [
+      setTimeout(() => (landed.value = true), GAIN_LANDING),
+      setTimeout(() => {
+        gain.value = null
+        landed.value = false
+      }, GAIN_DURATION),
+    ]
+  },
+)
+onBeforeUnmount(clearGainTimers)
 
 // Glissement horizontal vers la gauche : au moins 60 px, plus horizontal que vertical.
 const swipeStart = ref<{ x: number; y: number } | null>(null)
@@ -180,6 +209,7 @@ useBackButton(20, (processNextHandler) => {
   margin: 0 auto;
 }
 .meta {
+  position: relative;
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -207,6 +237,75 @@ useBackButton(20, (processNextHandler) => {
 }
 .points.frozen {
   color: var(--ion-color-medium);
+}
+/* Le total grossit un instant quand le gain l'atteint. */
+.total {
+  display: inline-block;
+  transform-origin: right center;
+}
+.total.bump {
+  animation: bump 0.25s ease-out;
+}
+@keyframes bump {
+  50% {
+    transform: scale(1.25);
+    color: var(--ion-color-primary);
+    font-weight: 700;
+  }
+}
+.gain {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  /* Contour couleur du fond : le gain reste lisible par-dessus le texte qu'il survole. */
+  text-shadow:
+    0 0 3px var(--ion-background-color),
+    0 0 3px var(--ion-background-color),
+    0 0 6px var(--ion-background-color);
+  animation: gain 1.5s ease-in-out forwards;
+}
+/*
+ * Apparaît en biais au-dessus des points de la question, puis s'envole en arc vers le total
+ * (à droite, sur la deuxième ligne), rapetisse en s'y posant et s'efface.
+ */
+@keyframes gain {
+  0% {
+    left: 0;
+    top: 6px;
+    opacity: 0;
+    transform: translateX(0) rotate(-12deg) scale(0.6);
+  }
+  12% {
+    opacity: 1;
+    transform: translateX(0) rotate(-12deg) scale(1.15);
+  }
+  25% {
+    left: 0;
+    top: 0;
+    transform: translateX(0) rotate(-12deg) scale(1);
+  }
+  55% {
+    left: 50%;
+    top: -16px;
+    transform: translateX(-50%) rotate(-12deg) scale(1);
+  }
+  83% {
+    left: 100%;
+    top: 16px;
+    opacity: 1;
+    transform: translateX(-100%) rotate(-12deg) scale(0.6);
+  }
+  100% {
+    left: 100%;
+    top: 16px;
+    opacity: 0;
+    transform: translateX(-100%) rotate(-12deg) scale(0.4);
+  }
 }
 .progress {
   display: flex;
