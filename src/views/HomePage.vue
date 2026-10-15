@@ -2,6 +2,7 @@
   <ion-page>
     <ion-content class="ion-padding">
       <div class="top">
+        <img class="logo" src="/logo.svg" alt="" />
         <h1>HarmoWhat</h1>
         <ion-button fill="clear" router-link="/parametres" aria-label="Paramètres" title="Paramètres">
           <ion-icon slot="icon-only" :icon="settingsOutline" />
@@ -110,6 +111,11 @@ ion-card-content {
 }
 .top h1 {
   flex: 1;
+}
+.logo {
+  width: 36px;
+  height: 36px;
+  margin-right: 10px;
 }
 .top ion-button {
   --color: var(--ion-color-primary);
