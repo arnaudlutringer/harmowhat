@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.harmowhat.app',
-  appName: 'HarmoWhat',
+  appName: "L'oreille",
   webDir: 'dist',
 }
 

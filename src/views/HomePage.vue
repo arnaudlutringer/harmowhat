@@ -7,13 +7,13 @@
         </ion-button>
         <div class="brand">
           <img class="logo" src="/logo.svg" alt="" />
-          <h1>HarmoWhat</h1>
+          <h1>L'oreille</h1>
         </div>
         <ion-button fill="clear" router-link="/parametres" aria-label="Paramètres" title="Paramètres">
           <ion-icon slot="icon-only" :icon="settingsOutline" />
         </ion-button>
       </div>
-      <p class="intro">Teste ton oreille avec des mini-jeux de 20 questions.</p>
+      <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
       <div class="games">
         <ion-card v-for="game in games" :key="game.path" button :router-link="game.path" :style="{ '--background': game.color }">
           <ion-card-header>

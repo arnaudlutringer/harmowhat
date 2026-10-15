@@ -1,4 +1,4 @@
-# HarmoWhat
+# L'oreille
 
 App Ionic + Capacitor + Vue 3 pour tester son oreille (absolue et harmonique) à travers des mini-jeux.
 
