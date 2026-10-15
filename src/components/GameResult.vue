@@ -1,6 +1,6 @@
 <template>
   <div class="result hw-square">
-    <div class="emoji" aria-hidden="true">{{ copy.emoji }}</div>
+    <div class="emoji" aria-hidden="true">{{ emoji }}</div>
     <h1>{{ summary.points }} <small>pts</small></h1>
     <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
 
@@ -19,7 +19,6 @@
       />
       <p v-if="nameError" class="error">Indique ton nom pour enregistrer ton score.</p>
       <ion-button type="submit" expand="block">Enregistrer</ion-button>
-      <ion-button fill="clear" size="small" @click="record = false">Ne pas enregistrer</ion-button>
     </form>
 
     <ol class="notes" aria-label="Détail des réponses">
@@ -33,13 +32,6 @@
       </li>
     </ol>
 
-    <p>{{ copy.message }}</p>
-    <ion-button expand="block" @click="restart">Rejouer</ion-button>
-    <ion-button v-if="settingsHref" expand="block" fill="outline" :router-link="settingsHref" router-direction="back">
-      Changer les réglages
-    </ion-button>
-    <ion-button expand="block" fill="outline" router-link="/home" router-direction="back">Autres jeux</ion-button>
-
     <button class="elise" :class="{ 'is-playing': elise.playing.value }" @click="toggleElise">
       <ion-icon :icon="elise.playing.value ? stop : musicalNotes" aria-hidden="true" />
       <span>
@@ -50,6 +42,12 @@
         </small>
       </span>
     </button>
+
+    <ion-button expand="block" @click="restart">Rejouer</ion-button>
+    <ion-button v-if="settingsHref" expand="block" fill="outline" :router-link="settingsHref" router-direction="back">
+      Changer les réglages
+    </ion-button>
+    <ion-button expand="block" fill="outline" router-link="/home" router-direction="back">Autres jeux</ion-button>
   </div>
 </template>
 
@@ -91,14 +89,7 @@ function saveRecord() {
   router.push(scoresHref(props.board, rank))
 }
 const tier = computed(() => tierForScore(summary.value.correct, props.total))
-const copy = computed(
-  () =>
-    ({
-      great: { emoji: '🏆', message: 'Bravo, quelle oreille !' },
-      good: { emoji: '🎶', message: 'Joli score, encore un petit effort.' },
-      poor: { emoji: '🎧', message: "L'oreille, ça s'entraîne. On réessaie ?" },
-    })[tier.value],
-)
+const emoji = computed(() => ({ great: '🏆', good: '🎶', poor: '🎧' })[tier.value])
 
 // Musique de fin, selon l'instrument (voir music/endings.ts), d'autant plus mal jouée (musicien éméché)
 // que le joueur a fait d'erreurs (voir music/drunk.ts). Tirée une fois pour cet écran.
@@ -190,7 +181,7 @@ p {
   color: var(--ion-color-danger);
 }
 .elise {
-  margin-top: 24px;
+  margin: 0 0 24px;
   width: 100%;
   display: flex;
   align-items: center;
