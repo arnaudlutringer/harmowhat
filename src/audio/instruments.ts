@@ -8,7 +8,7 @@ import { PIANO_HIGHEST, PIANO_LOWEST, randomInt } from '@/music/notes'
  * Échantillons dans public/samples/<dossier>/, licence dans LICENSE.txt.
  */
 
-export type InstrumentId = 'piano' | 'violin' | 'cello' | 'clarinet' | 'trumpet' | 'accordion'
+export type InstrumentId = 'piano' | 'violin' | 'cello' | 'clarinet' | 'trumpet' | 'accordion' | 'guitar'
 
 export interface Instrument {
   id: InstrumentId
@@ -28,6 +28,7 @@ export const INSTRUMENTS: Record<InstrumentId, Instrument> = {
   clarinet: { id: 'clarinet', label: 'Clarinette', emoji: '🎶', low: 50, high: 91, gain: 0.95 },
   trumpet: { id: 'trumpet', label: 'Trompette', emoji: '🎺', low: 52, high: 82, gain: 1 },
   accordion: { id: 'accordion', label: 'Accordéon', emoji: '🪗', low: 53, high: 93, gain: 2 },
+  guitar: { id: 'guitar', label: 'Guitare', emoji: '🎸', low: 40, high: 83, gain: 1.8 },
 }
 
 export const DEFAULT_INSTRUMENT: InstrumentId = 'piano'

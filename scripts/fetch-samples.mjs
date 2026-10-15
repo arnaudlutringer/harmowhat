@@ -1,6 +1,7 @@
 // Télécharge les échantillons des instruments (sauf le piano, déjà dans public/samples/piano) :
 // Musyng Kite SoundFont, rendu MP3 du projet MIDI.js Soundfonts (CC BY-SA 3.0).
 // Usage : npm run samples   (Node 18 ou plus, accès Internet)
+//         node scripts/fetch-samples.mjs guitar   (seulement les instruments nommés)
 import { mkdir, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 
@@ -14,7 +15,11 @@ export const RANGES = {
   clarinet: [50, 91],
   trumpet: [52, 82],
   accordion: [53, 93],
+  guitar: [40, 83],
 }
+
+/** Nom de l'instrument dans Musyng Kite, quand il diffère de notre identifiant. */
+const SOUNDFONT_NAMES = { guitar: 'acoustic_guitar_nylon' }
 
 /** Une note toutes les tierces mineures, plus la plus aiguë (comme sampleMidis). */
 export function sampleMidis([low, high]) {
@@ -26,10 +31,12 @@ export function sampleMidis([low, high]) {
 
 async function main() {
   const root = fileURLToPath(new URL('../public/samples/', import.meta.url))
+  const only = process.argv.slice(2)
   for (const [inst, range] of Object.entries(RANGES)) {
+    if (only.length && !only.includes(inst)) continue
     await mkdir(`${root}${inst}`, { recursive: true })
     for (const midi of sampleMidis(range)) {
-      const url = `${BASE}/${inst}-mp3/${NAMES[midi % 12]}${Math.floor(midi / 12) - 1}.mp3`
+      const url = `${BASE}/${SOUNDFONT_NAMES[inst] ?? inst}-mp3/${NAMES[midi % 12]}${Math.floor(midi / 12) - 1}.mp3`
       const res = await fetch(url)
       if (!res.ok) throw new Error(`${url} : ${res.status}`)
       await writeFile(`${root}${inst}/${midi}.mp3`, Buffer.from(await res.arrayBuffer()))
