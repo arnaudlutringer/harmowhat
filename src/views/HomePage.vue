@@ -21,19 +21,16 @@
           <ion-card-content>{{ game.description }}</ion-card-content>
         </ion-card>
       </div>
-      <p class="credits">
-        Sons de piano : Salamander Grand Piano, par Alexander Holm, licence
-        <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>.
-        Autres instruments : Musyng Kite SoundFont, rendu MP3 MIDI.js Soundfonts par Benjamin Gleitzman, licence
-        <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC BY-SA 3.0</a>.
-      </p>
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+        <ion-fab-button router-link="/infos" aria-label="Informations" title="Informations">INFO</ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar,
+  IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar,
 } from '@ionic/vue'
 import { settingsOutline } from 'ionicons/icons'
 
@@ -104,10 +101,12 @@ ion-card-content {
   margin-bottom: 6px;
   text-shadow: none;
 }
-.credits {
-  margin-top: 32px;
-  font-size: 12px;
-  color: var(--ion-color-medium);
-  text-align: center;
+/* Laisse la place au bouton INFO sous la dernière rangée de cartes. */
+.games {
+  padding-bottom: 72px;
+}
+ion-fab-button {
+  font-size: 13px;
+  font-weight: 700;
 }
 </style>

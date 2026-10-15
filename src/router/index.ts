@@ -6,6 +6,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/home' },
   { path: '/home', component: HomePage },
   { path: '/parametres', component: () => import('@/views/SettingsPage.vue') },
+  { path: '/infos', component: () => import('@/views/InfoPage.vue') },
   { path: '/games/grave-ou-aigu', component: () => import('@/views/HighLowGame.vue') },
   { path: '/games/quelle-note', component: () => import('@/views/NameTheNoteSettings.vue') },
   { path: '/games/accords', component: () => import('@/views/ChordsGame.vue') },
