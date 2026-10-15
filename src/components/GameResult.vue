@@ -57,7 +57,7 @@ const copy = computed(
     })[tier.value],
 )
 
-// Musique de fin (« Le Printemps » au violon, « La Lettre à Élise » sinon), avec autant de % de notes faussées d'un demi-ton
+// Musique de fin, selon l'instrument (voir music/endings.ts), avec autant de % de notes faussées d'un demi-ton
 // que de % de mauvaises réponses. Tirées une fois pour cet écran.
 const wrongRatio = props.total ? (props.total - summary.value.correct) / props.total : 0
 const wrongPercent = Math.round(wrongRatio * 100)
