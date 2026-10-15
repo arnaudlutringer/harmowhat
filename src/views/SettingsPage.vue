@@ -1,15 +1,7 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/home" text="" />
-        </ion-buttons>
-        <ion-title>Paramètres</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
+      <page-nav title="Paramètres" back-href="/home" />
       <div class="settings">
         <h2>Instrument</h2>
         <p class="hint">Il joue les notes et les accords de tous les jeux. Les questions restent dans sa tessiture.</p>
@@ -30,8 +22,9 @@
 
 <script setup lang="ts">
 import {
-  IonBackButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonTitle, IonToolbar,
+  IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup,
 } from '@ionic/vue'
+import PageNav from '@/components/PageNav.vue'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { playPiano, preloadPiano } from '@/audio/engine'
 import { A440, noteName } from '@/music/notes'

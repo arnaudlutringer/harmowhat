@@ -1,15 +1,7 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/home" text="" />
-        </ion-buttons>
-        <ion-title>Les harmonies</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
+      <page-nav title="Les harmonies" back-href="/home" />
       <div class="settings hw-square">
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
@@ -51,9 +43,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup,
-  IonSegment, IonSegmentButton, IonTitle, IonToolbar, useIonRouter,
+  IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
+import PageNav from '@/components/PageNav.vue'
 import { afterSettings } from '@/games/ready'
 import { LEVELS, parseSettings, PRECISIONS, QUESTION_COUNTS, type Level, type Precision } from '@/games/intervals'
 

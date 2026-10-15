@@ -1,17 +1,6 @@
 <template>
   <ion-page>
-    <ion-header>
-      <!-- Pas de bouton Retour dans les jeux : le bouton retour du téléphone propose de quitter la partie. -->
-      <ion-toolbar>
-        <ion-title>{{ title }}</ion-title>
-        <!-- Le diapason n'est disponible que pendant les questions (et jamais en mode expert). -->
-        <ion-buttons v-if="!noTuningFork && !quiz.finished.value" slot="end">
-          <tuning-fork-button @played="quiz.penalizeTuningFork()" />
-        </ion-buttons>
-      </ion-toolbar>
-      <ion-progress-bar v-if="!quiz.finished.value" :value="quiz.index.value / quiz.total" />
-    </ion-header>
-
+    <!-- Pas d'en-tête ni de bouton Retour dans les jeux : le bouton retour du téléphone propose de quitter la partie. -->
     <ion-content class="ion-padding">
       <game-result
         v-if="quiz.finished.value"
@@ -33,6 +22,8 @@
             <strong>{{ quiz.points.value }}</strong>
             <span>pts</span>
           </div>
+          <!-- Le diapason n'est disponible que pendant les questions (et jamais en mode expert). -->
+          <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
           <div class="progress">
             <span>Question {{ quiz.number.value }} / {{ quiz.total }}</span>
             <span>Total : {{ quiz.totalPoints.value }} pts</span>
@@ -68,7 +59,7 @@
 
 <script setup lang="ts">
 import {
-  alertController, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonProgressBar, IonTitle, IonToolbar, onIonViewDidEnter,
+  alertController, IonContent, IonIcon, IonPage, onIonViewDidEnter,
   onIonViewWillLeave, useBackButton, useIonRouter,
 } from '@ionic/vue'
 import { play, volumeHigh } from 'ionicons/icons'
@@ -156,6 +147,14 @@ useBackButton(20, (processNextHandler) => {
   align-items: flex-start;
   color: var(--ion-color-medium);
   font-size: 14px;
+}
+.points,
+.progress {
+  flex: 1;
+}
+.fork {
+  margin: -4px 0 0;
+  --color: var(--ion-color-primary);
 }
 .points {
   display: flex;

@@ -1,15 +1,7 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/home" text="" />
-        </ion-buttons>
-        <ion-title>Quelle est la note ?</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
+      <page-nav title="Quelle est la note ?" back-href="/home" />
       <div class="settings hw-square">
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
@@ -42,9 +34,9 @@ import { ref } from 'vue'
 import { onIonViewWillLeave, useIonRouter } from '@ionic/vue'
 import { stopAll } from '@/audio/engine'
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup,
-  IonSegment, IonSegmentButton, IonTitle, IonToolbar,
+  IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton,
 } from '@ionic/vue'
+import PageNav from '@/components/PageNav.vue'
 import { afterSettings } from '@/games/ready'
 import { levelRange, LEVELS, parseSettings, QUESTION_COUNTS, type Level } from '@/games/nameTheNote'
 import { currentInstrument } from '@/audio/instruments'

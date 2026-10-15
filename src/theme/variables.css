@@ -1,5 +1,5 @@
 /*
- * Palette « Partition pop » : fond crème clair, en-tête violet, une couleur vive par jeu,
+ * Palette « Partition pop » : fond crème clair, pas d'en-tête, une couleur vive par jeu,
  * boutons blancs à angles droits, bouton de lecture rond violet (corail pendant le son).
  */
 :root {
@@ -37,10 +37,6 @@
   --ion-text-color-rgb: 45, 48, 71;
   --ion-item-background: transparent;
 
-  /* En-tête : une seule ligne, violet, texte blanc. */
-  --ion-toolbar-background: #6c5ce7;
-  --ion-toolbar-color: #ffffff;
-
   /* Boutons des jeux : blancs, texte violet, angles droits. */
   --hw-button: #ffffff;
   --hw-button-active: #efecff;
@@ -53,17 +49,9 @@
   --hw-game-4: #e17055;
 }
 
-ion-toolbar {
-  --min-height: 48px;
-  --padding-top: 0;
-  --padding-bottom: 0;
-}
-ion-title {
-  font-size: 18px;
-}
-ion-progress-bar {
-  --progress-background: var(--ion-color-secondary);
-  --background: rgba(var(--ion-color-secondary-rgb), 0.2);
+/* Pas d'en-tête : le contenu laisse lui-même la place à la barre d'état du téléphone. */
+ion-content.ion-padding {
+  --padding-top: calc(var(--ion-padding, 16px) + var(--ion-safe-area-top, 0px));
 }
 
 .hw-square ion-button {

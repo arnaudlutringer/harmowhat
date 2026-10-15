@@ -1,16 +1,15 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>HarmoWhat</ion-title>
-        <ion-buttons slot="end">
-          <ion-button router-link="/parametres" aria-label="Paramètres" title="Paramètres">
-            <ion-icon slot="icon-only" :icon="settingsOutline" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
     <ion-content class="ion-padding">
+      <div class="top">
+        <h1>HarmoWhat</h1>
+        <ion-button fill="clear" router-link="/parametres" aria-label="Paramètres" title="Paramètres">
+          <ion-icon slot="icon-only" :icon="settingsOutline" />
+        </ion-button>
+        <ion-button fill="clear" router-link="/infos" aria-label="Informations" title="Informations">
+          <ion-icon slot="icon-only" :icon="informationCircleOutline" />
+        </ion-button>
+      </div>
       <p class="intro">Teste ton oreille avec des mini-jeux de 20 questions.</p>
       <div class="games">
         <ion-card v-for="game in games" :key="game.path" button :router-link="game.path" :style="{ '--background': game.color }">
@@ -21,18 +20,15 @@
           <ion-card-content>{{ game.description }}</ion-card-content>
         </ion-card>
       </div>
-      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-        <ion-fab-button router-link="/infos" aria-label="Informations" title="Informations">INFO</ion-fab-button>
-      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar,
+  IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonPage,
 } from '@ionic/vue'
-import { settingsOutline } from 'ionicons/icons'
+import { informationCircleOutline, settingsOutline } from 'ionicons/icons'
 
 const games = [
   {
@@ -67,6 +63,12 @@ const games = [
 </script>
 
 <style scoped>
+h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ion-color-primary);
+}
 .intro {
   color: var(--ion-color-medium);
 }
@@ -101,12 +103,16 @@ ion-card-content {
   margin-bottom: 6px;
   text-shadow: none;
 }
-/* Laisse la place au bouton INFO sous la dernière rangée de cartes. */
-.games {
-  padding-bottom: 72px;
+/* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
+.top {
+  display: flex;
+  align-items: center;
 }
-ion-fab-button {
-  font-size: 13px;
-  font-weight: 700;
+.top h1 {
+  flex: 1;
+}
+.top ion-button {
+  --color: var(--ion-color-primary);
+  margin: 0;
 }
 </style>

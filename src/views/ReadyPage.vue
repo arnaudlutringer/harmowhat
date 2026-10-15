@@ -1,15 +1,7 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button :default-href="`/games/${game.slug}`" text="" />
-        </ion-buttons>
-        <ion-title>{{ game.title }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
+      <page-nav :title="game.title" :back-href="`/games/${game.slug}`" />
       <div class="ready hw-square">
         <button class="play fork" :class="{ 'is-playing': playing }" aria-label="Écouter le diapason, La3 440 Hz" @click="listen">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -31,8 +23,9 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, onIonViewWillLeave, useIonRouter,
+  IonButton, IonContent, IonPage, onIonViewWillLeave, useIonRouter,
 } from '@ionic/vue'
+import PageNav from '@/components/PageNav.vue'
 import { playTuningFork, stopAll } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { readyGame } from '@/games/ready'

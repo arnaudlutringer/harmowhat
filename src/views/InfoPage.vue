@@ -1,15 +1,7 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/home" text="" />
-        </ion-buttons>
-        <ion-title>Informations</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
     <ion-content class="ion-padding">
+      <page-nav title="Informations" back-href="/home" />
       <div class="info">
         <h2>Sons</h2>
         <ion-list lines="full">
@@ -41,8 +33,9 @@
 
 <script setup lang="ts">
 import {
-  IonBackButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonPage, IonTitle, IonToolbar,
+  IonContent, IonItem, IonLabel, IonList, IonPage,
 } from '@ionic/vue'
+import PageNav from '@/components/PageNav.vue'
 </script>
 
 <style scoped>
