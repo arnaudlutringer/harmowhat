@@ -22,14 +22,6 @@
         >
           {{ name(midi) }}
         </button>
-        <button
-          class="listen"
-          :class="{ 'is-playing': notePlayer.current.value === midi }"
-          :aria-label="`Écouter ${name(midi)}`"
-          @click="notePlayer.track(playPiano(midi, { duration: 1.5 }), midi)"
-        >
-          <ion-icon :icon="volumeHigh" />
-        </button>
       </div>
     </div>
 
@@ -48,13 +40,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { IonButton, IonIcon } from '@ionic/vue'
-import { volumeHigh } from 'ionicons/icons'
+import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
 import ChordStaff from '@/components/ChordStaff.vue'
 import FlipPlayer from '@/components/FlipPlayer.vue'
 import { useQuiz } from '@/composables/useQuiz'
-import { usePlaying } from '@/composables/usePlaying'
 import { playChord, playPiano } from '@/audio/engine'
 import { spelledName } from '@/music/spelling'
 import { CHORD_SIZE, createChordQuestion, isCorrect } from '@/games/chords'
@@ -62,7 +52,6 @@ import { SINGLE_LEVEL } from '@/games/highScores'
 
 // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
 const quiz = useQuiz({ createQuestion: createChordQuestion, play: (q) => playChord(q.notes), advanceDelay: null })
-const notePlayer = usePlaying<number>()
 const q = computed(() => quiz.question.value)
 const selected = ref<number[]>([])
 const revealed = computed(() => quiz.feedback.value !== null)
@@ -71,10 +60,14 @@ const chordName = computed(() => q.value.notes.map(name).join(', '))
 
 watch(q, () => (selected.value = []))
 
+// Choisir une note la fait entendre ; la retirer ne joue rien.
 function toggle(midi: number) {
   const i = selected.value.indexOf(midi)
   if (i >= 0) selected.value.splice(i, 1)
-  else if (selected.value.length < CHORD_SIZE) selected.value.push(midi)
+  else if (selected.value.length < CHORD_SIZE) {
+    selected.value.push(midi)
+    void playPiano(midi, { duration: 1.5 })
+  }
 }
 
 function validate() {
@@ -93,9 +86,6 @@ function stateFor(midi: number) {
 </script>
 
 <style scoped>
-.choice .listen.is-playing {
-  animation: none;
-}
 .choices {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -122,12 +112,6 @@ function stateFor(midi: number) {
 }
 .pick:disabled {
   cursor: default;
-}
-.listen {
-  width: 48px;
-  border-left: 1px solid rgba(108, 92, 231, 0.25) !important;
-  display: grid;
-  place-items: center;
 }
 .choice.selected .pick {
   background: var(--ion-color-primary);
