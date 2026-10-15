@@ -14,6 +14,9 @@ import { BLUE_DANUBE, BLUE_DANUBE_BEAT } from './blueDanube'
 import { MORNING_MOOD, MORNING_EIGHTH } from './morningMood'
 import { FAUNE, FAUNE_EIGHTH } from './faune'
 import { BADINERIE, BADINERIE_SIXTEENTH } from './badinerie'
+import { RISING_SUN, RISING_SUN_BEAT } from './risingSun'
+import { PAGANINI_24, PAGANINI_SIXTEENTH } from './paganini24'
+import { MOUNTAIN_KING, MOUNTAIN_KING_EIGHTH } from './mountainKing'
 import { SPRING, SPRING_BEAT } from './vivaldiSpring'
 import { SKATERS, SKATERS_BEAT } from './skatersWaltz'
 import { BELLA_CIAO, BELLA_CIAO_EIGHTH } from './bellaCiao'
@@ -47,6 +50,7 @@ export type EndingId =
   | 'te-deum' | 'taps'
   | 'skaters' | 'over-the-waves' | 'blue-danube'
   | 'morning' | 'faune' | 'badinerie'
+  | 'rising-sun' | 'paganini-24' | 'mountain-king'
   | 'spring' | 'bella-ciao' | 'romance'
 
 const PIECES: Record<EndingId, Ending> = {
@@ -74,6 +78,15 @@ const PIECES: Record<EndingId, Ending> = {
   morning: { id: 'morning', title: 'Au matin (Peer Gynt)', composer: 'Grieg', notes: MORNING_MOOD, unit: MORNING_EIGHTH },
   faune: { id: 'faune', title: 'Prélude à l’après-midi d’un faune', composer: 'Debussy', notes: FAUNE, unit: FAUNE_EIGHTH },
   badinerie: { id: 'badinerie', title: 'Badinerie', composer: 'Bach', notes: BADINERIE, unit: BADINERIE_SIXTEENTH },
+  'rising-sun': { id: 'rising-sun', title: 'The House of the Rising Sun', composer: 'Traditionnel', notes: RISING_SUN, unit: RISING_SUN_BEAT },
+  'paganini-24': { id: 'paganini-24', title: 'Caprice n° 24', composer: 'Paganini', notes: PAGANINI_24, unit: PAGANINI_SIXTEENTH },
+  'mountain-king': {
+    id: 'mountain-king',
+    title: 'Dans l’antre du roi de la montagne',
+    composer: 'Grieg',
+    notes: MOUNTAIN_KING,
+    unit: MOUNTAIN_KING_EIGHTH,
+  },
   taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
@@ -94,7 +107,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   accordion: ['skaters', 'over-the-waves', 'blue-danube'],
   guitar: ['romance'],
   flute: ['morning', 'faune', 'badinerie'],
-  'electric-guitar': ['bella-ciao'],
+  'electric-guitar': ['rising-sun', 'paganini-24', 'mountain-king'],
 }
 
 export function endingsFor(instrument: InstrumentId): Ending[] {

@@ -50,7 +50,12 @@ describe('Musique de fin', () => {
     expect(first('morning', 6)).toEqual(['Si', 'Sol♯', 'Fa♯', 'Mi', 'Fa♯', 'Sol♯'])
     expect(first('faune', 7)).toEqual(['Do♯', 'Do', 'Si', 'La♯', 'La', 'Sol♯', 'Sol'])
     expect(first('badinerie', 6)).toEqual(['Si', 'Ré', 'Si', 'Fa♯', 'Si', 'Fa♯'])
-    expect(INSTRUMENT_ENDINGS.flute).toEqual(['morning', 'faune', 'badinerie'])  })
+    expect(INSTRUMENT_ENDINGS.flute).toEqual(['morning', 'faune', 'badinerie'])
+    expect(first('rising-sun', 6)).toEqual(['La', 'Ré', 'Mi', 'Ré', 'Fa', 'Sol'])
+    expect(first('paganini-24', 6)).toEqual(['La', 'La', 'La', 'Do', 'Si', 'La'])
+    expect(first('mountain-king', 7)).toEqual(['Si', 'Do♯', 'Ré', 'Mi', 'Fa♯', 'Ré', 'Fa♯'])
+    expect(INSTRUMENT_ENDINGS['electric-guitar']).toEqual(['rising-sun', 'paganini-24', 'mountain-king'])
+  })
 
   it('Taps à la trompette : sol sol do, sol do mi, dans les 10 premières secondes', () => {
     const { notes } = ENDINGS.taps
