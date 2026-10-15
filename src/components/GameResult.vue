@@ -44,7 +44,10 @@
       <ion-icon :icon="elise.playing.value ? stop : musicalNotes" aria-hidden="true" />
       <span>
         <strong>{{ ending.title }}</strong>
-        <small>{{ ending.composer }} · {{ wrongPercent }} % de notes faussées, comme tes erreurs</small>
+        <small>
+          {{ ending.composer }} ·
+          {{ wrongPercent ? `${wrongPercent} % d'erreurs : le musicien a un peu trop fêté ça` : 'joué sans une fausse note' }}
+        </small>
       </span>
     </button>
   </div>
@@ -57,7 +60,7 @@ import { musicalNote, musicalNotes, stop } from 'ionicons/icons'
 import { playSequence, stopAll, tierForScore } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { summarize, type QuestionResult } from '@/games/scoring'
-import { detune } from '@/music/furElise'
+import { drunk } from '@/music/drunk'
 import { endingFor } from '@/music/endings'
 import { selectedInstrument } from '@/audio/instruments'
 import {
@@ -97,12 +100,12 @@ const copy = computed(
     })[tier.value],
 )
 
-// Musique de fin, selon l'instrument (voir music/endings.ts), avec autant de % de notes faussées d'un demi-ton
-// que de % de mauvaises réponses. Tirées une fois pour cet écran.
+// Musique de fin, selon l'instrument (voir music/endings.ts), d'autant plus mal jouée (musicien éméché)
+// que le joueur a fait d'erreurs (voir music/drunk.ts). Tirée une fois pour cet écran.
 const wrongRatio = props.total ? (props.total - summary.value.correct) / props.total : 0
 const wrongPercent = Math.round(wrongRatio * 100)
 const ending = endingFor(selectedInstrument.value)
-const music = detune(ending.notes, wrongRatio)
+const music = drunk(ending.notes, wrongRatio)
 
 const elise = usePlaying()
 

@@ -43,18 +43,3 @@ add(44, A4, 9)
 ;[A2, E3, A3].forEach((m, i) => add(44 + i, m, 9 - i))
 
 export const FUR_ELISE: readonly SequenceNote[] = notes.sort((a, b) => a.at - b.at)
-
-/**
- * Fausse une part des notes d'un demi-ton (vers le haut ou vers le bas), au hasard :
- * `ratio` = part de mauvaises réponses (0 = morceau juste, 1 = toutes les notes fausses).
- */
-export function detune(notes: readonly SequenceNote[], ratio: number, random: () => number = Math.random): SequenceNote[] {
-  const count = Math.round(Math.max(0, Math.min(1, ratio)) * notes.length)
-  const order = notes.map((_, i) => i)
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1))
-    ;[order[i], order[j]] = [order[j], order[i]]
-  }
-  const wrong = new Set(order.slice(0, count))
-  return notes.map((n, i) => (wrong.has(i) ? { ...n, midi: n.midi + (random() < 0.5 ? -1 : 1) } : { ...n }))
-}
