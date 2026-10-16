@@ -34,7 +34,7 @@
           </ion-item>
         </ion-radio-group>
 
-        <ion-button expand="block" size="large" class="start" @click="start">Commencer</ion-button>
+        <ion-button expand="block" size="large" class="start" @click="start">C'est parti&nbsp;!</ion-button>
       </div>
     </ion-content>
   </ion-page>

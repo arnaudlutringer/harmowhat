@@ -22,7 +22,7 @@
           </ion-item>
         </ion-radio-group>
 
-        <ion-button expand="block" size="large" class="start" @click="start">Commencer</ion-button>
+        <ion-button expand="block" size="large" class="start" @click="start">C'est parti&nbsp;!</ion-button>
       </div>
     </ion-content>
   </ion-page>
@@ -37,7 +37,7 @@ import PageNav from '@/components/PageNav.vue'
 
 /**
  * Écran de réglages d'un jeu : nombre de questions et niveau, mémorisés sur l'appareil,
- * puis « Commencer » ouvre le jeu avec ces réglages dans l'adresse.
+ * puis « C'est parti ! » ouvre le jeu avec ces réglages dans l'adresse.
  */
 const props = defineProps<{
   title: string
