@@ -407,6 +407,11 @@ useBackButton(20, (processNextHandler) => {
     transform: scaleX(1);
   }
 }
+/* Pas de place réservée au message tant qu'on n'a pas répondu : le bas de l'écran (ex. Valider) reste visible. */
+.feedback:empty {
+  min-height: 0;
+  margin-top: 0;
+}
 .next-hint {
   margin-top: 12px;
   background: none;

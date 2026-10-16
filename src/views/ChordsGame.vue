@@ -1,16 +1,18 @@
 <template>
   <game-shell
     title="Les accords"
-    prompt="Quelles sont les 3 notes de l'accord ?"
+    prompt="Quelles sont ces 3 notes ?"
     :quiz="quiz"
     :board="{ game: 'accords', level: settings.level, questions: settings.questions }"
     settings-href="/games/accords"
     swipe-to-next
   >
     <template #player>
-      <flip-player :quiz="quiz" what="l'accord">
-        <chord-staff :notes="q.notes.map((m) => q.spelled[m])" :label="`Accord ${chordName}`" />
-      </flip-player>
+      <div class="player">
+        <flip-player :quiz="quiz" what="l'accord">
+          <chord-staff :notes="q.notes.map((m) => q.spelled[m])" :label="`Accord ${chordName}`" />
+        </flip-player>
+      </div>
     </template>
 
     <div class="choices">
@@ -94,10 +96,34 @@ function stateFor(midi: number) {
 </script>
 
 <style scoped>
+/* Écran plus compact que les autres jeux : 8 notes et le bouton Valider doivent tenir sans défilement. */
+.player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.player :deep(.card) {
+  height: 136px;
+}
+.player :deep(.front) {
+  width: 120px;
+  height: 120px;
+  font-size: 56px;
+}
+/* La portée se réduit à la hauteur de la carte (moins sa marge intérieure) ; VexFlow fixe sa taille en style. */
+.player :deep(.back svg) {
+  display: block;
+  height: 128px !important;
+  width: auto !important;
+  margin: 0 auto;
+}
+.player :deep(.hint) {
+  margin: 8px 0 14px;
+}
 .choices {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 .choice {
   display: flex;
@@ -115,7 +141,7 @@ function stateFor(midi: number) {
 }
 .pick {
   flex: 1;
-  padding: 14px 8px;
+  padding: 12px 8px;
   font-weight: 600;
 }
 .pick:disabled {
@@ -147,6 +173,6 @@ function stateFor(midi: number) {
   color: var(--ion-color-success);
 }
 .validate {
-  margin-top: 20px;
+  margin-top: 14px;
 }
 </style>
