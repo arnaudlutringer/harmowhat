@@ -1,15 +1,18 @@
 <template>
   <ion-app>
     <ion-router-outlet />
+    <splash-screen :visible="splash" />
   </ion-app>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { IonApp, IonRouterOutlet, useBackButton, useIonRouter } from '@ionic/vue'
+import SplashScreen from '@/components/SplashScreen.vue'
 import { useRouter } from 'vue-router'
 import { App } from '@capacitor/app'
 import { stopAll } from '@/audio/engine'
-import { flushPending, uploadLocalScoresOnce } from '@/games/worldScores'
+import { syncWorldScores } from '@/games/worldScores'
 
 const router = useRouter()
 const ionRouter = useIonRouter()
@@ -18,10 +21,16 @@ const ionRouter = useIonRouter()
 // avec cet écouteur, le bouton passe par les gestionnaires ci-dessous (et par la popin des jeux en cours).
 void App.addListener('backButton', () => {}).catch(() => {})
 
-// Classement mondial : au lancement, les scores déjà sur l'appareil partent une fois pour toutes ;
-// au retour dans l'appli, ceux restés en attente (pas de connexion) repartent.
-void uploadLocalScoresOnce()
-void App.addListener('resume', () => void flushPending()).catch(() => {})
+// Classement mondial : au lancement et au retour dans l'appli, les scores en attente partent (et, une fois
+// pour toutes, ceux déjà sur l'appareil), puis les classements sont chargés en cache.
+// Au lancement, l'écran de démarrage reste le temps de ce chargement : au moins 1,2 s, au plus 5 s
+// (sans connexion, l'appli démarre avec le cache précédent).
+const SPLASH_MIN_MS = 1200
+const SPLASH_MAX_MS = 5000
+const splash = ref(true)
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+void Promise.race([Promise.all([syncWorldScores(), wait(SPLASH_MIN_MS)]), wait(SPLASH_MAX_MS)]).finally(() => (splash.value = false))
+void App.addListener('resume', () => void syncWorldScores()).catch(() => {})
 
 // Bouton retour du téléphone : on coupe le son, puis Ionic revient à l'écran précédent.
 useBackButton(10, (processNextHandler) => {

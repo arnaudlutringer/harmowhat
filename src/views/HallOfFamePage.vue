@@ -31,7 +31,7 @@ import { IonContent, IonItem, IonLabel, IonList, IonPage, onIonViewWillEnter } f
 import PageNav from '@/components/PageNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
 import { GAMES, getScores, parseBoard, scoresHref, type Board, type GameId } from '@/games/highScores'
-import { fetchRecord, scope, type WorldRecord } from '@/games/worldScores'
+import { cachedRecord, fetchRecord, scope, type WorldRecord } from '@/games/worldScores'
 import { flag } from '@/player/countries'
 import { profile } from '@/player/profile'
 
@@ -76,7 +76,13 @@ function rowsOf(records: readonly (WorldRecord | undefined)[]): GameRow[] {
   })
 }
 
-/** Records du monde ou du pays du joueur. */
+/** Records du monde ou du pays du joueur, d'après le cache chargé au lancement (undefined s'il n'est pas chargé). */
+function cachedRows(country?: string): GameRow[] | undefined {
+  const cached = ids.map((id) => cachedRecord(id, country))
+  return cached.every((c) => c) ? rowsOf(cached.map((c) => c?.record)) : undefined
+}
+
+/** Records du monde ou du pays du joueur, à jour depuis la base. */
 async function worldRows(country?: string): Promise<GameRow[]> {
   return rowsOf(await Promise.all(ids.map((id) => fetchRecord(id, country))))
 }
@@ -94,12 +100,17 @@ async function load() {
     games.value = deviceRows()
     return
   }
-  loading.value = true
+  // Les records en cache (chargés au lancement) s'affichent aussitôt, puis la version à jour les remplace.
+  const country = scope.value === 'pays' ? profile.value.country : undefined
+  const cached = cachedRows(country)
+  if (cached) games.value = cached
+  loading.value = !cached
   try {
-    const rows = await worldRows(scope.value === 'pays' ? profile.value.country : undefined)
+    const rows = await worldRows(country)
     if (id === request) games.value = rows
   } catch {
-    if (id === request) {
+    // Sans connexion, le cache suffit ; sans cache, on le signale.
+    if (id === request && !cached) {
       games.value = ids.map((g) => ({ id: g, title: GAMES[g].title, board: parseBoard(g, {}) }))
       failed.value = true
     }

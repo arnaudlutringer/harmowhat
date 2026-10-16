@@ -69,7 +69,7 @@ import {
 import PageNav from '@/components/PageNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
 import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref } from '@/games/highScores'
-import { fetchBoard, parseScope, scope } from '@/games/worldScores'
+import { cachedBoard, fetchBoard, parseScope, scope, updateCachedBoard } from '@/games/worldScores'
 import { flag } from '@/player/countries'
 import { profile } from '@/player/profile'
 
@@ -114,15 +114,18 @@ async function load() {
     entries.value = getScores(board)
     return
   }
-  loading.value = true
+  // Le classement en cache (chargé au lancement) s'affiche aussitôt, puis la version à jour le remplace.
+  const country = scope.value === 'pays' ? profile.value.country : undefined
+  const cached = cachedBoard(board, country)
+  entries.value = cached ?? []
+  loading.value = !cached
   try {
-    const rows = await fetchBoard(board, scope.value === 'pays' ? profile.value.country : undefined)
+    const rows = await fetchBoard(board, country)
     if (id === request) entries.value = rows
+    updateCachedBoard(board, rows, country)
   } catch {
-    if (id === request) {
-      entries.value = []
-      failed.value = true
-    }
+    // Sans connexion, le cache suffit ; sans cache, on le signale.
+    if (id === request && !cached) failed.value = true
   } finally {
     if (id === request) loading.value = false
   }

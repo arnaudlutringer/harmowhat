@@ -40,3 +40,23 @@ create policy "Ajout de scores par tous" on public.scores
 
 -- Pas de politique update ni delete : modifier ou supprimer un score est impossible depuis l'appli.
 grant select, insert on public.scores to anon, authenticated;
+
+-- Classements chargés au lancement de l'appli (mis en cache sur l'appareil) : les 10 meilleurs de chaque
+-- classement dans le monde, et pays par pays. Les vues respectent les règles d'accès de la table.
+create or replace view public.top_world with (security_invoker = true) as
+select game, level, questions, name, country, points, correct, played_at
+from (
+  select s.*, row_number() over (partition by game, level, questions order by points desc, played_at asc) as rk
+  from public.scores s
+) ranked
+where rk <= 10;
+
+create or replace view public.top_country with (security_invoker = true) as
+select game, level, questions, name, country, points, correct, played_at
+from (
+  select s.*, row_number() over (partition by game, level, questions, country order by points desc, played_at asc) as rk
+  from public.scores s
+) ranked
+where rk <= 10;
+
+grant select on public.top_world, public.top_country to anon, authenticated;

@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { boardOfKey, localScoreList, type Board, type GameId, type ScoreEntry } from './highScores'
 import { profile } from '@/player/profile'
 
@@ -73,9 +73,9 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
   }
 }
 
-async function select<T>(query: string): Promise<T[]> {
+async function select<T>(query: string, table = 'scores'): Promise<T[]> {
   if (!worldEnabled) throw new Error('Classement mondial non configuré')
-  const res = await request(`scores?${query}`)
+  const res = await request(`${table}?${query}`)
   if (!res.ok) throw new Error(`Supabase ${res.status}`)
   return res.json()
 }
@@ -95,6 +95,119 @@ export async function fetchRecord(game: GameId, country?: string): Promise<World
   const rows = await select<WorldRecord>(`select=${COLUMNS},level,questions&${where}&order=points.desc,played_at.asc&limit=1`)
   return rows[0]
 }
+
+/*
+ * Cache des classements : au lancement, les 10 meilleurs de chaque classement (monde, et pays du joueur)
+ * sont chargés en deux requêtes (vues top_world et top_country, voir supabase/002_top_views.sql) et
+ * gardés sur l'appareil. Le Hall of fame et les meilleurs scores s'affichent aussitôt à partir du cache,
+ * même sans connexion, puis se mettent à jour.
+ */
+
+/** Une ligne de classement, avec le classement auquel elle appartient. */
+export interface BoardRow extends WorldRecord {
+  game: GameId
+}
+
+interface WorldCache {
+  world: BoardRow[] | null
+  /** Pays chargé (celui du joueur au moment du chargement) et ses classements. */
+  country: { code: string; rows: BoardRow[] } | null
+  loadedAt: string | null
+}
+
+const CACHE_KEY = 'harmowhat.worldCache'
+const BOARD_COLUMNS = `game,level,questions,${COLUMNS}`
+const CACHE_LIMIT = 10
+
+function loadCache(): WorldCache {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null')
+    if (raw && typeof raw === 'object') return { world: raw.world ?? null, country: raw.country ?? null, loadedAt: raw.loadedAt ?? null }
+  } catch {
+    // Cache illisible : on repart de zéro.
+  }
+  return { world: null, country: null, loadedAt: null }
+}
+
+/** Classements en cache (réactif : les écrans se mettent à jour quand il change). */
+export const worldCache = ref<WorldCache>(loadCache())
+
+function saveCache() {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(worldCache.value))
+  } catch {
+    // Stockage indisponible : le cache ne vaut que pour cette session.
+  }
+}
+
+const sameBoard = (r: { game: string; level: string; questions: number }, b: Board) =>
+  r.game === b.game && r.level === b.level && r.questions === b.questions
+const byPoints = (a: WorldScore, b: WorldScore) => b.points - a.points || a.played_at.localeCompare(b.played_at)
+
+/** Les lignes en cache pour le monde, ou pour un pays (si c'est celui qui est chargé). */
+function cachedRows(country?: string): BoardRow[] | null {
+  if (!country) return worldCache.value.world
+  return worldCache.value.country?.code === country ? worldCache.value.country.rows : null
+}
+
+/** Les 10 meilleurs d'un classement d'après le cache, ou undefined s'il n'est pas chargé. */
+export function cachedBoard(board: Board, country?: string): WorldScore[] | undefined {
+  return cachedRows(country)?.filter((r) => sameBoard(r, board)).sort(byPoints).slice(0, CACHE_LIMIT)
+}
+
+/** Record d'un jeu d'après le cache : { record } (éventuellement absent), ou undefined si rien n'est chargé. */
+export function cachedRecord(game: GameId, country?: string): { record?: WorldRecord } | undefined {
+  const rows = cachedRows(country)
+  if (!rows) return undefined
+  return { record: rows.filter((r) => r.game === game).sort(byPoints)[0] }
+}
+
+/** Remplace en cache les lignes d'un classement (après un chargement à jour depuis la base). */
+export function updateCachedBoard(board: Board, rows: readonly WorldScore[], country?: string) {
+  const current = cachedRows(country)
+  if (!current) return
+  const next = [...current.filter((r) => !sameBoard(r, board)), ...rows.map((r) => ({ ...r, ...board }))]
+  if (country) worldCache.value = { ...worldCache.value, country: { code: country, rows: next } }
+  else worldCache.value = { ...worldCache.value, world: next }
+  saveCache()
+}
+
+/** Ajoute un score qui vient d'être enregistré au cache (monde, et pays s'il est chargé), en gardant les 10 meilleurs. */
+function addToCache(score: PendingScore) {
+  const board = { game: score.game, level: score.level, questions: score.questions }
+  const row: WorldScore = { name: score.name, country: score.country, points: score.points, correct: score.correct, played_at: score.played_at }
+  for (const country of [undefined, score.country]) {
+    const top = cachedBoard(board, country)
+    if (top) updateCachedBoard(board, [...top, row].sort(byPoints).slice(0, CACHE_LIMIT), country)
+  }
+}
+
+/**
+ * Charge les classements dans le cache : le monde et le pays du joueur. Sans connexion (ou si les vues
+ * n'existent pas encore dans la base), le cache précédent est gardé.
+ */
+export async function preloadWorldScores(country = profile.value.country): Promise<void> {
+  if (!worldEnabled) return
+  const query = `select=${BOARD_COLUMNS}&order=points.desc&limit=10000`
+  const [world, local] = await Promise.allSettled([
+    select<BoardRow>(query, 'top_world'),
+    select<BoardRow>(`${query}&country=eq.${country}`, 'top_country'),
+  ])
+  const next = { ...worldCache.value }
+  if (world.status === 'fulfilled') next.world = world.value
+  if (local.status === 'fulfilled') next.country = { code: country, rows: local.value }
+  if (world.status === 'fulfilled' || local.status === 'fulfilled') {
+    next.loadedAt = new Date().toISOString()
+    worldCache.value = next
+    saveCache()
+  }
+}
+
+// Changement de pays (onglet Mon compte) : on charge les classements du nouveau pays.
+watch(
+  () => profile.value.country,
+  (country) => void preloadWorldScores(country),
+)
 
 function uuid(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
@@ -164,8 +277,16 @@ export function flushPending(): Promise<void> {
 /** Ajoute un score au classement mondial, avec le pays du joueur (envoi immédiat, ou plus tard sans connexion). */
 export function submitScore(board: Board, entry: ScoreEntry, country = profile.value.country): Promise<void> {
   if (!worldEnabled) return Promise.resolve()
-  savePending([...loadPending(), toPending(board, entry, country)])
+  const score = toPending(board, entry, country)
+  savePending([...loadPending(), score])
+  // Le score apparaît tout de suite dans les classements en cache, même s'il part plus tard.
+  addToCache(score)
   return flushPending()
+}
+
+/** Lancement ou retour dans l'appli : envoie ce qui est en attente, puis recharge les classements en cache. */
+export function syncWorldScores(): Promise<void> {
+  return uploadLocalScoresOnce().finally(() => preloadWorldScores())
 }
 
 /**

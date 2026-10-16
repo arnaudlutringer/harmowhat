@@ -79,6 +79,45 @@ describe('Classement mondial', () => {
     ])
   })
 
+  it('charge les classements en cache au lancement, et y ajoute le score qui vient d’être enregistré', async () => {
+    const row = (name: string, country: string, points: number, game = 'accords') =>
+      ({ game, level: 'normal', questions: 20, name, country, points, correct: 15, played_at: entry.date })
+    const fetch = vi.fn(async (url: string) => {
+      if (url.includes('/top_world?')) return Response.json([row('Lucie', 'BE', 15000), row('Kenji', 'JP', 12000), row('Maya', 'CA', 18000, 'grave-ou-aigu')])
+      if (url.includes('/top_country?')) return Response.json([row('Arno', 'FR', 9000)])
+      return new Response(null, { status: 201 })
+    })
+    vi.stubGlobal('fetch', fetch)
+    const w = await loadModule()
+    expect(w.cachedBoard(board)).toBeUndefined()
+
+    await w.preloadWorldScores('FR')
+    expect((fetch.mock.calls[1] as unknown as [string])[0]).toContain('/top_country?select=game,level,questions,')
+    expect((fetch.mock.calls[1] as unknown as [string])[0]).toContain('country=eq.FR')
+    expect(w.cachedBoard(board)?.map((r) => r.name)).toEqual(['Lucie', 'Kenji'])
+    expect(w.cachedBoard(board, 'FR')?.map((r) => r.name)).toEqual(['Arno'])
+    expect(w.cachedBoard(board, 'BE')).toBeUndefined() // Pays non chargé.
+    expect(w.cachedRecord('grave-ou-aigu')?.record?.name).toBe('Maya')
+    expect(w.cachedRecord('lecture-note')).toEqual({ record: undefined })
+
+    // Gardé sur l'appareil : un nouveau lancement le retrouve, même sans connexion.
+    expect(JSON.parse(localStorage.getItem('harmowhat.worldCache')!).world).toHaveLength(3)
+
+    await w.submitScore(board, { ...entry, points: 13000 }, 'FR')
+    expect(w.cachedBoard(board)?.map((r) => r.name)).toEqual(['Lucie', 'Arno', 'Kenji'])
+    expect(w.cachedBoard(board, 'FR')?.map((r) => r.points)).toEqual([13000, 9000])
+  })
+
+  it('garde le cache précédent si le chargement échoue', async () => {
+    localStorage.setItem('harmowhat.worldCache', JSON.stringify({ world: [{ game: 'accords', level: 'normal', questions: 20, name: 'Lucie', country: 'BE', points: 15000, correct: 18, played_at: entry.date }], country: null, loadedAt: entry.date }))
+    vi.stubGlobal('fetch', vi.fn(async (): Promise<Response> => {
+      throw new TypeError('Failed to fetch')
+    }))
+    const w = await loadModule()
+    await w.preloadWorldScores('FR')
+    expect(w.cachedBoard(board)?.map((r) => r.name)).toEqual(['Lucie'])
+  })
+
   it('lit les 10 meilleurs d’un classement, dans le monde ou dans un pays', async () => {
     const fetch = vi.fn(async () => Response.json([{ name: 'Arno', country: 'FR', points: 12345, correct: 18, played_at: entry.date }]))
     vi.stubGlobal('fetch', fetch)
