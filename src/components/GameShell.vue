@@ -193,9 +193,10 @@ useBackButton(20, (processNextHandler) => {
 </script>
 
 <style scoped>
-/* Compte à rebours avant la première question : un grand chiffre qui apparaît à chaque seconde. */
+/* Compte à rebours avant la première question : un grand chiffre qui apparaît à chaque seconde,
+   centré sur toute la hauteur de l'écran (moins les marges du contenu). */
 .countdown {
-  min-height: 70vh;
+  min-height: calc(100vh - 2 * var(--ion-padding, 16px) - var(--ion-safe-area-top, 0px));
   display: flex;
   flex-direction: column;
   align-items: center;
