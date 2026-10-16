@@ -67,9 +67,9 @@
 
 <script setup lang="ts">
 import {
-  alertController, IonContent, IonIcon, IonPage, onIonViewDidEnter,
-  onIonViewWillLeave, useBackButton, useIonRouter,
+  alertController, IonContent, IonIcon, IonPage, onIonViewWillLeave, useBackButton, useIonRouter,
 } from '@ionic/vue'
+import { useRoute } from 'vue-router'
 import { play, volumeHigh } from 'ionicons/icons'
 import TuningForkButton from './TuningForkButton.vue'
 import GameResult from './GameResult.vue'
@@ -154,14 +154,19 @@ onMounted(() => void preloadPiano().catch(() => {}))
 // On quitte l'écran : plus aucun son.
 onIonViewWillLeave(stopAll)
 
-// Bouton retour du téléphone pendant une partie : on demande avant de quitter, et on revient à l'accueil.
+// Bouton retour du téléphone pendant une partie : la partie se met en pause et on demande avant de quitter ;
+// si le joueur confirme, il revient aux réglages du jeu (ou à l'accueil pour un jeu sans réglages).
 // Hors partie (écran de fin), il revient simplement à l'écran précédent.
 const router = useIonRouter()
-let visible = false
-onIonViewDidEnter(() => (visible = true))
-onIonViewWillLeave(() => (visible = false))
+// Les événements de vue d'Ionic (onIonViewDidEnter…) ne parviennent qu'au composant de la page, pas à GameShell :
+// le jeu est à l'écran quand la route courante est celle sur laquelle il a été ouvert.
+const route = useRoute()
+const ownPath = route.path
+let confirming = false
 
 async function confirmQuit() {
+  confirming = true
+  props.quiz.pause()
   const alert = await alertController.create({
     header: 'Quitter la partie ?',
     message: 'Ta partie en cours sera perdue.',
@@ -172,15 +177,18 @@ async function confirmQuit() {
   })
   await alert.present()
   const { role } = await alert.onDidDismiss()
-  if (role === 'confirm') {
-    stopAll()
-    router.navigate('/home', 'back', 'push')
-  }
+  confirming = false
+  if (role !== 'confirm') return props.quiz.resume()
+  stopAll()
+  const target = props.settingsHref ?? '/home'
+  // On vient en général des réglages : on y revient dans l'historique plutôt que d'en empiler une copie.
+  if (window.history.state?.back === target) router.back()
+  else router.navigate(target, 'back', 'replace')
 }
 
 useBackButton(20, (processNextHandler) => {
-  if (!visible || props.quiz.finished.value) return processNextHandler()
-  void confirmQuit()
+  if (route.path !== ownPath || props.quiz.finished.value) return processNextHandler()
+  if (!confirming) void confirmQuit()
 })
 </script>
 

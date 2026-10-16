@@ -7,6 +7,23 @@ function fakeClock() {
   return { clock, advance: (ms: number) => (t += ms) }
 }
 
+describe('Pause du décompte', () => {
+  it('ne retire pas de points pendant la pause (popin « Quitter la partie ? »)', () => {
+    const { clock, advance } = fakeClock()
+    clock.start()
+    advance(2000)
+    const before = clock.points
+    clock.pause()
+    expect(clock.running).toBe(false)
+    advance(10000)
+    expect(clock.points).toBe(before)
+    clock.resume()
+    expect(clock.points).toBe(before)
+    advance(2000)
+    expect(clock.points).toBe(pointsLeft(4000, 0))
+  })
+})
+
 describe('Points par question', () => {
   it('part de 1000 et perd 1 point toutes les 10 ms, sans descendre sous 100', () => {
     expect(pointsLeft(0, 0)).toBe(START_POINTS)

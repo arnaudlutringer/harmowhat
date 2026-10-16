@@ -18,17 +18,30 @@ export function pointsLeft(elapsedMs: number, penalties: number): number {
 export class QuestionClock {
   private startedAt: number | null = null
   private stoppedAt: number | null = null
+  private pausedAt: number | null = null
   private penalties = 0
 
   constructor(private readonly now: () => number = () => performance.now()) {}
 
   get running(): boolean {
-    return this.startedAt !== null && this.stoppedAt === null
+    return this.startedAt !== null && this.stoppedAt === null && this.pausedAt === null
   }
 
   get points(): number {
-    const end = this.stoppedAt ?? this.now()
+    const end = this.stoppedAt ?? this.pausedAt ?? this.now()
     return pointsLeft(this.startedAt === null ? 0 : end - this.startedAt, this.penalties)
+  }
+
+  /** Met le décompte en pause (ex. pendant la popin « Quitter la partie ? »). */
+  pause(): void {
+    if (this.running) this.pausedAt = this.now()
+  }
+
+  /** Reprend le décompte là où il s'était arrêté : le temps de pause ne compte pas. */
+  resume(): void {
+    if (this.pausedAt === null) return
+    if (this.startedAt !== null) this.startedAt += this.now() - this.pausedAt
+    this.pausedAt = null
   }
 
   start(): void {
@@ -42,6 +55,7 @@ export class QuestionClock {
 
   /** Fige les points et les renvoie. */
   stop(): number {
+    this.resume()
     if (this.startedAt === null) this.startedAt = this.now()
     if (this.stoppedAt === null) this.stoppedAt = this.now()
     return this.points

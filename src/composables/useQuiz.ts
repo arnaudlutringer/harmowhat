@@ -40,6 +40,9 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
   let clockTimer: ReturnType<typeof setTimeout> | undefined
   let countdownTimer: ReturnType<typeof setTimeout> | undefined
   let frame: number | undefined
+  /** Partie en pause (popin « Quitter la partie ? ») ; startPending : le décompte devait démarrer pendant la pause. */
+  let paused = false
+  let startPending = false
 
   const number = computed(() => index.value + 1)
   const canAnswer = computed(() => hasListened.value && !feedback.value && !finished.value)
@@ -77,6 +80,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
         const c = clock
         clockTimer = setTimeout(() => {
           if (c !== clock) return
+          if (paused) return void (startPending = true)
           c.start()
           tick()
         }, seconds * 1000)
@@ -101,20 +105,44 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
   }
 
   /** Affiche 3, 2, 1 (une seconde chacun), puis joue la première question. */
+  function countdownStep() {
+    if (countdown.value === null || paused) return
+    if (countdown.value > 1) {
+      countdown.value--
+      countdownTimer = setTimeout(countdownStep, 1000)
+    } else {
+      countdown.value = null
+      void listen()
+    }
+  }
+
   function startCountdown() {
     clearTimeout(countdownTimer)
     countdown.value = 3
-    const step = () => {
-      if (countdown.value === null) return
-      if (countdown.value > 1) {
-        countdown.value--
-        countdownTimer = setTimeout(step, 1000)
-      } else {
-        countdown.value = null
-        void listen()
-      }
+    countdownTimer = setTimeout(countdownStep, 1000)
+  }
+
+  /** Met la partie en pause : les points de la question ne baissent plus, le compte à rebours s'arrête. */
+  function pause() {
+    if (paused || finished.value) return
+    paused = true
+    clearTimeout(countdownTimer)
+    clock.pause()
+    stopTicking()
+    points.value = clock.points
+  }
+
+  /** Reprend la partie là où elle en était. */
+  function resume() {
+    if (!paused) return
+    paused = false
+    if (startPending) {
+      startPending = false
+      clock.start()
     }
-    countdownTimer = setTimeout(step, 1000)
+    clock.resume()
+    tick()
+    if (countdown.value !== null) countdownTimer = setTimeout(countdownStep, 1000)
   }
 
   function startQuestion(first = false) {
@@ -122,6 +150,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
     clearTimeout(clockTimer)
     stopAll()
     clock = new QuestionClock()
+    startPending = false
     plays = 0
     points.value = clock.points
     question.value = createQuestion()
@@ -169,6 +198,6 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
 
   return {
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
-    playing: sound.playing, listen, penalizeTuningFork, answer, next, restart,
+    playing: sound.playing, listen, penalizeTuningFork, answer, next, restart, pause, resume,
   }
 }
