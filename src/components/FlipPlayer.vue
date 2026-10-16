@@ -17,7 +17,7 @@
     </div>
   </div>
   <p class="hint">
-    {{ quiz.playing.value ? 'Écoute…' : revealed ? `Touche la portée pour réécouter ${what}` : !quiz.hasListened.value ? 'Lecture…' : 'Réécouter (−100 pts)' }}
+    {{ quiz.playing.value ? 'Écoute…' : revealed ? `Touche la portée pour réécouter ${what}` : !quiz.hasListened.value ? 'Lecture…' : quiz.replayCosts.value ? 'Réécouter (−20 pts)' : ' ' }}
   </p>
 </template>
 

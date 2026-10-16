@@ -1,13 +1,13 @@
 /**
  * Points d'une question : 1000 au départ, moins 1 toutes les 10 millisecondes à partir de la
- * fin de la première écoute (donc 100 au bout de 9 s), moins 100 par réécoute ou par coup de
+ * fin de la première écoute (donc 100 au bout de 9 s), moins 20 par réécoute et 100 par coup de
  * diapason. Jamais en dessous de 100 : une bonne réponse rapporte toujours un minimum.
  */
 
 export const START_POINTS = 1000
 export const MIN_POINTS = 100
 export const POINTS_PER_MS = 0.1
-export const REPLAY_PENALTY = 100
+export const REPLAY_PENALTY = 20
 export const TUNING_FORK_PENALTY = 100
 
 export function pointsLeft(elapsedMs: number, penalties: number): number {

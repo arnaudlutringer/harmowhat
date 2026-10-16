@@ -45,16 +45,18 @@ describe('Points par question', () => {
     expect(clock.running).toBe(true)
   })
 
-  it('retire 100 par réécoute ou diapason, et se fige à la réponse', () => {
+  it('retire 20 par réécoute et 100 par diapason, et se fige à la réponse', () => {
+    expect(REPLAY_PENALTY).toBe(20)
+    expect(TUNING_FORK_PENALTY).toBe(100)
     const { clock, advance } = fakeClock()
     clock.start()
     advance(1000)
     clock.penalize(REPLAY_PENALTY)
     clock.penalize(TUNING_FORK_PENALTY)
-    expect(clock.stop()).toBe(700)
+    expect(clock.stop()).toBe(780)
     advance(1000)
     clock.penalize(REPLAY_PENALTY)
-    expect(clock.points).toBe(700)
+    expect(clock.points).toBe(780)
     expect(clock.running).toBe(false)
   })
 

@@ -1,5 +1,5 @@
 import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { QuestionClock, REPLAY_PENALTY, summarize, TUNING_FORK_PENALTY, type QuestionResult } from '@/games/scoring'
+import { MIN_POINTS, QuestionClock, REPLAY_PENALTY, summarize, TUNING_FORK_PENALTY, type QuestionResult } from '@/games/scoring'
 import { usePlaying } from './usePlaying'
 import { stopAll } from '@/audio/engine'
 
@@ -50,6 +50,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
   const score = computed(() => summary.value.correct)
   const totalPoints = computed(() => summary.value.points)
   const questionOpen = () => !feedback.value && !finished.value
+  /** La pénalité de réécoute retire encore des points : sinon, on n'annonce plus « Réécouter (−20 pts) ». */
+  const replayCosts = computed(() => points.value - REPLAY_PENALTY > MIN_POINTS)
 
   // Rafraîchit l'affichage des points tant que le chronomètre tourne.
   function tick() {
@@ -64,7 +66,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
 
   /**
    * Joue la question. La première écoute est gratuite et le décompte des points démarre
-   * quand elle se termine ; chaque réécoute coûte 100 points.
+   * quand elle se termine ; chaque réécoute coûte 20 points.
    */
   function listen(): Promise<void> {
     const q = question.value
@@ -198,6 +200,6 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 16
 
   return {
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
-    playing: sound.playing, listen, penalizeTuningFork, answer, next, restart, pause, resume,
+    playing: sound.playing, replayCosts, listen, penalizeTuningFork, answer, next, restart, pause, resume,
   }
 }
