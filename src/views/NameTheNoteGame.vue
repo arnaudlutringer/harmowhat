@@ -5,6 +5,7 @@
     :quiz="quiz"
     :board="{ game: 'quelle-note', level: settings.level, questions: settings.questions }"
     settings-href="/games/quelle-note"
+    :advance-bar="ADVANCE_DELAY"
     :no-tuning-fork="settings.level === 'expert'"
   >
     <div class="choices">
@@ -26,7 +27,7 @@
 import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
-import { useQuiz } from '@/composables/useQuiz'
+import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
 import { createQuestion, LEVELS, parseSettings } from '@/games/nameTheNote'
 

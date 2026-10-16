@@ -1,10 +1,11 @@
 <template>
   <game-shell
     title="Grave ou aigu ?"
-    prompt="Plus grave ou plus aigu que le La3 du diapason ?"
+    prompt="Plus grave ou plus aigu que le diapason ?"
     :quiz="quiz"
     :board="{ game: 'grave-ou-aigu', level: settings.level, questions: settings.questions }"
     settings-href="/games/grave-ou-aigu"
+    :advance-bar="ADVANCE_DELAY"
   >
     <div class="choices">
       <ion-button size="large" :disabled="!quiz.canAnswer.value" @click="choose('grave')">GRAVE</ion-button>
@@ -17,7 +18,7 @@
 import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
-import { useQuiz } from '@/composables/useQuiz'
+import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
 import { A440, noteName } from '@/music/notes'
 import { createHighLowQuestion, parseSettings } from '@/games/highLow'
@@ -25,6 +26,7 @@ import { createHighLowQuestion, parseSettings } from '@/games/highLow'
 const settings = parseSettings(useRoute().query)
 
 // La référence est le La3 du diapason ; la note jouée en est plus ou moins éloignée selon le niveau.
+// Après la réponse, une barre se remplit en 1,5 s, puis vient la question suivante.
 const quiz = useQuiz({
   total: settings.questions,
   createQuestion: () => createHighLowQuestion(settings.level),

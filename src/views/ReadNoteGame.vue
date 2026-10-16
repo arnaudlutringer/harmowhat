@@ -5,21 +5,14 @@
     :quiz="quiz"
     :board="{ game: 'lecture-note', level: settings.level, questions: settings.questions }"
     settings-href="/games/lecture-note"
-    swipe-to-next
     no-tuning-fork
+    :advance-bar="ADVANCE_DELAY"
   >
-    <!-- Jeu visuel : pas de son à deviner. Après la réponse, toucher la portée fait entendre la note. -->
+    <!-- Jeu visuel : pas de son à deviner. La note sonne une fois à la réponse, sans réécoute possible. -->
     <template #player>
-      <button
-        class="sheet"
-        :class="{ sounding: quiz.playing.value, revealed }"
-        :disabled="!revealed"
-        :aria-label="revealed ? `Écouter le ${q.fullName}` : undefined"
-        @click="quiz.listen()"
-      >
+      <div class="sheet" :class="{ sounding: quiz.playing.value }">
         <chord-staff :notes="[q.note]" :clef="CLEFS[q.clef].vex" :label="`${CLEFS[q.clef].label}, note à lire`" />
-      </button>
-      <p class="hint">{{ quiz.playing.value ? 'Écoute…' : revealed ? 'Touche la portée pour écouter la note' : CLEFS[q.clef].label }}</p>
+      </div>
     </template>
 
     <div class="choices">
@@ -42,19 +35,18 @@ import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
 import ChordStaff from '@/components/ChordStaff.vue'
-import { useQuiz } from '@/composables/useQuiz'
+import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
 import { CHOICES, CLEFS, createQuestion, LEVELS, parseSettings, type Question } from '@/games/readNote'
 
 const settings = parseSettings(useRoute().query)
 
-// La note n'est pas jouée pendant la question (le décompte des points démarre aussitôt), seulement après la réponse.
-// Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
+// La note n'est pas jouée pendant la question (le décompte des points démarre aussitôt), seulement à la réponse ;
+// 1,5 s après (une barre se remplit sous le message), on passe à la question suivante.
 const quiz = useQuiz({
   total: settings.questions,
   createQuestion: () => createQuestion(settings.level),
   play: (question: Question): Promise<number> => (quiz.feedback.value ? playPiano(question.note.midi) : Promise.resolve(0)),
-  advanceDelay: null,
 })
 const q = computed(() => quiz.question.value)
 const revealed = computed(() => quiz.feedback.value !== null)
@@ -80,6 +72,7 @@ function colorFor(pc: number) {
 .sheet {
   width: 100%;
   max-width: 340px;
+  margin-bottom: 24px;
   padding: 4px;
   border: none;
   background: #fffdf3;
@@ -87,15 +80,8 @@ function colorFor(pc: number) {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   transition: box-shadow 0.2s;
 }
-.sheet.revealed {
-  cursor: pointer;
-}
 .sheet.sounding {
   box-shadow: 0 0 0 4px var(--ion-color-secondary), 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-/* La portée reste lisible tant que la question est ouverte (pas de grisé du bouton désactivé). */
-.sheet:disabled {
-  opacity: 1;
 }
 .sheet :deep(.staff) {
   color: #222;
@@ -104,11 +90,6 @@ function colorFor(pc: number) {
 .sheet :deep(svg) {
   width: 100% !important;
   height: auto !important;
-}
-.hint {
-  color: var(--ion-color-medium);
-  margin: 12px 0 20px;
-  text-align: center;
 }
 .choices {
   display: grid;

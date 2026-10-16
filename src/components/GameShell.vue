@@ -55,6 +55,14 @@
           <template v-if="quiz.feedback.value">
             <strong>{{ quiz.feedback.value.correct ? 'Bonne réponse !' : 'Mauvaise réponse' }}</strong>
             <span>{{ quiz.feedback.value.message }}</span>
+            <!-- Passage automatique : une barre se remplit jusqu'à la question suivante. -->
+            <span
+              v-if="advanceBar"
+              :key="quiz.number.value"
+              class="advance-bar"
+              :style="{ animationDuration: `${advanceBar}ms` }"
+              aria-hidden="true"
+            />
             <button v-if="swipeToNext" class="next-hint" @click="quiz.next()">
               Glisse vers la gauche pour {{ quiz.number.value < quiz.total ? 'la question suivante' : 'voir ton score' }} ›
             </button>
@@ -90,6 +98,8 @@ const props = defineProps<{
   swipeToNext?: boolean
   /** Pas de diapason pendant les questions (mode expert, jeu des intervalles). */
   noTuningFork?: boolean
+  /** Délai du passage automatique à la question suivante (ms) : une barre se remplit pendant ce temps. */
+  advanceBar?: number
 }>()
 
 // À chaque réponse qui rapporte des points (sauf la première, où le total ne fait que démarrer),
@@ -372,6 +382,30 @@ useBackButton(20, (processNextHandler) => {
   align-items: center;
   gap: 4px;
   font-size: 18px;
+}
+.advance-bar {
+  position: relative;
+  overflow: hidden;
+  width: 160px;
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 2px;
+  background: rgba(108, 92, 231, 0.18);
+}
+.advance-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--ion-color-primary);
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: advance linear forwards;
+  animation-duration: inherit;
+}
+@keyframes advance {
+  to {
+    transform: scaleX(1);
+  }
 }
 .next-hint {
   margin-top: 12px;

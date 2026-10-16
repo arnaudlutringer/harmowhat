@@ -23,7 +23,10 @@ export interface QuizOptions<Q> {
  * Déroulé commun des mini-jeux : N questions jouées automatiquement, points par question
  * (voir games/scoring.ts), message après chaque réponse, bilan en fin de partie.
  */
-export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = 1600 }: QuizOptions<Q>) {
+/** Délai du passage automatique à la question suivante, après une réponse (ms). */
+export const ADVANCE_DELAY = 1500
+
+export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY }: QuizOptions<Q>) {
   const index = ref(0)
   const question = shallowRef<Q>(createQuestion())
   const hasListened = ref(false)
