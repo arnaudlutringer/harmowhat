@@ -2,7 +2,18 @@
   <ion-page>
     <ion-content class="ion-padding">
       <page-nav title="Paramètres" back-href="/home" />
-      <div class="settings">
+      <!-- Deux onglets : l'instrument (et sa musique de fin), Mon compte (nom et pays du joueur). -->
+      <ion-segment :value="tab" class="tabs" @ion-change="switchTab($event.detail.value as Tab)">
+        <ion-segment-button value="instrument">
+          <ion-label>🎻 Instrument</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="joueur">
+          <ion-label>{{ flag(profile.country) }} Mon compte</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <player-settings v-if="tab === 'joueur'" class="settings" />
+      <div v-else class="settings">
         <h2>Instrument</h2>
         <p class="hint">Il joue les notes et les accords de tous les jeux. Les questions restent dans sa tessiture.</p>
         <ion-radio-group :value="selectedInstrument" @ion-change="choose($event.detail.value)">
@@ -39,16 +50,35 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import {
-  IonContent, IonIcon, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, onIonViewWillLeave,
+  IonContent, IonIcon, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, onIonViewWillEnter,
+  onIonViewWillLeave,
 } from '@ionic/vue'
 import { play, stop } from 'ionicons/icons'
 import PageNav from '@/components/PageNav.vue'
+import PlayerSettings from '@/components/PlayerSettings.vue'
+import { flag } from '@/player/countries'
+import { profile } from '@/player/profile'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { playPiano, playSequence, preloadPiano, stopAll } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { A440, noteName } from '@/music/notes'
 import { chooseEnding, chosenEndings, endingFor, endingsFor, type Ending } from '@/music/endings'
+
+// Onglet ouvert : celui demandé par le lien (?onglet=joueur, depuis l'accueil ou la fin de partie), sinon l'instrument.
+type Tab = 'instrument' | 'joueur'
+const route = useRoute()
+const tabFromRoute = (): Tab => (route.query.onglet === 'joueur' ? 'joueur' : 'instrument')
+const tab = ref<Tab>(tabFromRoute())
+onIonViewWillEnter(() => (tab.value = tabFromRoute()))
+
+// Changer d'onglet coupe le morceau en cours d'écoute.
+function switchTab(next: Tab) {
+  stopAll()
+  tab.value = next
+}
 
 // Le joueur entend tout de suite le nouvel instrument (La3 du diapason) ; sa première musique de fin est choisie.
 function choose(id: InstrumentId) {
@@ -76,8 +106,16 @@ onIonViewWillLeave(stopAll)
 
 <style scoped>
 .settings {
+  display: block;
   max-width: 480px;
   margin: 0 auto;
+}
+.tabs {
+  max-width: 480px;
+  margin: 16px auto 8px;
+}
+.tabs ion-label {
+  text-transform: none;
 }
 h2 {
   font-size: 18px;

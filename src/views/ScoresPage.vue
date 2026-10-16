@@ -24,12 +24,16 @@
           </ion-segment-button>
         </ion-segment>
 
-        <template v-if="entries.length">
+        <scope-tabs />
+
+        <p v-if="loading" class="empty">Chargement du classement…</p>
+        <p v-else-if="failed" class="empty">Classement indisponible pour le moment : vérifie ta connexion.</p>
+        <template v-else-if="entries.length">
           <!-- Podium : le deuxième à gauche, le premier au centre (plus haut), le troisième à droite. -->
           <div class="podium">
             <div v-for="i in [1, 0, 2]" :key="i" class="step" :class="[`place-${i + 1}`, { me: i === highlight, vacant: !entries[i] }]">
               <span class="medal" aria-hidden="true">{{ MEDALS[i] }}</span>
-              <span class="name">{{ entries[i]?.name ?? '—' }}</span>
+              <span class="name">{{ entries[i] ? withFlag(entries[i]) : '—' }}</span>
               <strong v-if="entries[i]" class="points">{{ entries[i].points }} pts.</strong>
               <div class="block">{{ i + 1 }}</div>
             </div>
@@ -39,7 +43,7 @@
           <ol v-if="entries.length > 3" class="table" start="4">
             <li v-for="(e, i) in entries.slice(3)" :key="i" :class="{ me: i + 3 === highlight }">
               <span class="rank">{{ i + 4 }}</span>
-              <span class="name">{{ e.name }}</span>
+              <span class="name">{{ withFlag(e) }}</span>
               <strong class="points">{{ e.points }} pts.</strong>
             </li>
           </ol>
@@ -63,7 +67,18 @@ import {
   IonButton, IonContent, IonLabel, IonPage, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, onIonViewWillEnter, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
-import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref, type ScoreEntry } from '@/games/highScores'
+import ScopeTabs from '@/components/ScopeTabs.vue'
+import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref } from '@/games/highScores'
+import { fetchBoard, parseScope, scope } from '@/games/worldScores'
+import { flag } from '@/player/countries'
+import { profile } from '@/player/profile'
+
+interface Row {
+  name: string
+  points: number
+  /** Pays du joueur (classements mondial et national). */
+  country?: string
+}
 
 const route = useRoute()
 const router = useIonRouter()
@@ -71,20 +86,50 @@ const game = isGameId(route.params.game) ? route.params.game : 'grave-ou-aigu'
 const info = GAMES[game]
 const board = reactive(parseBoard(game, route.query))
 const initial = { ...board }
-const entries = ref<ScoreEntry[]>([])
+const entries = ref<Row[]>([])
+const loading = ref(false)
+const failed = ref(false)
+scope.value = parseScope(route.query.vue) ?? scope.value
 
-// Le score qui vient d'être enregistré est mis en avant, tant qu'on regarde son classement.
+// Le score qui vient d'être enregistré est mis en avant, tant qu'on regarde son classement :
+// par son rang sur l'appareil, par son nom et ses points dans le monde et le pays.
 const rang = Number(route.query.rang)
-const highlight = computed(() =>
-  Number.isInteger(rang) && board.level === initial.level && board.questions === initial.questions ? rang : -1,
-)
+const myName = typeof route.query.nom === 'string' ? route.query.nom : ''
+const myPoints = Number(route.query.pts)
+const highlight = computed(() => {
+  if (board.level !== initial.level || board.questions !== initial.questions) return -1
+  if (scope.value === 'appareil') return Number.isInteger(rang) ? rang : -1
+  return entries.value.findIndex((e) => e.name === myName && e.points === myPoints)
+})
 
-function load() {
-  entries.value = getScores(board)
+const withFlag = (e: Row) => (e.country ? `${flag(e.country)} ${e.name}` : e.name)
+
+// Chaque chargement remplace le précédent : une réponse arrivée trop tard (autre onglet, autre réglage) est ignorée.
+let request = 0
+async function load() {
+  const id = ++request
+  failed.value = false
+  if (scope.value === 'appareil') {
+    loading.value = false
+    entries.value = getScores(board)
+    return
+  }
+  loading.value = true
+  try {
+    const rows = await fetchBoard(board, scope.value === 'pays' ? profile.value.country : undefined)
+    if (id === request) entries.value = rows
+  } catch {
+    if (id === request) {
+      entries.value = []
+      failed.value = true
+    }
+  } finally {
+    if (id === request) loading.value = false
+  }
 }
-watch(board, load)
-onIonViewWillEnter(load)
-load()
+watch([board, scope], () => void load())
+onIonViewWillEnter(() => void load())
+void load()
 
 const MEDALS = ['🥇', '🥈', '🥉']
 

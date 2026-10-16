@@ -4,10 +4,12 @@ import { LEVELS as INTERVAL_LEVELS, PRECISIONS, QUESTION_COUNTS as INTERVAL_COUN
 import { LEVELS as READ_LEVELS, QUESTION_COUNTS as READ_COUNTS } from './readNote'
 import { LEVELS as HIGH_LOW_LEVELS, QUESTION_COUNTS as HIGH_LOW_COUNTS } from './highLow'
 import { LEVELS as CHORD_LEVELS, QUESTION_COUNTS as CHORD_COUNTS } from './chords'
+import { profile, saveProfile } from '@/player/profile'
 
 /**
  * Meilleurs scores : un classement par jeu, par niveau et par nombre de questions,
  * mémorisé sur l'appareil. Seuls les 10 meilleurs sont gardés.
+ * Les scores sont aussi envoyés au classement mondial (voir worldScores.ts).
  */
 
 export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note'
@@ -94,7 +96,7 @@ export function parseBoard(game: GameId, raw: { level?: unknown; questions?: unk
 }
 
 /** Le score entre-t-il dans le classement ? (il faut au moins 1 point, et battre le 10ᵉ s'il est complet) */
-export function qualifies(entries: readonly ScoreEntry[], points: number): boolean {
+export function qualifies(entries: readonly { points: number }[], points: number): boolean {
   if (points <= 0) return false
   return entries.length < MAX_ENTRIES || points > entries[entries.length - 1].points
 }
@@ -121,15 +123,25 @@ export function playHref({ game, level, questions }: Board): string {
   return `/games/${game}/jouer?questions=${questions}&level=${level}`
 }
 
-/** Page des scores d'un classement, avec éventuellement le rang à mettre en avant. */
-export function scoresHref({ game, level, questions }: Board, rank?: number): string {
-  return `/scores/${game}?level=${level}&questions=${questions}${rank !== undefined && rank >= 0 ? `&rang=${rank}` : ''}`
+/**
+ * Page des scores d'un classement, avec éventuellement le score à mettre en avant :
+ * son rang sur l'appareil, et son nom et ses points pour le retrouver dans le classement mondial.
+ */
+export function scoresHref({ game, level, questions }: Board, rank?: number, mine?: { name: string; points: number }): string {
+  const rang = rank !== undefined && rank >= 0 ? `&rang=${rank}` : ''
+  const me = mine ? `&nom=${encodeURIComponent(mine.name)}&pts=${mine.points}` : ''
+  return `/scores/${game}?level=${level}&questions=${questions}${rang}${me}`
 }
 
 const STORAGE_KEY = 'harmowhat.scores'
-const NAME_KEY = 'harmowhat.player'
 
 const boardKey = ({ game, level, questions }: Board) => `${game}|${level}|${questions}`
+
+/** Classement correspondant à une clé de stockage (« jeu|niveau|questions »). */
+export function boardOfKey(key: string): Board {
+  const [game, level, questions] = key.split('|')
+  return { game: game as GameId, level, questions: Number(questions) }
+}
 
 /**
  * Les anciens classements « niveau unique » (Grave ou aigu ?, Les accords, avant leurs réglages)
@@ -158,25 +170,27 @@ export function getScores(board: Board): ScoreEntry[] {
   return Array.isArray(list) ? list : []
 }
 
-/** Enregistre un score et renvoie son rang (0 = premier, -1 s'il n'entre pas). */
+/** Tous les scores enregistrés sur l'appareil, avec la clé de leur classement. */
+export function localScoreList(): { key: string; entry: ScoreEntry }[] {
+  return Object.entries(loadAll()).flatMap(([key, list]) => (Array.isArray(list) ? list.map((entry) => ({ key, entry })) : []))
+}
+
+/** Enregistre un score sur l'appareil et renvoie son rang (0 = premier, -1 s'il n'entre pas). */
 export function saveScore(board: Board, entry: ScoreEntry): number {
   const all = loadAll()
   const { entries, rank } = insertScore(getScores(board), entry)
   all[boardKey(board)] = entries
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
-    localStorage.setItem(NAME_KEY, entry.name)
   } catch {
     // Stockage indisponible : le score n'est pas gardé.
   }
+  // Premier nom saisi : il devient celui du profil (onglet Joueur des paramètres).
+  if (!profile.value.name) saveProfile({ name: entry.name })
   return rank
 }
 
-/** Dernier nom saisi, pour le proposer à la partie suivante. */
+/** Nom proposé en fin de partie : celui du profil (onglet Joueur des paramètres). */
 export function lastPlayerName(): string {
-  try {
-    return localStorage.getItem(NAME_KEY) ?? ''
-  } catch {
-    return ''
-  }
+  return profile.value.name
 }

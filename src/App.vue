@@ -9,6 +9,7 @@ import { IonApp, IonRouterOutlet, useBackButton, useIonRouter } from '@ionic/vue
 import { useRouter } from 'vue-router'
 import { App } from '@capacitor/app'
 import { stopAll } from '@/audio/engine'
+import { flushPending, uploadLocalScoresOnce } from '@/games/worldScores'
 
 const router = useRouter()
 const ionRouter = useIonRouter()
@@ -16,6 +17,11 @@ const ionRouter = useIonRouter()
 // Bouton retour du téléphone (Android). Sans écouteur, Capacitor ne prévient pas Ionic et l'appli se ferme :
 // avec cet écouteur, le bouton passe par les gestionnaires ci-dessous (et par la popin des jeux en cours).
 void App.addListener('backButton', () => {}).catch(() => {})
+
+// Classement mondial : au lancement, les scores déjà sur l'appareil partent une fois pour toutes ;
+// au retour dans l'appli, ceux restés en attente (pas de connexion) repartent.
+void uploadLocalScoresOnce()
+void App.addListener('resume', () => void flushPending()).catch(() => {})
 
 // Bouton retour du téléphone : on coupe le son, puis Ionic revient à l'écran précédent.
 useBackButton(10, (processNextHandler) => {

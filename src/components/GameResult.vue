@@ -18,7 +18,9 @@
         @ion-input="nameError = false"
       />
       <p v-if="nameError" class="error">Indique ton nom pour enregistrer ton score.</p>
-      <ion-button type="submit" expand="block">Enregistrer</ion-button>
+      <!-- Le pays vient de l'onglet Joueur des paramètres. -->
+      <p v-if="worldEnabled" class="country">{{ country?.flag }} {{ country?.name }} <small>(modifiable dans Paramètres › Mon compte)</small></p>
+      <ion-button type="submit" expand="block" :disabled="saving">{{ saving ? 'Enregistrement…' : 'Enregistrer' }}</ion-button>
     </form>
 
     <ol class="notes" aria-label="Détail des réponses">
@@ -64,29 +66,50 @@ import { selectedInstrument } from '@/audio/instruments'
 import {
   cleanName, getScores, lastPlayerName, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
 } from '@/games/highScores'
+import { fetchBoard, submitScore, worldEnabled } from '@/games/worldScores'
+import { countryByCode } from '@/player/countries'
+import { profile } from '@/player/profile'
 
 const props = defineProps<{ results: QuestionResult[]; total: number; board: Board; settingsHref?: string }>()
 const emit = defineEmits<{ restart: [] }>()
 
 const summary = computed(() => summarize(props.results))
 
-// Meilleurs scores : si la partie entre au classement, le joueur peut y inscrire son nom.
+// Meilleurs scores : si la partie entre au classement de l'appareil ou au classement mondial,
+// le joueur peut y inscrire son nom (pré-rempli avec celui de l'onglet Joueur des paramètres).
 const router = useIonRouter()
 const record = ref(qualifies(getScores(props.board), summary.value.points))
 const playerName = ref(lastPlayerName())
 const nameError = ref(false)
+const saving = ref(false)
+const country = computed(() => countryByCode(profile.value.country))
 
-function saveRecord() {
+onMounted(() => {
+  if (record.value || !worldEnabled || summary.value.points <= 0) return
+  fetchBoard(props.board)
+    .then((world) => {
+      if (qualifies(world, summary.value.points)) record.value = true
+    })
+    .catch(() => {}) // Pas de connexion : seul le classement de l'appareil compte.
+})
+
+async function saveRecord() {
   const name = cleanName(playerName.value)
   if (!name) {
     nameError.value = true
     return
   }
+  if (saving.value) return
+  saving.value = true
   const { points, correct } = summary.value
-  const rank = saveScore(props.board, { name, points, correct, date: new Date().toISOString() })
+  const entry = { name, points, correct, date: new Date().toISOString() }
+  const rank = saveScore(props.board, entry)
+  // Envoi au classement mondial : on l'attend un peu pour que le score y figure déjà ; sinon il partira plus tard.
+  await Promise.race([submitScore(props.board, entry), new Promise((r) => setTimeout(r, 3000))])
   record.value = false
+  saving.value = false
   stopAll()
-  router.push(scoresHref(props.board, rank))
+  router.push(scoresHref(props.board, rank, { name, points }))
 }
 const tier = computed(() => tierForScore(summary.value.correct, props.total))
 const emoji = computed(() => ({ great: '🏆', good: '🎶', poor: '🎧' })[tier.value])
@@ -174,6 +197,13 @@ p {
 }
 .record strong {
   color: var(--ion-color-primary);
+}
+.record .country {
+  margin: 0;
+  font-size: 15px;
+}
+.record .country small {
+  color: var(--ion-color-medium);
 }
 .record .error {
   margin: 0;

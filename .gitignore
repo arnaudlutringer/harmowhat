@@ -3,3 +3,7 @@ dist
 android
 ios
 .DS_Store
+
+# Configuration locale (Supabase) : voir .env.example
+.env
+.env.local
