@@ -44,7 +44,7 @@
           <button class="play" :class="{ 'is-playing': quiz.playing.value }" aria-label="Écouter la note" @click="quiz.listen()">
             <ion-icon :icon="quiz.playing.value ? volumeHigh : play" />
           </button>
-          <p class="hint">{{ quiz.playing.value ? 'Écoute…' : !quiz.hasListened.value ? 'Lecture…' : quiz.feedback.value ? 'Réécouter' : quiz.replayCosts.value ? 'Réécouter (−20 pts)' : ' ' }}</p>
+          <p class="hint">{{ quiz.playing.value ? 'Écoute…' : !quiz.hasListened.value ? 'Lecture…' : quiz.feedback.value ? 'Réécouter' : quiz.replayCosts.value ? `Réécouter (−${quiz.replayPenalty} pts)` : ' ' }}</p>
         </slot>
 
         <div class="answers">

@@ -1,5 +1,5 @@
 import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { MIN_POINTS, QuestionClock, REPLAY_PENALTY, summarize, TUNING_FORK_PENALTY, type QuestionResult } from '@/games/scoring'
+import { COUNTDOWN_DELAY_MS, MIN_POINTS, QuestionClock, REPLAY_PENALTY, summarize, TUNING_FORK_PENALTY, type QuestionResult } from '@/games/scoring'
 import { usePlaying } from './usePlaying'
 import { stopAll } from '@/audio/engine'
 
@@ -53,7 +53,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   const score = computed(() => summary.value.correct)
   const totalPoints = computed(() => summary.value.points)
   const questionOpen = () => !feedback.value && !finished.value
-  /** La pénalité de réécoute retire encore des points : sinon, on n'annonce plus « Réécouter (−20 pts) ». */
+  /** La pénalité de réécoute retire encore des points : sinon, on n'annonce plus « Réécouter (−200 pts) ». */
   const replayCosts = computed(() => points.value - REPLAY_PENALTY > MIN_POINTS)
 
   // Rafraîchit l'affichage des points tant que le chronomètre tourne.
@@ -69,7 +69,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   /**
    * Joue la question. La première écoute est gratuite et le décompte des points démarre
-   * quand elle se termine ; chaque réécoute coûte 20 points.
+   * 50 ms après le début du son ; chaque réécoute coûte 200 points.
    */
   function listen(): Promise<void> {
     const q = question.value
@@ -78,7 +78,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     tick()
     return sound
       .track(play(q))
-      .then((seconds) => {
+      .then(() => {
         if (question.value !== q || !questionOpen()) return
         hasListened.value = true
         if (!first) return
@@ -88,7 +88,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
           if (paused) return void (startPending = true)
           c.start()
           tick()
-        }, seconds * 1000)
+        }, COUNTDOWN_DELAY_MS)
       })
       .catch(() => {})
   }
@@ -203,6 +203,6 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   return {
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
-    playing: sound.playing, replayCosts, listen, penalizeTuningFork, answer, next, restart, pause, resume,
+    playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, restart, pause, resume,
   }
 }

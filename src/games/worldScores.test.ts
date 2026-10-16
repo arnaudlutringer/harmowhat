@@ -63,7 +63,25 @@ describe('Classement mondial', () => {
     expect(JSON.parse(localStorage.getItem('harmowhat.pendingScores')!)).toEqual([])
   })
 
+  it('efface une fois pour toutes les scores de l’ancien barème (sur 1000)', async () => {
+    localStorage.setItem('harmowhat.scores', JSON.stringify({ 'accords|normal|20': [entry] }))
+    localStorage.setItem('harmowhat.pendingScores', JSON.stringify([{ client_id: 'x' }]))
+    localStorage.setItem('harmowhat.worldCache', JSON.stringify({ world: [], country: null, loadedAt: null }))
+    const fetch = vi.fn(async () => new Response(null, { status: 201 }))
+    vi.stubGlobal('fetch', fetch)
+    const w = await loadModule()
+    for (const key of ['harmowhat.scores', 'harmowhat.pendingScores', 'harmowhat.worldCache']) expect(localStorage.getItem(key)).toBeNull()
+    await w.uploadLocalScoresOnce()
+    expect(fetch).not.toHaveBeenCalled()
+
+    // Les scores du nouveau barème, eux, restent.
+    localStorage.setItem('harmowhat.scores', JSON.stringify({ 'accords|normal|20': [entry] }))
+    await loadModule()
+    expect(localStorage.getItem('harmowhat.scores')).not.toBeNull()
+  })
+
   it('envoie une seule fois les scores déjà enregistrés sur l’appareil', async () => {
+    localStorage.setItem('harmowhat.scoringVersion', '2')
     localStorage.setItem('harmowhat.scores', JSON.stringify({ 'accords|normal|20': [entry, { ...entry, name: 'Léa', points: 9000 }] }))
     localStorage.setItem('harmowhat.profile', JSON.stringify({ name: 'Arno', country: 'CA' }))
     const fetch = vi.fn(async () => new Response(null, { status: 201 }))
@@ -109,6 +127,7 @@ describe('Classement mondial', () => {
   })
 
   it('garde le cache précédent si le chargement échoue', async () => {
+    localStorage.setItem('harmowhat.scoringVersion', '2')
     localStorage.setItem('harmowhat.worldCache', JSON.stringify({ world: [{ game: 'accords', level: 'normal', questions: 20, name: 'Lucie', country: 'BE', points: 15000, correct: 18, played_at: entry.date }], country: null, loadedAt: entry.date }))
     vi.stubGlobal('fetch', vi.fn(async (): Promise<Response> => {
       throw new TypeError('Failed to fetch')

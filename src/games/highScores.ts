@@ -5,6 +5,7 @@ import { LEVELS as READ_LEVELS, QUESTION_COUNTS as READ_COUNTS } from './readNot
 import { LEVELS as HIGH_LOW_LEVELS, QUESTION_COUNTS as HIGH_LOW_COUNTS } from './highLow'
 import { LEVELS as CHORD_LEVELS, QUESTION_COUNTS as CHORD_COUNTS } from './chords'
 import { profile, saveProfile } from '@/player/profile'
+import { SCORING_VERSION } from './scoring'
 
 /**
  * Meilleurs scores : un classement par jeu, par niveau et par nombre de questions,
@@ -134,6 +135,25 @@ export function scoresHref({ game, level, questions }: Board, rank?: number, min
 }
 
 const STORAGE_KEY = 'harmowhat.scores'
+const SCORING_VERSION_KEY = 'harmowhat.scoringVersion'
+
+/**
+ * Nouveau barème (10 000 points par question au lieu de 1000) : les scores de l'ancien barème ne sont pas
+ * comparables, ils sont effacés une fois pour toutes (meilleurs scores de l'appareil, scores en attente d'envoi,
+ * classements mondiaux en cache). Appelé au chargement de ce module, avant la lecture du cache mondial.
+ */
+export function resetScoresForNewScoring(): void {
+  try {
+    if (localStorage.getItem(SCORING_VERSION_KEY) === String(SCORING_VERSION)) return
+    for (const key of [STORAGE_KEY, 'harmowhat.pendingScores', 'harmowhat.worldCache']) localStorage.removeItem(key)
+    // Plus rien à envoyer de l'ancien barème au classement mondial.
+    localStorage.setItem('harmowhat.localScoresUploaded', '1')
+    localStorage.setItem(SCORING_VERSION_KEY, String(SCORING_VERSION))
+  } catch {
+    // Stockage indisponible : rien à effacer.
+  }
+}
+resetScoresForNewScoring()
 
 const boardKey = ({ game, level, questions }: Board) => `${game}|${level}|${questions}`
 

@@ -1,20 +1,26 @@
 /**
- * Points d'une question : 1000 au départ, moins 1 toutes les 10 millisecondes à partir de la
- * fin de la première écoute (donc 100 au bout de 9 s), moins 20 par réécoute et 100 par coup de
- * diapason. Jamais en dessous de 100 : une bonne réponse rapporte toujours un minimum.
+ * Points d'une question : 10 000 au départ ; le décompte démarre 50 ms après le début du premier son
+ * et descend jusqu'au plancher de 100 en 9 s (1,1 point par milliseconde) ; moins 200 par réécoute et
+ * 200 par coup de diapason. Jamais en dessous de 100 : une bonne réponse rapporte toujours un minimum.
  */
 
-export const START_POINTS = 1000
+export const START_POINTS = 10000
 export const MIN_POINTS = 100
-export const POINTS_PER_MS = 0.1
-export const REPLAY_PENALTY = 20
-export const TUNING_FORK_PENALTY = 100
+/** Durée pour descendre du score de départ au plancher. */
+export const COUNTDOWN_MS = 9000
+export const POINTS_PER_MS = (START_POINTS - MIN_POINTS) / COUNTDOWN_MS
+/** Délai entre le début du premier son et le début du décompte. */
+export const COUNTDOWN_DELAY_MS = 50
+export const REPLAY_PENALTY = 200
+export const TUNING_FORK_PENALTY = 200
+/** Version du barème : les scores d'un barème précédent ne sont pas comparables (voir highScores.ts). */
+export const SCORING_VERSION = 2
 
 export function pointsLeft(elapsedMs: number, penalties: number): number {
   return Math.max(MIN_POINTS, Math.round(START_POINTS - elapsedMs * POINTS_PER_MS - penalties))
 }
 
-/** Chronomètre d'une question : démarre à la fin de la première écoute, s'arrête à la réponse. */
+/** Chronomètre d'une question : démarre peu après le début de la première écoute, s'arrête à la réponse. */
 export class QuestionClock {
   private startedAt: number | null = null
   private stoppedAt: number | null = null

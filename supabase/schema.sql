@@ -15,8 +15,8 @@ create table if not exists public.scores (
   name text not null check (char_length(name) between 1 and 10 and name = btrim(name)),
   -- Code pays ISO 3166-1 alpha-2 (FR, BE, CA…).
   country char(2) not null check (country ~ '^[A-Z]{2}$'),
-  -- Au plus 1000 points par question.
-  points integer not null check (points > 0 and points <= questions * 1000),
+  -- Au plus 10 000 points par question.
+  points integer not null constraint scores_points_range check (points > 0 and points <= questions * 10000),
   correct smallint not null check (correct between 0 and questions),
   played_at timestamptz not null default now(),
   created_at timestamptz not null default now()
