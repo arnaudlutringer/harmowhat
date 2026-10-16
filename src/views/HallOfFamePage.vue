@@ -31,7 +31,7 @@ import { IonContent, IonItem, IonLabel, IonList, IonPage, onIonViewWillEnter } f
 import PageNav from '@/components/PageNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
 import { GAMES, getScores, parseBoard, scoresHref, type Board, type GameId } from '@/games/highScores'
-import { cachedRecord, fetchRecord, scope, type WorldRecord } from '@/games/worldScores'
+import { cachedRecord, fetchRecord, scope, worldVersion, type WorldRecord } from '@/games/worldScores'
 import { flag } from '@/player/countries'
 import { profile } from '@/player/profile'
 
@@ -118,7 +118,8 @@ async function load() {
     if (id === request) loading.value = false
   }
 }
-watch(scope, () => void load())
+// worldVersion : des scores viennent d'arriver dans la base.
+watch([scope, worldVersion], () => void load())
 onIonViewWillEnter(() => void load())
 void load()
 </script>

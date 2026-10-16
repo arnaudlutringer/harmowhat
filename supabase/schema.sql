@@ -19,8 +19,11 @@ create table if not exists public.scores (
   points integer not null constraint scores_points_range check (points > 0 and points <= questions * 10000),
   correct smallint not null check (correct between 0 and questions),
   played_at timestamptz not null default now(),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Identifiant technique du joueur (profil de l'appareil) : ne change pas avec le nom ou le pays.
+  player_id uuid
 );
+create index if not exists scores_player_idx on public.scores (player_id);
 
 -- Classements : un jeu, un niveau, un nombre de questions (et éventuellement un pays), du meilleur au moins bon.
 create index if not exists scores_board_idx on public.scores (game, level, questions, points desc);
@@ -44,7 +47,7 @@ grant select, insert on public.scores to anon, authenticated;
 -- Classements chargés au lancement de l'appli (mis en cache sur l'appareil) : les 10 meilleurs de chaque
 -- classement dans le monde, et pays par pays. Les vues respectent les règles d'accès de la table.
 create or replace view public.top_world with (security_invoker = true) as
-select game, level, questions, name, country, points, correct, played_at
+select game, level, questions, name, country, points, correct, played_at, player_id
 from (
   select s.*, row_number() over (partition by game, level, questions order by points desc, played_at asc) as rk
   from public.scores s
@@ -52,7 +55,7 @@ from (
 where rk <= 10;
 
 create or replace view public.top_country with (security_invoker = true) as
-select game, level, questions, name, country, points, correct, played_at
+select game, level, questions, name, country, points, correct, played_at, player_id
 from (
   select s.*, row_number() over (partition by game, level, questions, country order by points desc, played_at asc) as rk
   from public.scores s

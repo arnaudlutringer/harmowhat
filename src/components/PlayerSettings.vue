@@ -22,6 +22,13 @@
       <span class="change">Changer</span>
     </button>
 
+    <!-- Identifiant technique : reconnaît les scores du joueur même s'il change de nom ou de pays. -->
+    <div class="player-id">
+      <span>Identifiant joueur</span>
+      <code>{{ profile.id }}</code>
+      <button class="copy" @click="copyId">{{ copied ? 'Copié ✓' : 'Copier' }}</button>
+    </div>
+
     <!-- Choix du pays : recherche par nom, puis la liste des pays avec leur drapeau. -->
     <ion-modal :is-open="picking" @did-dismiss="closePicker">
       <ion-header>
@@ -89,6 +96,17 @@ function closePicker() {
   picking.value = false
   query.value = ''
 }
+
+const copied = ref(false)
+async function copyId() {
+  try {
+    await navigator.clipboard.writeText(profile.value.id)
+    copied.value = true
+    setTimeout(() => (copied.value = false), 2000)
+  } catch {
+    // Presse-papiers indisponible : l'identifiant reste sélectionnable à la main.
+  }
+}
 </script>
 
 <style scoped>
@@ -127,6 +145,32 @@ h2 {
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
+}
+.player-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 32px;
+  font-size: 12px;
+  color: var(--ion-color-medium);
+}
+.player-id span {
+  width: 100%;
+}
+.player-id code {
+  user-select: all;
+  font-size: 12px;
+  word-break: break-all;
+}
+.player-id .copy {
+  padding: 2px 8px;
+  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.35);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ion-color-primary);
+  font-size: 12px;
+  cursor: pointer;
 }
 ion-item .flag {
   margin-right: 4px;

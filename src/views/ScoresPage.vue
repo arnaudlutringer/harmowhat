@@ -31,7 +31,7 @@
         <template v-else-if="entries.length">
           <!-- Podium : le deuxième à gauche, le premier au centre (plus haut), le troisième à droite. -->
           <div class="podium">
-            <div v-for="i in [1, 0, 2]" :key="i" class="step" :class="[`place-${i + 1}`, { me: i === highlight, vacant: !entries[i] }]">
+            <div v-for="i in [1, 0, 2]" :key="i" class="step" :class="[`place-${i + 1}`, { me: i === highlight, mine: isMine(entries[i]), vacant: !entries[i] }]">
               <span class="medal" aria-hidden="true">{{ MEDALS[i] }}</span>
               <span class="name">{{ entries[i] ? withFlag(entries[i]) : '—' }}</span>
               <strong v-if="entries[i]" class="points">{{ entries[i].points }} pts.</strong>
@@ -41,7 +41,7 @@
 
           <!-- À partir du quatrième : un tableau. -->
           <ol v-if="entries.length > 3" class="table" start="4">
-            <li v-for="(e, i) in entries.slice(3)" :key="i" :class="{ me: i + 3 === highlight }">
+            <li v-for="(e, i) in entries.slice(3)" :key="i" :class="{ me: i + 3 === highlight, mine: isMine(e) }">
               <span class="rank">{{ i + 4 }}</span>
               <span class="name">{{ withFlag(e) }}</span>
               <strong class="points">{{ e.points }} pts.</strong>
@@ -69,7 +69,7 @@ import {
 import PageNav from '@/components/PageNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
 import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref } from '@/games/highScores'
-import { cachedBoard, fetchBoard, parseScope, scope, updateCachedBoard } from '@/games/worldScores'
+import { cachedBoard, fetchBoard, parseScope, scope, updateCachedBoard, worldVersion, type WorldScore } from '@/games/worldScores'
 import { flag } from '@/player/countries'
 import { profile } from '@/player/profile'
 
@@ -78,7 +78,12 @@ interface Row {
   points: number
   /** Pays du joueur (classements mondial et national). */
   country?: string
+  /** Identifiant technique du joueur (profil Mon compte de son appareil). */
+  playerId?: string
 }
+
+const fromWorld = (rows: readonly WorldScore[]): Row[] =>
+  rows.map((r) => ({ name: r.name, points: r.points, country: r.country, playerId: r.player_id ?? undefined }))
 
 const route = useRoute()
 const router = useIonRouter()
@@ -92,17 +97,20 @@ const failed = ref(false)
 scope.value = parseScope(route.query.vue) ?? scope.value
 
 // Le score qui vient d'être enregistré est mis en avant, tant qu'on regarde son classement :
-// par son rang sur l'appareil, par son nom et ses points dans le monde et le pays.
+// par son rang sur l'appareil, par l'identifiant du joueur et ses points dans le monde et le pays.
 const rang = Number(route.query.rang)
-const myName = typeof route.query.nom === 'string' ? route.query.nom : ''
 const myPoints = Number(route.query.pts)
 const highlight = computed(() => {
   if (board.level !== initial.level || board.questions !== initial.questions) return -1
   if (scope.value === 'appareil') return Number.isInteger(rang) ? rang : -1
-  return entries.value.findIndex((e) => e.name === myName && e.points === myPoints)
+  return Number.isFinite(myPoints) ? entries.value.findIndex((e) => isMine(e) && e.points === myPoints) : -1
 })
 
 const withFlag = (e: Row) => (e.country ? `${flag(e.country)} ${e.name}` : e.name)
+
+// Scores du joueur qui utilise l'appli, reconnus à son identifiant technique (et non à son nom ou son pays,
+// qu'il peut changer, ou que d'autres peuvent porter) : en gras et mis en avant.
+const isMine = (e?: Row) => !!e?.playerId && e.playerId === profile.value.id
 
 // Chaque chargement remplace le précédent : une réponse arrivée trop tard (autre onglet, autre réglage) est ignorée.
 let request = 0
@@ -117,11 +125,11 @@ async function load() {
   // Le classement en cache (chargé au lancement) s'affiche aussitôt, puis la version à jour le remplace.
   const country = scope.value === 'pays' ? profile.value.country : undefined
   const cached = cachedBoard(board, country)
-  entries.value = cached ?? []
+  entries.value = fromWorld(cached ?? [])
   loading.value = !cached
   try {
     const rows = await fetchBoard(board, country)
-    if (id === request) entries.value = rows
+    if (id === request) entries.value = fromWorld(rows)
     updateCachedBoard(board, rows, country)
   } catch {
     // Sans connexion, le cache suffit ; sans cache, on le signale.
@@ -130,7 +138,8 @@ async function load() {
     if (id === request) loading.value = false
   }
 }
-watch([board, scope], () => void load())
+// worldVersion : des scores viennent d'arriver dans la base (celui qu'on vient d'enregistrer, ou des scores en attente).
+watch([board, scope, worldVersion], () => void load())
 onIonViewWillEnter(() => void load())
 void load()
 
@@ -234,9 +243,26 @@ h2 {
   padding: 10px 12px;
   border-bottom: 1px solid rgba(var(--ion-text-color-rgb), 0.08);
 }
-.table li.me {
+.table li.me,
+.table li.mine {
   background: var(--hw-button-active);
   font-weight: 700;
+}
+/* Scores du joueur : ligne en gras sur fond violet clair, liseré à gauche. */
+.table li.mine {
+  box-shadow: inset 4px 0 0 var(--ion-color-primary);
+}
+.table li.mine .name {
+  color: var(--ion-color-primary);
+}
+.step.mine .name {
+  padding: 2px 8px;
+  background: var(--hw-button-active);
+  color: var(--ion-color-primary);
+  font-weight: 800;
+}
+.step.mine .points {
+  font-weight: 800;
 }
 .rank {
   width: 28px;

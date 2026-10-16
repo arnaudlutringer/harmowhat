@@ -4,9 +4,14 @@
     <h1>{{ summary.points }} <small>pts</small></h1>
     <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
 
-    <!-- Le score entre au classement : on propose d'enregistrer le nom du joueur. -->
+    <!-- Le score entre dans au moins un classement (monde, pays, téléphone) : on propose de l'enregistrer dans les trois. -->
     <form v-if="record" class="record" @submit.prevent="saveRecord">
       <strong>🏅 Tu entres dans les meilleurs scores !</strong>
+      <p class="tops">
+        <span v-if="tops.monde">🌍 Monde</span>
+        <span v-if="tops.pays">{{ country?.flag }} {{ country?.name }}</span>
+        <span v-if="tops.appareil">📱 Téléphone</span>
+      </p>
       <ion-input
         v-model="playerName"
         :maxlength="MAX_NAME_LENGTH"
@@ -54,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
 import { musicalNote, musicalNotes, stop } from 'ionicons/icons'
 import { playSequence, stopAll, tierForScore } from '@/audio/engine'
@@ -66,7 +71,7 @@ import { selectedInstrument } from '@/audio/instruments'
 import {
   cleanName, getScores, lastPlayerName, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
 } from '@/games/highScores'
-import { fetchBoard, submitScore, worldEnabled } from '@/games/worldScores'
+import { cachedBoard, fetchBoard, submitScore, worldEnabled } from '@/games/worldScores'
 import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
 
@@ -75,22 +80,33 @@ const emit = defineEmits<{ restart: [] }>()
 
 const summary = computed(() => summarize(props.results))
 
-// Meilleurs scores : si la partie entre au classement de l'appareil ou au classement mondial,
-// le joueur peut y inscrire son nom (pré-rempli avec celui de l'onglet Joueur des paramètres).
+// Meilleurs scores : si la partie entre dans le top 10 du monde, du pays du joueur ou du téléphone, le joueur
+// peut l'enregistrer (nom pré-rempli avec celui de Mon compte). Le score est alors enregistré partout :
+// sur le téléphone, et dans la base mondiale, qui alimente les classements du monde et des pays.
 const router = useIonRouter()
-const record = ref(qualifies(getScores(props.board), summary.value.points))
+const tops = reactive({ monde: false, pays: false, appareil: qualifies(getScores(props.board), summary.value.points) })
+const saved = ref(false)
+const record = computed(() => !saved.value && (tops.monde || tops.pays || tops.appareil))
 const playerName = ref(lastPlayerName())
 const nameError = ref(false)
 const saving = ref(false)
 const country = computed(() => countryByCode(profile.value.country))
 
 onMounted(() => {
-  if (record.value || !worldEnabled || summary.value.points <= 0) return
+  const points = summary.value.points
+  if (!worldEnabled || points <= 0) return
+  const code = profile.value.country
+  // D'abord le cache chargé au lancement (réponse immédiate, même hors connexion), puis la base à jour.
+  const world = cachedBoard(props.board)
+  const local = cachedBoard(props.board, code)
+  if (world) tops.monde = qualifies(world, points)
+  if (local) tops.pays = qualifies(local, points)
   fetchBoard(props.board)
-    .then((world) => {
-      if (qualifies(world, summary.value.points)) record.value = true
-    })
-    .catch(() => {}) // Pas de connexion : seul le classement de l'appareil compte.
+    .then((rows) => (tops.monde = qualifies(rows, points)))
+    .catch(() => {})
+  fetchBoard(props.board, code)
+    .then((rows) => (tops.pays = qualifies(rows, points)))
+    .catch(() => {})
 })
 
 async function saveRecord() {
@@ -102,14 +118,17 @@ async function saveRecord() {
   if (saving.value) return
   saving.value = true
   const { points, correct } = summary.value
-  const entry = { name, points, correct, date: new Date().toISOString() }
+  const entry = { name, points, correct, date: new Date().toISOString(), playerId: profile.value.id }
+  // Téléphone (son top 10), puis base mondiale (monde et pays) : on attend un peu l'envoi pour que le score
+  // y figure déjà ; sans connexion, il partira plus tard.
   const rank = saveScore(props.board, entry)
-  // Envoi au classement mondial : on l'attend un peu pour que le score y figure déjà ; sinon il partira plus tard.
   await Promise.race([submitScore(props.board, entry), new Promise((r) => setTimeout(r, 3000))])
-  record.value = false
+  saved.value = true
   saving.value = false
   stopAll()
-  router.push(scoresHref(props.board, rank, { name, points }))
+  // On ouvre le plus beau des classements où le score entre.
+  const vue = tops.monde ? 'monde' : tops.pays ? 'pays' : 'appareil'
+  router.push(`${scoresHref(props.board, rank, { name, points })}&vue=${worldEnabled ? vue : 'appareil'}`)
 }
 const tier = computed(() => tierForScore(summary.value.correct, props.total))
 const emoji = computed(() => ({ great: '🏆', good: '🎶', poor: '🎧' })[tier.value])
@@ -197,6 +216,20 @@ p {
 }
 .record strong {
   color: var(--ion-color-primary);
+}
+.record .tops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+.record .tops span {
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: var(--hw-button-active);
+  color: var(--ion-color-primary);
+  font-size: 14px;
+  font-weight: 600;
 }
 .record .country {
   margin: 0;

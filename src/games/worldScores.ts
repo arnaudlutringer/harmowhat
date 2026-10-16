@@ -1,6 +1,7 @@
 import { ref, watch } from 'vue'
 import { boardOfKey, localScoreList, type Board, type GameId, type ScoreEntry } from './highScores'
 import { profile } from '@/player/profile'
+import { uuid } from '@/player/uuid'
 
 /**
  * Classement mondial : les scores enregistrés sur tous les appareils, dans une base Supabase
@@ -20,6 +21,8 @@ export interface WorldScore {
   points: number
   correct: number
   played_at: string
+  /** Identifiant technique du joueur (absent pour les scores d'avant son introduction). */
+  player_id?: string | null
 }
 
 /** Record d'un jeu, avec le classement (niveau, nombre de questions) où il a été fait. */
@@ -38,6 +41,7 @@ interface PendingScore {
   points: number
   correct: number
   played_at: string
+  player_id: string | null
 }
 
 // L'adresse du projet, avec ou sans « /rest/v1/ » à la fin (les deux formes sont copiées depuis Supabase).
@@ -46,7 +50,7 @@ const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
 const PENDING_KEY = 'harmowhat.pendingScores'
 const UPLOADED_KEY = 'harmowhat.localScoresUploaded'
 const TIMEOUT_MS = 8000
-const COLUMNS = 'name,country,points,correct,played_at'
+const COLUMNS = 'name,country,points,correct,played_at,player_id'
 
 /** Le classement mondial est configuré (adresse et clé Supabase fournies à la construction). */
 export const worldEnabled = Boolean(URL_BASE && KEY)
@@ -83,17 +87,34 @@ async function select<T>(query: string, table = 'scores'): Promise<T[]> {
 const boardFilter = ({ game, level, questions }: Board) =>
   `game=eq.${encodeURIComponent(game)}&level=eq.${encodeURIComponent(level)}&questions=eq.${questions}`
 
-/** Les 10 meilleurs scores d'un classement, dans le monde ou dans un pays. */
-export function fetchBoard(board: Board, country?: string, limit = 10): Promise<WorldScore[]> {
+/**
+ * Ajoute aux lignes lues dans la base les scores de cet appareil encore en attente d'envoi (même jeu, et même
+ * classement ou même pays si demandé) : un score qui vient d'être enregistré apparaît tout de suite, même s'il
+ * part plus tard. Les scores déjà arrivés dans la base ne sont pas comptés deux fois.
+ */
+function withPending<T extends WorldScore>(rows: readonly T[], keep: (p: PendingScore) => boolean, toRow: (p: PendingScore) => T, limit: number): T[] {
+  const already = (p: PendingScore) => rows.some((r) => r.player_id === p.player_id && r.points === p.points && r.played_at.slice(0, 19) === p.played_at.slice(0, 19))
+  const extra = loadPending().filter((p) => keep(p) && !already(p)).map(toRow)
+  return extra.length ? [...rows, ...extra].sort(byPoints).slice(0, limit) : [...rows]
+}
+
+const pendingRow = (p: PendingScore): WorldRecord => ({
+  name: p.name, country: p.country, points: p.points, correct: p.correct, played_at: p.played_at, player_id: p.player_id,
+  level: p.level, questions: p.questions,
+})
+
+/** Les 10 meilleurs scores d'un classement, dans le monde ou dans un pays (scores en attente d'envoi compris). */
+export async function fetchBoard(board: Board, country?: string, limit = 10): Promise<WorldScore[]> {
   const where = boardFilter(board) + (country ? `&country=eq.${country}` : '')
-  return select<WorldScore>(`select=${COLUMNS}&${where}&order=points.desc,played_at.asc&limit=${limit}`)
+  const rows = await select<WorldScore>(`select=${COLUMNS}&${where}&order=points.desc,played_at.asc&limit=${limit}`)
+  return withPending(rows, (p) => sameBoard(p, board) && (!country || p.country === country), pendingRow, limit)
 }
 
 /** Le meilleur score d'un jeu, tous niveaux et nombres de questions confondus (dans le monde ou un pays). */
 export async function fetchRecord(game: GameId, country?: string): Promise<WorldRecord | undefined> {
   const where = `game=eq.${game}` + (country ? `&country=eq.${country}` : '')
   const rows = await select<WorldRecord>(`select=${COLUMNS},level,questions&${where}&order=points.desc,played_at.asc&limit=1`)
-  return rows[0]
+  return withPending(rows, (p) => p.game === game && (!country || p.country === country), pendingRow, 1)[0]
 }
 
 /*
@@ -150,16 +171,18 @@ function cachedRows(country?: string): BoardRow[] | null {
   return worldCache.value.country?.code === country ? worldCache.value.country.rows : null
 }
 
-/** Les 10 meilleurs d'un classement d'après le cache, ou undefined s'il n'est pas chargé. */
+/** Les 10 meilleurs d'un classement d'après le cache (scores en attente d'envoi compris), ou undefined s'il n'est pas chargé. */
 export function cachedBoard(board: Board, country?: string): WorldScore[] | undefined {
-  return cachedRows(country)?.filter((r) => sameBoard(r, board)).sort(byPoints).slice(0, CACHE_LIMIT)
+  const rows = cachedRows(country)?.filter((r) => sameBoard(r, board)).sort(byPoints).slice(0, CACHE_LIMIT)
+  return rows && withPending(rows, (p) => sameBoard(p, board) && (!country || p.country === country), pendingRow, CACHE_LIMIT)
 }
 
 /** Record d'un jeu d'après le cache : { record } (éventuellement absent), ou undefined si rien n'est chargé. */
 export function cachedRecord(game: GameId, country?: string): { record?: WorldRecord } | undefined {
   const rows = cachedRows(country)
   if (!rows) return undefined
-  return { record: rows.filter((r) => r.game === game).sort(byPoints)[0] }
+  const best = rows.filter((r) => r.game === game).sort(byPoints).slice(0, 1)
+  return { record: withPending(best, (p) => p.game === game && (!country || p.country === country), pendingRow, 1)[0] }
 }
 
 /** Remplace en cache les lignes d'un classement (après un chargement à jour depuis la base). */
@@ -175,9 +198,10 @@ export function updateCachedBoard(board: Board, rows: readonly WorldScore[], cou
 /** Ajoute un score qui vient d'être enregistré au cache (monde, et pays s'il est chargé), en gardant les 10 meilleurs. */
 function addToCache(score: PendingScore) {
   const board = { game: score.game, level: score.level, questions: score.questions }
-  const row: WorldScore = { name: score.name, country: score.country, points: score.points, correct: score.correct, played_at: score.played_at }
+  const row: WorldScore = { name: score.name, country: score.country, points: score.points, correct: score.correct, played_at: score.played_at, player_id: score.player_id }
   for (const country of [undefined, score.country]) {
-    const top = cachedBoard(board, country)
+    // Lignes du cache telles quelles (cachedBoard y ajoute déjà les scores en attente, dont celui-ci).
+    const top = cachedRows(country)?.filter((r) => sameBoard(r, board))
     if (top) updateCachedBoard(board, [...top, row].sort(byPoints).slice(0, CACHE_LIMIT), country)
   }
 }
@@ -209,15 +233,6 @@ watch(
   (country) => void preloadWorldScores(country),
 )
 
-function uuid(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
-  // Repli (anciens navigateurs) : UUID v4 tiré avec Math.random.
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
-  })
-}
-
 function loadPending(): PendingScore[] {
   try {
     const raw = JSON.parse(localStorage.getItem(PENDING_KEY) ?? '[]')
@@ -246,15 +261,23 @@ function toPending(board: Board, entry: ScoreEntry, country: string): PendingSco
     points: entry.points,
     correct: entry.correct,
     played_at: entry.date,
+    player_id: entry.playerId ?? null,
   }
 }
 
 let flushing: Promise<void> | null = null
 
+/**
+ * Incrémenté chaque fois que des scores sont arrivés dans la base : le Hall of fame et les meilleurs scores
+ * ouverts se rechargent alors.
+ */
+export const worldVersion = ref(0)
+
 /** Envoie les scores en attente ; ceux qui ne partent pas (pas de connexion) restent dans la file. */
 export function flushPending(): Promise<void> {
   if (!worldEnabled) return Promise.resolve()
   flushing ??= (async () => {
+    let arrived = 0
     try {
       for (const score of loadPending()) {
         let sent = false
@@ -262,6 +285,7 @@ export function flushPending(): Promise<void> {
           const res = await request('scores', { method: 'POST', body: JSON.stringify(score), headers: { Prefer: 'return=minimal' } })
           // 409 : déjà enregistré (envoi précédent dont la réponse s'est perdue) ; 400 : refusé par la base, inutile d'insister.
           sent = res.ok || res.status === 409 || res.status === 400
+          if (res.ok || res.status === 409) arrived++
         } catch {
           break // Pas de connexion : on réessaiera plus tard.
         }
@@ -269,6 +293,11 @@ export function flushPending(): Promise<void> {
       }
     } finally {
       flushing = null
+    }
+    // Des scores sont arrivés : les classements en cache sont rechargés, puis les écrans ouverts.
+    if (arrived) {
+      await preloadWorldScores().catch(() => {})
+      worldVersion.value++
     }
   })()
   return flushing

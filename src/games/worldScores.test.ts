@@ -35,13 +35,15 @@ describe('Classement mondial', () => {
     vi.stubGlobal('fetch', fetch)
     const w = await loadModule()
     expect(w.worldEnabled).toBe(true)
-    await w.submitScore(board, entry, 'BE')
+    await w.submitScore(board, { ...entry, playerId: '11111111-2222-4333-8444-555555555555' }, 'BE')
     const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit]
     expect(url).toBe('https://exemple.supabase.co/rest/v1/scores')
     expect(init.method).toBe('POST')
     expect((init.headers as Record<string, string>).apikey).toBe('cle-publique')
     const body = JSON.parse(String(init.body))
     expect(body).toMatchObject({ game: 'accords', level: 'normal', questions: 20, name: 'Arno', country: 'BE', points: 12345, correct: 18 })
+    // L'identifiant technique du joueur part avec le score.
+    expect(body.player_id).toBe('11111111-2222-4333-8444-555555555555')
     expect(body.client_id).toMatch(/^[0-9a-f-]{36}$/)
     expect(JSON.parse(localStorage.getItem('harmowhat.pendingScores')!)).toEqual([])
   })
@@ -89,8 +91,10 @@ describe('Classement mondial', () => {
     const w = await loadModule()
     await w.uploadLocalScoresOnce()
     await w.uploadLocalScoresOnce()
-    expect(fetch).toHaveBeenCalledTimes(2)
-    const sent = fetch.mock.calls.map((c) => JSON.parse(String((c as unknown as [string, RequestInit])[1].body)))
+    // Les envois (POST) seulement : après eux, les classements en cache sont rechargés (GET).
+    const posts = fetch.mock.calls.map((c) => (c as unknown as [string, RequestInit])[1]).filter((init) => init.method === 'POST')
+    expect(posts).toHaveLength(2)
+    const sent = posts.map((init) => JSON.parse(String(init.body)))
     expect(sent.map((s) => [s.name, s.points, s.country, s.played_at])).toEqual([
       ['Arno', 12345, 'CA', entry.date],
       ['Léa', 9000, 'CA', entry.date],
@@ -99,11 +103,17 @@ describe('Classement mondial', () => {
 
   it('charge les classements en cache au lancement, et y ajoute le score qui vient d’être enregistré', async () => {
     const row = (name: string, country: string, points: number, game = 'accords') =>
-      ({ game, level: 'normal', questions: 20, name, country, points, correct: 15, played_at: entry.date })
-    const fetch = vi.fn(async (url: string) => {
-      if (url.includes('/top_world?')) return Response.json([row('Lucie', 'BE', 15000), row('Kenji', 'JP', 12000), row('Maya', 'CA', 18000, 'grave-ou-aigu')])
-      if (url.includes('/top_country?')) return Response.json([row('Arno', 'FR', 9000)])
-      return new Response(null, { status: 201 })
+      ({ game, level: 'normal', questions: 20, name, country, points, correct: 15, played_at: entry.date, player_id: null })
+    // Faux serveur : les vues renvoient aussi les scores reçus depuis.
+    const received: ReturnType<typeof row>[] = []
+    const fetch = vi.fn(async (url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        received.push(JSON.parse(String(init.body)))
+        return new Response(null, { status: 201 })
+      }
+      if (url.includes('/top_world?')) return Response.json([row('Lucie', 'BE', 15000), row('Kenji', 'JP', 12000), row('Maya', 'CA', 18000, 'grave-ou-aigu'), ...received])
+      if (url.includes('/top_country?')) return Response.json([row('Arno', 'FR', 9000), ...received.filter((r) => r.country === 'FR')])
+      return Response.json([])
     })
     vi.stubGlobal('fetch', fetch)
     const w = await loadModule()
@@ -121,9 +131,31 @@ describe('Classement mondial', () => {
     // Gardé sur l'appareil : un nouveau lancement le retrouve, même sans connexion.
     expect(JSON.parse(localStorage.getItem('harmowhat.worldCache')!).world).toHaveLength(3)
 
+    // Le score enregistré entre dans le cache (monde et pays), sans doublon, et les écrans sont prévenus.
+    const version = w.worldVersion.value
     await w.submitScore(board, { ...entry, points: 13000 }, 'FR')
     expect(w.cachedBoard(board)?.map((r) => r.name)).toEqual(['Lucie', 'Arno', 'Kenji'])
     expect(w.cachedBoard(board, 'FR')?.map((r) => r.points)).toEqual([13000, 9000])
+    expect(w.worldVersion.value).toBe(version + 1)
+  })
+
+  it('montre tout de suite un score en attente d’envoi dans les classements lus dans la base', async () => {
+    localStorage.setItem('harmowhat.scoringVersion', '2')
+    const fetch = vi.fn(async (_url: string, init?: RequestInit): Promise<Response> => {
+      if (init?.method === 'POST') throw new TypeError('Failed to fetch') // L'envoi ne passe pas…
+      return Response.json([{ name: 'Lucie', country: 'BE', points: 15000, correct: 18, played_at: entry.date, player_id: null }])
+    })
+    vi.stubGlobal('fetch', fetch)
+    const w = await loadModule()
+    const version = w.worldVersion.value
+    await w.submitScore(board, { ...entry, points: 16000, playerId: 'p1' }, 'FR')
+    expect(w.worldVersion.value).toBe(version) // Rien n'est arrivé dans la base.
+    // … mais le score figure dans le classement mondial et dans celui de la France.
+    expect((await w.fetchBoard(board)).map((r) => [r.name, r.points])).toEqual([['Arno', 16000], ['Lucie', 15000]])
+    expect((await w.fetchBoard(board, 'FR')).map((r) => r.player_id)).toContain('p1')
+    expect((await w.fetchRecord('accords'))?.points).toBe(16000)
+    // Pas dans un autre classement.
+    expect((await w.fetchBoard({ ...board, questions: 10 })).map((r) => r.points)).toEqual([15000])
   })
 
   it('garde le cache précédent si le chargement échoue', async () => {

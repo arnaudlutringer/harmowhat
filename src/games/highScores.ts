@@ -28,6 +28,8 @@ export interface ScoreEntry {
   correct: number
   /** Date de la partie (ISO). */
   date: string
+  /** Identifiant technique du joueur (profil Mon compte) qui a fait ce score. */
+  playerId?: string
 }
 
 export const MAX_ENTRIES = 10
