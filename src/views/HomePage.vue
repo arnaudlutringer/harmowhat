@@ -14,15 +14,19 @@
         </ion-button>
       </div>
       <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
-      <div class="games">
-        <ion-card v-for="game in games" :key="game.path" button :router-link="game.path" :style="{ '--background': game.color }">
-          <ion-card-header>
-            <div class="emoji" aria-hidden="true">{{ game.emoji }}</div>
-            <ion-card-title>{{ game.title }}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>{{ game.description }}</ion-card-content>
-        </ion-card>
-      </div>
+      <!-- Les jeux, rangés par catégorie : l'oreille (on écoute), le solfège (on lit la partition). -->
+      <section v-for="category in categories" :key="category.title" class="category">
+        <h2>{{ category.title }}</h2>
+        <div class="games">
+          <ion-card v-for="game in category.games" :key="game.path" button :router-link="game.path" :style="{ '--background': game.color }">
+            <ion-card-header>
+              <div class="emoji" aria-hidden="true">{{ game.emoji }}</div>
+              <ion-card-title>{{ game.title }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>{{ game.description }}</ion-card-content>
+          </ion-card>
+        </div>
+      </section>
       <ion-button class="hall" expand="block" router-link="/hall-of-fame">
         <ion-icon slot="start" :icon="trophyOutline" />
         Hall of fame
@@ -38,7 +42,7 @@ import {
 import { informationCircleOutline, settingsOutline, trophyOutline } from 'ionicons/icons'
 import { GAMES } from '@/games/highScores'
 
-const games = [
+const earGames = [
   {
     path: '/games/grave-ou-aigu',
     color: 'var(--hw-game-1)',
@@ -51,7 +55,7 @@ const games = [
     color: 'var(--hw-game-2)',
     emoji: GAMES['quelle-note'].emoji,
     title: 'Quelle est la note ?',
-    description: 'Retrouve la note jouée parmi plusieurs propositions. Choisis le nombre de questions et ton niveau.',
+    description: 'Retrouve la note jouée parmi plusieurs propositions.',
   },
   {
     path: '/games/accords',
@@ -67,6 +71,9 @@ const games = [
     title: 'Les harmonies',
     description: "Deux notes l'une après l'autre : trouve l'intervalle (tierce, quinte, sixte…).",
   },
+]
+
+const theoryGames = [
   {
     path: '/games/lecture-note',
     color: 'var(--hw-game-5)',
@@ -74,6 +81,11 @@ const games = [
     title: 'Lecture de note',
     description: "Une note sur une portée, en clé de sol, de fa ou d'ut : quelle est cette note ?",
   },
+]
+
+const categories = [
+  { title: "L'oreille", games: earGames },
+  { title: 'Le solfège', games: theoryGames },
 ]
 </script>
 
@@ -93,6 +105,17 @@ h1 {
   color: var(--ion-color-medium);
   text-align: center;
 }
+/* Titre de catégorie : la police manuscrite du titre, en violet. */
+.category h2 {
+  margin: 20px 0 10px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+}
+.category:first-of-type h2 {
+  margin-top: 4px;
+}
 .games {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -105,13 +128,19 @@ ion-card {
   --color: #fff;
   box-shadow: 0 6px 16px rgba(45, 48, 71, 0.15);
 }
+/* En-tête de carte : l'icône du jeu à gauche, son titre à droite, aligné à droite. */
 ion-card-header {
-  padding: 14px 12px 6px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 12px 8px;
 }
 ion-card-title {
+  flex: 1;
   color: #fff;
   font-size: 18px;
   font-weight: 700;
+  text-align: right;
 }
 ion-card-content {
   color: #fff;
@@ -120,8 +149,9 @@ ion-card-content {
   line-height: 1.35;
 }
 .emoji {
+  flex: none;
   font-size: 30px;
-  margin-bottom: 6px;
+  line-height: 1;
   text-shadow: none;
 }
 .hall {
