@@ -17,6 +17,11 @@ export interface QuizOptions<Q> {
   play: (question: Q) => Promise<number>
   /** Délai avant de passer à la question suivante après une réponse (ms), ou null pour attendre le joueur. */
   advanceDelay?: number | null
+  /**
+   * Délai entre le début du premier son et le début du décompte des points (ms), par défaut 50 ms.
+   * Avec ce réglage, les réponses ne s'ouvrent qu'à ce moment-là (ex. la dernière note d'une gamme).
+   */
+  countdownStart?: (question: Q) => number
 }
 
 /**
@@ -26,7 +31,7 @@ export interface QuizOptions<Q> {
 /** Délai du passage automatique à la question suivante, après une réponse (ms). */
 export const ADVANCE_DELAY = 1500
 
-export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY }: QuizOptions<Q>) {
+export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart }: QuizOptions<Q>) {
   const index = ref(0)
   const question = shallowRef<Q>(createQuestion())
   const hasListened = ref(false)
@@ -69,7 +74,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   /**
    * Joue la question. La première écoute est gratuite et le décompte des points démarre
-   * 50 ms après le début du son ; chaque réécoute coûte 200 points.
+   * 50 ms après le début du son (ou au délai propre au jeu) ; chaque réécoute coûte 200 points.
    */
   function listen(): Promise<void> {
     const q = question.value
@@ -80,15 +85,17 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
       .track(play(q))
       .then(() => {
         if (question.value !== q || !questionOpen()) return
-        hasListened.value = true
+        // Délai propre au jeu : les réponses s'ouvrent avec le décompte ; sinon, dès le début du son.
+        if (!countdownStart || !first) hasListened.value = true
         if (!first) return
         const c = clock
         clockTimer = setTimeout(() => {
           if (c !== clock) return
+          hasListened.value = true
           if (paused) return void (startPending = true)
           c.start()
           tick()
-        }, COUNTDOWN_DELAY_MS)
+        }, countdownStart ? countdownStart(q) : COUNTDOWN_DELAY_MS)
       })
       .catch(() => {})
   }

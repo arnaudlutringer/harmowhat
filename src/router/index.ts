@@ -28,6 +28,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/fais-harmonie/jouer', component: () => import('@/views/MakeHarmonyGame.vue') },
   { path: '/games/tonalite', component: () => import('@/views/KeySignatureSettings.vue') },
   { path: '/games/tonalite/jouer', component: () => import('@/views/KeySignatureGame.vue') },
+  { path: '/games/modalite', component: () => import('@/views/ModalitySettings.vue') },
+  { path: '/games/modalite/jouer', component: () => import('@/views/ModalityGame.vue') },
 ]
 
 const router = createRouter({

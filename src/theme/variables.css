@@ -64,6 +64,7 @@
   --hw-game-5: #e84393;
   --hw-game-6: #6c5ce7;
   --hw-game-7: #0097a7;
+  --hw-game-8: #d35400;
 }
 
 /* Les boutons et champs HTML (hors composants Ionic) prennent aussi la police de l'appli. */

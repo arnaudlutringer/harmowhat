@@ -71,6 +71,13 @@ const earGames = [
     title: 'Les harmonies',
     description: "Deux notes l'une après l'autre : trouve l'intervalle (tierce, quinte, sixte…).",
   },
+  {
+    path: '/games/modalite',
+    color: 'var(--hw-game-8)',
+    emoji: GAMES.modalite.emoji,
+    title: 'La modalité',
+    description: "Devine la modalité à l'oreille.",
+  },
 ]
 
 const theoryGames = [
