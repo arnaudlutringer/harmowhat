@@ -109,16 +109,20 @@ function colorFor(id: ModeId) {
 }
 .hint {
   color: var(--ion-color-medium);
-  margin: 12px 0 20px;
+  margin: 8px 0 14px;
   text-align: center;
 }
 .sheet :deep(.staff) {
   color: #222;
 }
-/* VexFlow fixe la taille du dessin en style ; ici la portée occupe toute la largeur de la feuille. */
+/* VexFlow fixe la taille du dessin en style ; ici la portée est limitée en hauteur (même proportions, centrée),
+   pour que la question, la réponse et le message tiennent sans défilement sur un téléphone. */
 .sheet :deep(svg) {
-  width: 100% !important;
-  height: auto !important;
+  display: block;
+  height: 124px !important;
+  width: auto !important;
+  max-width: 100%;
+  margin: 0 auto;
 }
 .choices {
   display: grid;
@@ -127,7 +131,7 @@ function colorFor(id: ModeId) {
 }
 .choices ion-button {
   margin: 0;
-  height: 48px;
+  height: 42px;
   font-size: 16px;
   text-transform: none;
 }
