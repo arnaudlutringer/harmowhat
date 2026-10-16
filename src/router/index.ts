@@ -24,6 +24,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/harmonies/jouer', component: () => import('@/views/IntervalsGame.vue') },
   { path: '/games/lecture-note', component: () => import('@/views/ReadNoteSettings.vue') },
   { path: '/games/lecture-note/jouer', component: () => import('@/views/ReadNoteGame.vue') },
+  { path: '/games/fais-harmonie', component: () => import('@/views/MakeHarmonySettings.vue') },
+  { path: '/games/fais-harmonie/jouer', component: () => import('@/views/MakeHarmonyGame.vue') },
 ]
 
 const router = createRouter({

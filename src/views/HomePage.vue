@@ -81,6 +81,13 @@ const theoryGames = [
     title: 'Lecture de note',
     description: "Une note sur une portée, en clé de sol, de fa ou d'ut : quelle est cette note ?",
   },
+  {
+    path: '/games/fais-harmonie',
+    color: 'var(--hw-game-6)',
+    emoji: GAMES['fais-harmonie'].emoji,
+    title: "Fais l'harmonie",
+    description: 'Une note sur une portée et un intervalle : quelle note forme cette harmonie (la quinte du Do, la septième du Ré♯…) ?',
+  },
 ]
 
 const categories = [

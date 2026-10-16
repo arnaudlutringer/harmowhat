@@ -111,7 +111,7 @@ export function stepRange(clef: ClefId, ledgerLines: number): { low: number; hig
  * Altération au hasard : une note sur trois environ est altérée. On n'écrit ni Mi♯, ni Fa♭,
  * ni Si♯, ni Do♭ : chaque note altérée est une touche noire.
  */
-function randomAlter(letter: number): Alter {
+export function randomAlter(letter: number): Alter {
   if (Math.random() < 0.65) return 0
   const options: Alter[] = []
   if (letter !== 2 && letter !== 6) options.push(1)
