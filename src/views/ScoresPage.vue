@@ -46,7 +46,10 @@
         </template>
         <p v-else class="empty">Pas encore de score ici. À toi de jouer !</p>
 
-        <ion-button expand="block" size="large" @click="replay">Rejouer</ion-button>
+        <ion-button expand="block" size="large" @click="replay">
+          <span class="game-emoji" aria-hidden="true">{{ info.emoji }}</span>
+          Jouer
+        </ion-button>
         <ion-button expand="block" fill="outline" @click="home">Accueil</ion-button>
       </div>
     </ion-content>
@@ -206,6 +209,10 @@ h2 {
   margin: 28px 0;
   text-align: center;
   color: var(--ion-color-medium);
+}
+.game-emoji {
+  margin-right: 10px;
+  font-size: 22px;
 }
 ion-button + ion-button {
   margin-top: 8px;

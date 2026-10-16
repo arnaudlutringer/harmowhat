@@ -36,40 +36,41 @@ import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonPage,
 } from '@ionic/vue'
 import { informationCircleOutline, settingsOutline, trophyOutline } from 'ionicons/icons'
+import { GAMES } from '@/games/highScores'
 
 const games = [
   {
     path: '/games/grave-ou-aigu',
     color: 'var(--hw-game-1)',
-    emoji: '↕️',
+    emoji: GAMES['grave-ou-aigu'].emoji,
     title: 'Grave ou aigu ?',
     description: 'La note jouée est-elle plus grave ou plus aiguë que le La3 du diapason ?',
   },
   {
     path: '/games/quelle-note',
     color: 'var(--hw-game-2)',
-    emoji: '🎹',
+    emoji: GAMES['quelle-note'].emoji,
     title: 'Quelle est la note ?',
     description: 'Retrouve la note jouée parmi plusieurs propositions. Choisis le nombre de questions et ton niveau.',
   },
   {
     path: '/games/accords',
     color: 'var(--hw-game-3)',
-    emoji: '🎼',
+    emoji: GAMES['accords'].emoji,
     title: 'Les accords',
     description: 'Trois notes jouées ensemble, entre La2 et La4 : retrouve-les toutes les trois.',
   },
   {
     path: '/games/harmonies',
     color: 'var(--hw-game-4)',
-    emoji: '🎵',
+    emoji: GAMES['harmonies'].emoji,
     title: 'Les harmonies',
     description: "Deux notes l'une après l'autre : trouve l'intervalle (tierce, quinte, sixte…).",
   },
   {
     path: '/games/lecture-note',
     color: 'var(--hw-game-5)',
-    emoji: '👀',
+    emoji: GAMES['lecture-note'].emoji,
     title: 'Lecture de note',
     description: "Une note sur une portée, en clé de sol, de fa ou d'ut : quelle est cette note ?",
   },

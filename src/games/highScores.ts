@@ -32,6 +32,8 @@ export const MAX_NAME_LENGTH = 10
 
 interface GameInfo {
   title: string
+  /** Icône du jeu (accueil, bouton Jouer des meilleurs scores). */
+  emoji: string
   /** Niveaux proposés (identifiant et libellé), dans l'ordre d'affichage. */
   levels: { id: string; label: string }[]
   questionCounts: readonly number[]
@@ -40,22 +42,26 @@ interface GameInfo {
 export const GAMES: Record<GameId, GameInfo> = {
   'grave-ou-aigu': {
     title: 'Grave ou aigu ?',
+    emoji: '↕️',
     levels: Object.entries(HIGH_LOW_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: HIGH_LOW_COUNTS,
   },
   'quelle-note': {
     title: 'Quelle est la note ?',
+    emoji: '🎹',
     levels: Object.entries(NOTE_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: NOTE_COUNTS,
   },
   accords: {
     title: 'Les accords',
+    emoji: '🎼',
     levels: Object.entries(CHORD_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: CHORD_COUNTS,
   },
   // Aux harmonies, la précision fait partie du niveau : « Normal · Précise » n'est pas comparable à « Normal · Simple ».
   harmonies: {
     title: 'Les harmonies',
+    emoji: '🎵',
     levels: Object.entries(INTERVAL_LEVELS).flatMap(([level, cfg]) =>
       Object.entries(PRECISIONS).map(([precision, p]) => ({ id: `${level}-${precision}`, label: `${cfg.label} · ${p.label}` })),
     ),
@@ -63,6 +69,7 @@ export const GAMES: Record<GameId, GameInfo> = {
   },
   'lecture-note': {
     title: 'Lecture de note',
+    emoji: '👀',
     levels: Object.entries(READ_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: READ_COUNTS,
   },
