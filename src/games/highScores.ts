@@ -56,7 +56,7 @@ export const GAMES: Record<GameId, GameInfo> = {
   },
   'quelle-note': {
     title: 'Quelle est la note ?',
-    emoji: '🎹',
+    emoji: '👂',
     levels: Object.entries(NOTE_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: NOTE_COUNTS,
   },
@@ -95,7 +95,7 @@ export const GAMES: Record<GameId, GameInfo> = {
   },
   modalite: {
     title: 'La modalité',
-    emoji: '🧭',
+    emoji: '🎭',
     levels: Object.entries(MODALITY_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: MODALITY_COUNTS,
   },
