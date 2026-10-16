@@ -88,6 +88,13 @@ const theoryGames = [
     title: "Fais l'harmonie",
     description: 'Une note sur une portée et un intervalle : quelle note forme cette harmonie (la quinte du Do, la septième du Ré♯…) ?',
   },
+  {
+    path: '/games/tonalite',
+    color: 'var(--hw-game-7)',
+    emoji: GAMES.tonalite.emoji,
+    title: 'La tonalité',
+    description: "Trouve la tonalité en regardant l'armure de la portée : ses dièses, ses bémols… ou rien.",
+  },
 ]
 
 const categories = [
