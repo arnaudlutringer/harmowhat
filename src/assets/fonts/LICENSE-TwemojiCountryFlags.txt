@@ -1,0 +1,6 @@
+TwemojiCountryFlags.woff2 : police « Twemoji Country Flags » du projet country-flag-emoji-polyfill (TalkJS),
+version 0.1.10, https://github.com/talkjs/country-flag-emoji-polyfill — fichier non modifié.
+
+Dessins des drapeaux : Twemoji (https://github.com/twitter/twemoji), Copyright Twitter, Inc. et autres contributeurs,
+sous licence Creative Commons Attribution 4.0 International (CC BY 4.0) : https://creativecommons.org/licenses/by/4.0/
+Code du projet : licence MIT, Copyright (c) 2022 TalkJS.

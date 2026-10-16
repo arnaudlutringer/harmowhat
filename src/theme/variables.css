@@ -2,6 +2,16 @@
  * Palette « Partition pop » : fond crème clair, pas d'en-tête, une couleur vive par jeu,
  * boutons blancs à angles droits, bouton de lecture rond violet (corail pendant le son).
  */
+
+/* Drapeaux des pays (Twemoji, CC BY 4.0 — voir src/assets/fonts/LICENSE-TwemojiCountryFlags.txt) :
+   la police ne sert qu'aux lettres « indicateur régional » qui forment les drapeaux. */
+@font-face {
+  font-family: 'Twemoji Country Flags';
+  src: url('../assets/fonts/TwemojiCountryFlags.woff2') format('woff2');
+  unicode-range: U+1F1E6-1F1FF;
+  font-display: swap;
+}
+
 :root {
   --ion-color-primary: #6c5ce7;
   --ion-color-primary-rgb: 108, 92, 231;
@@ -37,8 +47,9 @@
   --ion-text-color-rgb: 45, 48, 71;
   --ion-item-background: transparent;
 
-  /* Police ronde et ludique ; les signes ♯ et ♭, absents de Fredoka, viennent de la police système. */
-  --ion-font-family: 'Fredoka Variable', system-ui, sans-serif;
+  /* Police ronde et ludique ; les signes ♯ et ♭, absents de Fredoka, viennent de la police système.
+     Les drapeaux des pays viennent de « Twemoji Country Flags » (Windows n'a pas de drapeaux en émojis). */
+  --ion-font-family: 'Twemoji Country Flags', 'Fredoka Variable', system-ui, sans-serif;
 
   /* Boutons des jeux : blancs, texte violet, angles droits. */
   --hw-button: #ffffff;

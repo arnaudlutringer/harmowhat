@@ -36,6 +36,20 @@
             </ion-label>
           </ion-item>
         </ion-list>
+
+        <h2>Images</h2>
+        <ion-list lines="full">
+          <ion-item>
+            <ion-label class="ion-text-wrap">
+              <strong>🇫🇷 Drapeaux des pays</strong>
+              <p>Twemoji (Twitter, Inc. et contributeurs), police Twemoji Country Flags de TalkJS.</p>
+              <p>
+                Licence
+                <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
       </div>
     </ion-content>
   </ion-page>
