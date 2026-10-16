@@ -84,7 +84,11 @@ h1 {
   font-weight: 700;
   color: var(--ion-color-primary);
 }
+/* Même police manuscrite que le titre, un peu plus grande que le texte courant pour rester lisible. */
 .intro {
+  font-family: 'Dancing Script', cursive;
+  font-size: 22px;
+  font-weight: 600;
   color: var(--ion-color-medium);
   text-align: center;
 }
