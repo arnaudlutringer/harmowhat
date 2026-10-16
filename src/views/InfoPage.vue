@@ -25,6 +25,16 @@
               </p>
             </ion-label>
           </ion-item>
+          <ion-item>
+            <ion-label class="ion-text-wrap">
+              <strong>⚡ Guitare électrique</strong>
+              <p>tonejs-instruments, par Nicholaus Brosowsky.</p>
+              <p>
+                Licence
+                <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>.
+              </p>
+            </ion-label>
+          </ion-item>
         </ion-list>
       </div>
     </ion-content>

@@ -11,7 +11,11 @@ describe('Instruments', () => {
     for (const s of sampleMidis(inst)) {
       expect(existsSync(new URL(`../../public/samples/${inst.id}/${s}.mp3`, import.meta.url))).toBe(true)
     }
-    for (let m = inst.low; m <= inst.high; m++) expect(Math.abs(nearestSample(inst, m) - m)).toBeLessThanOrEqual(1)
+    // Exception : le ré aigu de la guitare électrique est joué à partir du do (dernier échantillon de tonejs-instruments).
+    for (let m = inst.low; m <= inst.high; m++) {
+      const max = inst.id === 'electric-guitar' && m === inst.high ? 2 : 1
+      expect(Math.abs(nearestSample(inst, m) - m)).toBeLessThanOrEqual(max)
+    }
   })
 
   it.each(all)('$label : les questions restent dans la tessiture', (inst) => {

@@ -17,9 +17,14 @@ export interface Instrument {
   /** Note la plus grave et la plus aiguë jouables (MIDI, bornes incluses). */
   low: number
   high: number
-  /** Volume relatif, pour équilibrer les instruments entre eux (les sons Musyng Kite sont enregistrés plus bas). */
+  /** Volume relatif, pour équilibrer les instruments entre eux (les sons Musyng Kite sont enregistrés plus bas, ceux de tonejs-instruments bien plus fort). */
   gain: number
+  /** Notes échantillonnées, quand elles ne suivent pas la grille par tierces mineures depuis la note la plus grave. */
+  samples?: readonly number[]
 }
+
+/** Guitare électrique (tonejs-instruments) : mi grave, puis une note toutes les tierces mineures de fa♯ à do aigu. */
+const ELECTRIC_GUITAR_SAMPLES = [40, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84]
 
 export const INSTRUMENTS: Record<InstrumentId, Instrument> = {
   piano: { id: 'piano', label: 'Piano', emoji: '🎹', low: PIANO_LOWEST, high: PIANO_HIGHEST, gain: 1 },
@@ -30,22 +35,23 @@ export const INSTRUMENTS: Record<InstrumentId, Instrument> = {
   accordion: { id: 'accordion', label: 'Accordéon', emoji: '🪗', low: 53, high: 93, gain: 2 },
   guitar: { id: 'guitar', label: 'Guitare', emoji: '🎸', low: 40, high: 83, gain: 1.8 },
   flute: { id: 'flute', label: 'Flûte traversière', emoji: '🪈', low: 60, high: 96, gain: 1.2 },
-  'electric-guitar': { id: 'electric-guitar', label: 'Guitare électrique', emoji: '⚡', low: 40, high: 86, gain: 1.8 },
+  'electric-guitar': { id: 'electric-guitar', label: 'Guitare électrique', emoji: '⚡', low: 40, high: 86, gain: 0.23, samples: ELECTRIC_GUITAR_SAMPLES },
 }
 
 export const DEFAULT_INSTRUMENT: InstrumentId = 'piano'
 
 const SAMPLE_STEP = 3
 
-/** Notes échantillonnées : une toutes les tierces mineures, plus la note la plus aiguë. */
+/** Notes échantillonnées : une toutes les tierces mineures, plus la note la plus aiguë (ou la liste propre à l'instrument). */
 export function sampleMidis(inst: Instrument): number[] {
+  if (inst.samples) return [...inst.samples]
   const midis: number[] = []
   for (let m = inst.low; m <= inst.high; m += SAMPLE_STEP) midis.push(m)
   if (midis[midis.length - 1] < inst.high) midis.push(inst.high)
   return midis
 }
 
-/** L'échantillon le plus proche d'une note (à un demi-ton au plus dans la tessiture). */
+/** L'échantillon le plus proche d'une note (à un demi-ton au plus dans la tessiture, deux pour le ré aigu de la guitare électrique). */
 export function nearestSample(inst: Instrument, midi: number): number {
   return sampleMidis(inst).reduce((best, s) => (Math.abs(s - midi) < Math.abs(best - midi) ? s : best))
 }

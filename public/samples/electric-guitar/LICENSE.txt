@@ -1,11 +1,10 @@
-Musyng Kite SoundFont, instrument « electric_guitar_clean »
-Rendu MP3 : projet MIDI.js Soundfonts de Benjamin Gleitzman
-https://github.com/gleitz/midi-js-soundfonts (dossier MusyngKite)
-Licence : Creative Commons Attribution - Partage dans les mêmes conditions 3.0 (CC BY-SA 3.0)
-https://creativecommons.org/licenses/by-sa/3.0/
+tonejs-instruments, instrument « guitar-electric »
+Échantillons de Nicholaus Brosowsky : https://github.com/nbrosowsky/tonejs-instruments
+Licence : Creative Commons Attribution 3.0 (CC BY 3.0)
+https://creativecommons.org/licenses/by/3.0/
 
 Fichiers non modifiés, téléchargés par `npm run samples` (scripts/fetch-samples.mjs).
 Le volume est équilibré dans le code (src/audio/instruments.ts).
 
-Les fichiers sont renommés par numéro MIDI (69 = La3/A4 = 440 Hz),
-un échantillon toutes les tierces mineures sur la tessiture de l'instrument.
+Les fichiers sont renommés par numéro MIDI (69 = La3/A4 = 440 Hz) :
+mi grave (40), puis une note toutes les tierces mineures de fa♯ (42) à do aigu (84).
