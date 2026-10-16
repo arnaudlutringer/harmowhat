@@ -243,8 +243,14 @@ useBackButton(20, (processNextHandler) => {
 .progress {
   flex: 1;
 }
+/* Diapason : bouton rond (les autres boutons du jeu sont carrés). */
 .fork {
   margin: -4px 0 0;
+  width: 48px;
+  height: 48px;
+  --border-radius: 50%;
+  --padding-start: 0;
+  --padding-end: 0;
   --color: var(--ion-color-primary);
 }
 .points {
