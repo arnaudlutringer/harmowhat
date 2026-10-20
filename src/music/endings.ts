@@ -58,7 +58,7 @@ export interface Ending {
 }
 
 export type EndingId =
-  | 'kenz' | 'elise'| 'moonlight' | 'turkish-march'
+  | 'blues' | 'elise'| 'moonlight' | 'turkish-march'
   | 'bach-prelude' | 'swan' | 'dvorak'
   | 'te-deum' | 'taps'
   | 'skaters' | 'over-the-waves' | 'blue-danube'
@@ -69,7 +69,7 @@ export type EndingId =
   | 'spring' | 'bella-ciao' | 'romance'
 
 const PIECES: Record<EndingId, Ending> = {
-  kenz: { id: 'kenz', title: 'KenZ', composer: 'enregistrement', notes: [], unit: 1, recording: 'music/KenZ.mp3' },
+  blues: { id: 'blues', title: 'Slow Piano Blues', composer: 'Juliush', notes: [], unit: 1, recording: 'music/slow-piano-blues.mp3' },
   elise: { id: 'elise', title: 'La Lettre à Élise', composer: 'Beethoven', notes: FUR_ELISE, unit: FUR_ELISE_SIXTEENTH },
   moonlight: { id: 'moonlight', title: 'Sonate au clair de lune (3ᵉ mvt)', composer: 'Beethoven', notes: MOONLIGHT, unit: MOONLIGHT_SIXTEENTH },
   'turkish-march': {
@@ -122,7 +122,7 @@ for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSecon
 
 /** Morceaux proposés pour chaque instrument ; le premier est celui par défaut. */
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
-  piano: ['kenz', 'elise', 'moonlight', 'turkish-march'],
+  piano: ['blues', 'elise', 'moonlight', 'turkish-march'],
   violin: ['spring', 'mendelssohn', 'danse-macabre'],
   cello: ['bach-prelude', 'swan', 'dvorak'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao'],
@@ -148,17 +148,17 @@ export function endingsFor(instrument: InstrumentId): Ending[] {
 
 const STORAGE_KEY = 'harmowhat.endings'
 
-const KENZ_KEY = 'harmowhat.endings.kenz'
+const BLUES_KEY = 'harmowhat.endings.blues'
 
 function loadChoices(): Partial<Record<InstrumentId, EndingId>> {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
     const choices = raw && typeof raw === 'object' ? raw : {}
-    // KenZ remplace une fois la Lettre à Élise, jusque-là jouée par défaut au piano (et mémorisée comme choisie).
-    if (!localStorage.getItem(KENZ_KEY)) {
-      localStorage.setItem(KENZ_KEY, '1')
-      if (choices.piano === 'elise') {
-        choices.piano = 'kenz'
+    // Le Slow Piano Blues remplace une fois la Lettre à Élise, jusque-là jouée par défaut au piano (et mémorisée comme choisie).
+    if (!localStorage.getItem(BLUES_KEY)) {
+      localStorage.setItem(BLUES_KEY, '1')
+      if (choices.piano === 'elise' || choices.piano === 'kenz') {
+        choices.piano = 'blues'
         localStorage.setItem(STORAGE_KEY, JSON.stringify(choices))
       }
     }

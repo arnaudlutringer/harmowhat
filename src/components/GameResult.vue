@@ -138,7 +138,7 @@ const emoji = computed(() => ({ great: '🏆', good: '🎶', poor: '🎧' })[tie
 // que le joueur a fait d'erreurs (voir music/drunk.ts). Tirée une fois pour cet écran.
 const wrongRatio = props.total ? (props.total - summary.value.correct) / props.total : 0
 const wrongPercent = Math.round(wrongRatio * 100)
-// Un enregistrement (KenZ au piano) est joué tel quel, sans fausses notes.
+// Un enregistrement (Slow Piano Blues au piano) est joué tel quel, sans fausses notes.
 const ending = endingFor(selectedInstrument.value)
 const music = drunk(ending.notes, wrongRatio)
 

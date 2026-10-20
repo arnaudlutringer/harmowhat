@@ -4,12 +4,12 @@ import { INSTRUMENTS, type InstrumentId } from '@/audio/instruments'
 import { pitchClassName } from './notes'
 
 describe('Musique de fin', () => {
-  it('joue le Printemps au violon, les Patineurs à l’accordéon, Bella ciao à la clarinette, KenZ au piano', () => {
+  it('joue le Printemps au violon, les Patineurs à l’accordéon, Bella ciao à la clarinette, Slow Piano Blues au piano', () => {
     expect(endingFor('violin').title).toBe('Le Printemps')
     expect(endingFor('accordion').title).toBe('Les Patineurs')
     expect(endingFor('clarinet').title).toBe('Rhapsody in Blue')
     expect(endingFor('guitar').title).toBe('Romance (Jeux interdits)')
-    expect(endingFor('piano').title).toBe('KenZ')
+    expect(endingFor('piano').title).toBe('Slow Piano Blues')
     expect(endingFor('cello').title).toBe('Prélude de la Suite n° 1')
   })
 
@@ -87,11 +87,11 @@ describe('Musique de fin', () => {
   })
 
   it('propose plusieurs morceaux au piano et joue celui choisi, s’il est proposé pour l’instrument', () => {
-    expect(endingsFor('piano').map((e) => e.title)).toEqual(['KenZ', 'La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque'])
+    expect(endingsFor('piano').map((e) => e.title)).toEqual(['Slow Piano Blues', 'La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque'])
     expect(endingFor('piano', { piano: 'moonlight' }).id).toBe('moonlight')
     expect(endingFor('violin', { violin: 'moonlight' }).id).toBe('spring')
-    expect(endingFor('piano', {}).id).toBe('kenz')
-    expect(endingFor('piano', {}).recording).toBe('music/KenZ.mp3')
+    expect(endingFor('piano', {}).id).toBe('blues')
+    expect(endingFor('piano', {}).recording).toBe('music/slow-piano-blues.mp3')
     for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) expect(INSTRUMENT_ENDINGS[id].length).toBeGreaterThan(0)
   })
 
