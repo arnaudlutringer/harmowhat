@@ -29,6 +29,7 @@ import { SPRING, SPRING_BEAT } from './vivaldiSpring'
 import { SKATERS, SKATERS_BEAT } from './skatersWaltz'
 import { BELLA_CIAO, BELLA_CIAO_EIGHTH } from './bellaCiao'
 import { ROMANCE, ROMANCE_BEAT } from './romance'
+import { TICO_TICO, TICO_TICO_EIGHTH } from './ticoTico'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -66,7 +67,7 @@ export type EndingId =
   | 'rising-sun' | 'paganini-24' | 'mountain-king'
   | 'mendelssohn' | 'danse-macabre'
   | 'rhapsody' | 'hava-nagila' | 'greensleeves' | 'gran-vals' | 'asturias'
-  | 'spring' | 'bella-ciao' | 'romance'
+  | 'spring' | 'bella-ciao' | 'romance' | 'tico-tico'
 
 const PIECES: Record<EndingId, Ending> = {
   blues: { id: 'blues', title: 'Slow Piano Blues', composer: 'Juliush', notes: [], unit: 1, recording: 'music/slow-piano-blues.mp3' },
@@ -114,6 +115,7 @@ const PIECES: Record<EndingId, Ending> = {
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
   'bella-ciao': { id: 'bella-ciao', title: 'Bella ciao', composer: 'chant populaire italien', notes: BELLA_CIAO, unit: BELLA_CIAO_EIGHTH },
+  'tico-tico': { id: 'tico-tico', title: 'Tico-Tico', composer: 'Zequinha de Abreu', notes: TICO_TICO, unit: TICO_TICO_EIGHTH },
   romance: { id: 'romance', title: 'Romance (Jeux interdits)', composer: 'Anonyme', notes: ROMANCE, unit: ROMANCE_BEAT },
 }
 
@@ -125,7 +127,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   piano: ['blues', 'elise', 'moonlight', 'turkish-march'],
   violin: ['spring', 'mendelssohn', 'danse-macabre'],
   cello: ['bach-prelude', 'swan', 'dvorak'],
-  clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao'],
+  clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],
   trumpet: ['te-deum', 'taps'],
   accordion: ['skaters', 'over-the-waves', 'blue-danube'],
   guitar: ['romance', 'gran-vals', 'greensleeves', 'asturias'],

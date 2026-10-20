@@ -64,7 +64,10 @@ describe('Musique de fin', () => {
     // Rhapsody in Blue : trille fa–sol, puis la montée jusqu'au si♭ aigu.
     expect(first('rhapsody', 2)).toEqual(['Fa', 'Sol'])
     expect(pitchClassName(ENDINGS.rhapsody.notes[ENDINGS.rhapsody.notes.length - 1].midi)).toBe('La♯')
-    expect(INSTRUMENT_ENDINGS.clarinet).toEqual(['rhapsody', 'hava-nagila', 'bella-ciao'])
+    expect(INSTRUMENT_ENDINGS.clarinet).toEqual(['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'])
+    // Tico-Tico : levée mi ré♯ mi, puis fa mi… la, et la phrase se pose sur le do.
+    expect(first('tico-tico', 6)).toEqual(['Mi', 'Ré♯', 'Mi', 'Fa', 'Mi', 'La'])
+    expect(pitchClassName(ENDINGS['tico-tico'].notes[ENDINGS['tico-tico'].notes.length - 1].midi)).toBe('Do')
     expect(first('greensleeves', 6)).toEqual(['Sol', 'La♯', 'Do', 'Ré', 'Ré♯', 'Ré'])
     expect(first('gran-vals', 4)).toEqual(['Ré', 'Mi', 'Mi', 'Fa♯'])
     expect(first('asturias', 8)).toEqual(['Mi', 'Si', 'Si', 'Si', 'Do', 'Si', 'La', 'Si'])
