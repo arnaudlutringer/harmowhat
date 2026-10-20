@@ -1,6 +1,7 @@
 import { ref } from 'vue'
-import type { SequenceNote } from '@/audio/engine'
-import type { InstrumentId } from '@/audio/instruments'
+import { playRecording, playSequence, type SequenceNote } from '@/audio/engine'
+import { INSTRUMENTS, type InstrumentId } from '@/audio/instruments'
+import { drunk } from './drunk'
 import { FUR_ELISE, FUR_ELISE_SIXTEENTH } from './furElise'
 import { MOONLIGHT, MOONLIGHT_SIXTEENTH } from './moonlight'
 import { TURKISH_MARCH, TURKISH_MARCH_SIXTEENTH } from './turkishMarch'
@@ -49,10 +50,15 @@ export interface Ending {
   notes: readonly SequenceNote[]
   /** Durée d'une unité de temps des notes, en secondes. */
   unit: number
+  /**
+   * Enregistrement joué à la place des notes (fichier de public/). Ses notes ne peuvent pas être
+   * altérées : il est joué tel quel, quelles que soient les erreurs.
+   */
+  recording?: string
 }
 
 export type EndingId =
-  | 'elise' | 'moonlight' | 'turkish-march'
+  | 'kenz' | 'elise'| 'moonlight' | 'turkish-march'
   | 'bach-prelude' | 'swan' | 'dvorak'
   | 'te-deum' | 'taps'
   | 'skaters' | 'over-the-waves' | 'blue-danube'
@@ -63,6 +69,7 @@ export type EndingId =
   | 'spring' | 'bella-ciao' | 'romance'
 
 const PIECES: Record<EndingId, Ending> = {
+  kenz: { id: 'kenz', title: 'KenZ', composer: 'enregistrement', notes: [], unit: 1, recording: 'music/KenZ.mp3' },
   elise: { id: 'elise', title: 'La Lettre à Élise', composer: 'Beethoven', notes: FUR_ELISE, unit: FUR_ELISE_SIXTEENTH },
   moonlight: { id: 'moonlight', title: 'Sonate au clair de lune (3ᵉ mvt)', composer: 'Beethoven', notes: MOONLIGHT, unit: MOONLIGHT_SIXTEENTH },
   'turkish-march': {
@@ -115,7 +122,7 @@ for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSecon
 
 /** Morceaux proposés pour chaque instrument ; le premier est celui par défaut. */
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
-  piano: ['elise', 'moonlight', 'turkish-march'],
+  piano: ['kenz', 'elise', 'moonlight', 'turkish-march'],
   violin: ['spring', 'mendelssohn', 'danse-macabre'],
   cello: ['bach-prelude', 'swan', 'dvorak'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao'],
@@ -126,16 +133,36 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   'electric-guitar': ['rising-sun', 'paganini-24', 'mountain-king'],
 }
 
+/**
+ * Joue un morceau de fin à l'instrument indiqué, d'autant plus mal joué (voir drunk.ts) que `wrongRatio`
+ * est grand ; un enregistrement est joué tel quel. Renvoie la durée, en secondes.
+ */
+export function playEnding(e: Ending, instrument: InstrumentId, wrongRatio = 0): Promise<number> {
+  if (e.recording) return playRecording(e.recording, ENDING_SECONDS)
+  return playSequence(drunk(e.notes, wrongRatio), e.unit, undefined, INSTRUMENTS[instrument]).then((p) => p.duration)
+}
+
 export function endingsFor(instrument: InstrumentId): Ending[] {
   return INSTRUMENT_ENDINGS[instrument].map((id) => ENDINGS[id])
 }
 
 const STORAGE_KEY = 'harmowhat.endings'
 
+const KENZ_KEY = 'harmowhat.endings.kenz'
+
 function loadChoices(): Partial<Record<InstrumentId, EndingId>> {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-    return raw && typeof raw === 'object' ? raw : {}
+    const choices = raw && typeof raw === 'object' ? raw : {}
+    // KenZ remplace une fois la Lettre à Élise, jusque-là jouée par défaut au piano (et mémorisée comme choisie).
+    if (!localStorage.getItem(KENZ_KEY)) {
+      localStorage.setItem(KENZ_KEY, '1')
+      if (choices.piano === 'elise') {
+        choices.piano = 'kenz'
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(choices))
+      }
+    }
+    return choices
   } catch {
     return {}
   }

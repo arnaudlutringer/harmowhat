@@ -43,7 +43,8 @@
       <ion-icon :icon="elise.playing.value ? stop : musicalNotes" aria-hidden="true" />
       <span>
         <strong>{{ ending.title }}</strong>
-        <small>
+        <small v-if="ending.recording">{{ ending.composer }}</small>
+        <small v-else>
           {{ ending.composer }} ·
           {{ wrongPercent ? `${wrongPercent} % d'erreurs : le musicien a un peu trop fêté ça` : 'joué sans une fausse note' }}
         </small>
@@ -62,11 +63,11 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
 import { musicalNote, musicalNotes, stop } from 'ionicons/icons'
-import { playSequence, stopAll, tierForScore } from '@/audio/engine'
+import { playRecording, playSequence, stopAll, tierForScore } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { summarize, type QuestionResult } from '@/games/scoring'
 import { drunk } from '@/music/drunk'
-import { endingFor } from '@/music/endings'
+import { ENDING_SECONDS, endingFor } from '@/music/endings'
 import { selectedInstrument } from '@/audio/instruments'
 import {
   cleanName, getScores, lastPlayerName, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
@@ -137,13 +138,17 @@ const emoji = computed(() => ({ great: '🏆', good: '🎶', poor: '🎧' })[tie
 // que le joueur a fait d'erreurs (voir music/drunk.ts). Tirée une fois pour cet écran.
 const wrongRatio = props.total ? (props.total - summary.value.correct) / props.total : 0
 const wrongPercent = Math.round(wrongRatio * 100)
+// Un enregistrement (KenZ au piano) est joué tel quel, sans fausses notes.
 const ending = endingFor(selectedInstrument.value)
 const music = drunk(ending.notes, wrongRatio)
 
 const elise = usePlaying()
 
 function playElise() {
-  elise.track(playSequence(music, ending.unit).then((p) => p.duration)).catch(() => {})
+  const sound = ending.recording
+    ? playRecording(ending.recording, ENDING_SECONDS)
+    : playSequence(music, ending.unit).then((p) => p.duration)
+  elise.track(sound).catch(() => {})
 }
 
 // Un appui arrête le morceau, un autre le relance.

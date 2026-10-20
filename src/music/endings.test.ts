@@ -4,17 +4,17 @@ import { INSTRUMENTS, type InstrumentId } from '@/audio/instruments'
 import { pitchClassName } from './notes'
 
 describe('Musique de fin', () => {
-  it('joue le Printemps au violon, les Patineurs à l’accordéon, Bella ciao à la clarinette, la Lettre à Élise sinon', () => {
+  it('joue le Printemps au violon, les Patineurs à l’accordéon, Bella ciao à la clarinette, KenZ au piano', () => {
     expect(endingFor('violin').title).toBe('Le Printemps')
     expect(endingFor('accordion').title).toBe('Les Patineurs')
     expect(endingFor('clarinet').title).toBe('Rhapsody in Blue')
     expect(endingFor('guitar').title).toBe('Romance (Jeux interdits)')
-    expect(endingFor('piano').title).toBe('La Lettre à Élise')
+    expect(endingFor('piano').title).toBe('KenZ')
     expect(endingFor('cello').title).toBe('Prélude de la Suite n° 1')
   })
 
   it('ne joue que les 10 premières secondes de chaque morceau', () => {
-    for (const e of Object.values(ENDINGS)) {
+    for (const e of Object.values(ENDINGS).filter((e) => !e.recording)) {
       const end = Math.max(...e.notes.map((n) => n.at + n.len)) * e.unit
       expect(end).toBeLessThanOrEqual(10 + 1e-9)
       // Une phrase complète peut finir avant (ex. l'appel de Rhapsody in Blue, la Danse macabre).
@@ -87,10 +87,11 @@ describe('Musique de fin', () => {
   })
 
   it('propose plusieurs morceaux au piano et joue celui choisi, s’il est proposé pour l’instrument', () => {
-    expect(endingsFor('piano').map((e) => e.title)).toEqual(['La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque'])
+    expect(endingsFor('piano').map((e) => e.title)).toEqual(['KenZ', 'La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque'])
     expect(endingFor('piano', { piano: 'moonlight' }).id).toBe('moonlight')
     expect(endingFor('violin', { violin: 'moonlight' }).id).toBe('spring')
-    expect(endingFor('piano', {}).id).toBe('elise')
+    expect(endingFor('piano', {}).id).toBe('kenz')
+    expect(endingFor('piano', {}).recording).toBe('music/KenZ.mp3')
     for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) expect(INSTRUMENT_ENDINGS[id].length).toBeGreaterThan(0)
   })
 
@@ -171,6 +172,10 @@ describe('Musique de fin', () => {
   })
 
   it('existe pour chaque instrument', () => {
-    for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) expect(endingFor(id).notes.length).toBeGreaterThan(5)
+    for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) {
+      const e = endingFor(id)
+      if (e.recording) expect(e.recording).toMatch(/\.mp3$/)
+      else expect(e.notes.length).toBeGreaterThan(5)
+    }
   })
 })

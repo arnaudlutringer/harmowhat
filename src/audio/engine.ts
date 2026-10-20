@@ -198,6 +198,42 @@ export async function playSequence(
   }
 }
 
+/**
+ * Joue un enregistrement (fichier de public/, ex. `music/KenZ.mp3`) pendant `seconds` au plus,
+ * avec un fondu de sortie. Coupé comme les autres sons par stopAll. Renvoie la durée jouée, en secondes.
+ */
+export async function playRecording(path: string, seconds: number, velocity = 0.8): Promise<number> {
+  const gen = generation
+  let p = buffers.get(path)
+  if (!p) {
+    const { ctx } = audio()
+    p = fetch(`${import.meta.env.BASE_URL}${path}`)
+      .then((r) => r.arrayBuffer())
+      .then((data) => ctx.decodeAudioData(data))
+    p.catch(() => buffers.delete(path))
+    buffers.set(path, p)
+  }
+  const buffer = await p
+  if (gen !== generation) return 0
+  const { ctx, out } = audio()
+  const at = ctx.currentTime + 0.05
+  const duration = Math.min(seconds, buffer.duration)
+  const fadeOut = Math.min(1.5, duration / 4)
+  const src = ctx.createBufferSource()
+  src.buffer = buffer
+  const g = ctx.createGain()
+  g.gain.setValueAtTime(velocity, at)
+  g.gain.setValueAtTime(velocity, at + duration - fadeOut)
+  g.gain.linearRampToValueAtTime(0, at + duration)
+  src.connect(g).connect(out)
+  src.start(at)
+  src.stop(at + duration + 0.05)
+  const voice = { src, gain: g }
+  active.add(voice)
+  src.onended = () => active.delete(voice)
+  return duration
+}
+
 /** Diapason : La3 (440 Hz) joué par l'instrument choisi, 2 s, avec fondu d'ouverture et de fermeture. */
 export function playTuningFork(): Promise<number> {
   return playPiano(A440, { duration: 2, fadeIn: 0.15, fadeOut: 0.5 })

@@ -127,8 +127,7 @@ import { chevronBack, play, stop } from 'ionicons/icons'
 import { playSequence, playTuningFork, stopAll } from '@/audio/engine'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { usePlaying } from '@/composables/usePlaying'
-import { chooseEnding, endingFor, endingsFor, type Ending, type EndingId } from '@/music/endings'
-import { drunk } from '@/music/drunk'
+import { chooseEnding, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
 import { markTutorialDone } from '@/tutorial'
 
 const STEPS = 7
@@ -168,13 +167,12 @@ function listenInstrument(id: InstrumentId) {
 }
 
 function listenEnding(e: Ending, key: string) {
-  toggle(key, () => playSequence(e.notes, e.unit, undefined, INSTRUMENTS[selectedInstrument.value]).then((p) => p.duration))
+  toggle(key, () => playEnding(e, selectedInstrument.value))
 }
 
 // Le même morceau joué comme après une partie à 5 bonnes réponses sur 10 (voir music/drunk.ts).
 function listenDrunk() {
-  const e = ending.value
-  toggle('drunk', () => playSequence(drunk(e.notes, 0.5), e.unit, undefined, INSTRUMENTS[selectedInstrument.value]).then((p) => p.duration))
+  toggle('drunk', () => playEnding(ending.value, selectedInstrument.value, 0.5))
 }
 
 function pickInstrument(id: InstrumentId) {

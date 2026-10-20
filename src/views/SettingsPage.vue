@@ -62,10 +62,10 @@ import PlayerSettings from '@/components/PlayerSettings.vue'
 import { flag } from '@/player/countries'
 import { profile } from '@/player/profile'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
-import { playPiano, playSequence, preloadPiano, stopAll } from '@/audio/engine'
+import { playPiano, preloadPiano, stopAll } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { A440, noteName } from '@/music/notes'
-import { chooseEnding, chosenEndings, endingFor, endingsFor, type Ending } from '@/music/endings'
+import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding, type Ending } from '@/music/endings'
 
 // Onglet ouvert : celui demandé par le lien (?onglet=joueur, depuis l'accueil ou la fin de partie), sinon l'instrument.
 type Tab = 'instrument' | 'joueur'
@@ -98,7 +98,7 @@ function pickEnding(instrument: InstrumentId, ending: Ending) {
   stopAll()
   chooseEnding(instrument, ending.id)
   if (wasPlaying) return
-  preview.track(playSequence(ending.notes, ending.unit, undefined, INSTRUMENTS[instrument]).then((p) => p.duration), key).catch(() => {})
+  preview.track(playEnding(ending, instrument), key).catch(() => {})
 }
 
 onIonViewWillLeave(stopAll)
