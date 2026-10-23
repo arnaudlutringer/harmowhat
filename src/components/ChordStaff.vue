@@ -11,9 +11,10 @@ import { vexAccidental, vexKeyOf, type SpelledNote } from '@/music/spelling'
 /**
  * `melodic` : les notes l'une après l'autre (intervalle), sinon ensemble (accord).
  * `clef` : clé VexFlow imposée (treble, bass, alto…) ; par défaut, sol ou fa selon le registre.
- * `correct` : en mode mélodique, indices des notes à colorer en vert (bonne réponse).
+ * `correct` : en mode mélodique, indices des notes à colorer en vert (bonne réponse) ;
+ * `wrong` : en rouge (mauvaise réponse).
  */
-const props = defineProps<{ notes: SpelledNote[]; melodic?: boolean; label?: string; clef?: string; correct?: number[] }>()
+const props = defineProps<{ notes: SpelledNote[]; melodic?: boolean; label?: string; clef?: string; correct?: number[]; wrong?: number[] }>()
 const host = ref<HTMLDivElement>()
 
 /** Dessine les notes sur une portée, avec la clé imposée ou une clé de sol ou de fa selon le registre. */
@@ -33,7 +34,9 @@ async function draw() {
 
   const groups = props.melodic ? props.notes.map((n) => [n]) : [props.notes]
   const tickables = groups.map((group) => {
-    const note = new StaveNote({ keys: group.map(vexKeyOf), duration: props.melodic ? 'h' : 'w', clef })
+    // Plus de deux notes l'une après l'autre : des noires, pour qu'elles tiennent dans la mesure.
+    const duration = !props.melodic ? 'w' : groups.length > 2 ? 'q' : 'h'
+    const note = new StaveNote({ keys: group.map(vexKeyOf), duration, clef })
     group.forEach((n, i) => {
       const acc = vexAccidental(n)
       if (acc) note.addModifier(new Accidental(acc), i)
@@ -46,6 +49,7 @@ async function draw() {
   voice.draw(context, stave)
   // Bonne réponse en vert : une classe sur le groupe SVG de la note (la couleur vient du style ci-dessous).
   for (const i of props.melodic ? (props.correct ?? []) : []) tickables[i]?.getSVGElement()?.classList.add('correct')
+  for (const i of props.melodic ? (props.wrong ?? []) : []) tickables[i]?.getSVGElement()?.classList.add('wrong')
 
   // Le dessin suit la couleur du texte (thème clair ou sombre).
   const svg = el.querySelector('svg')
@@ -57,7 +61,7 @@ async function draw() {
 }
 
 onMounted(draw)
-watch(() => [props.notes, props.clef, props.correct], draw)
+watch(() => [props.notes, props.clef, props.correct, props.wrong], draw)
 </script>
 
 <style scoped>
@@ -81,5 +85,11 @@ watch(() => [props.notes, props.clef, props.correct], draw)
 .staff :deep(svg .correct *) {
   fill: var(--ion-color-success);
   stroke: var(--ion-color-success);
+}
+/* Note chantée par erreur : en rouge. */
+.staff :deep(svg .wrong),
+.staff :deep(svg .wrong *) {
+  fill: var(--ion-color-danger);
+  stroke: var(--ion-color-danger);
 }
 </style>

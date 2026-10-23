@@ -88,6 +88,13 @@ const voiceGames = [
     title: 'Chante la note',
     description: 'Chante dans le micro la note demandée, au plus juste.',
   },
+  {
+    path: '/games/chante-harmonie',
+    color: 'var(--hw-game-10)',
+    emoji: GAMES['chante-harmonie'].emoji,
+    title: "Chante l'harmonie",
+    description: 'Une note est jouée : chante celle qui forme l’intervalle demandé (la quinte, la tierce majeure…).',
+  },
 ]
 
 const theoryGames = [
