@@ -8,7 +8,7 @@ import { PIANO_HIGHEST, PIANO_LOWEST, randomInt } from '@/music/notes'
  * Échantillons dans public/samples/<dossier>/, licence dans LICENSE.txt.
  */
 
-export type InstrumentId = 'piano' | 'violin' | 'cello' | 'clarinet' | 'trumpet' | 'accordion' | 'guitar' | 'flute' | 'electric-guitar'
+export type InstrumentId = 'piano' | 'violin' | 'cello' | 'clarinet' | 'trumpet' | 'accordion' | 'guitar' | 'flute' | 'electric-guitar' | 'choir'
 
 export interface Instrument {
   id: InstrumentId
@@ -36,6 +36,8 @@ export const INSTRUMENTS: Record<InstrumentId, Instrument> = {
   guitar: { id: 'guitar', label: 'Guitare', emoji: '🎸', low: 40, high: 83, gain: 1.8 },
   flute: { id: 'flute', label: 'Flûte traversière', emoji: '🪈', low: 60, high: 96, gain: 1.2 },
   'electric-guitar': { id: 'electric-guitar', label: 'Guitare électrique', emoji: '⚡', low: 40, high: 86, gain: 0.23, samples: ELECTRIC_GUITAR_SAMPLES },
+  // Chœur mixte (Choir Aahs) : des basses aux sopranos, de Do2 à La4.
+  choir: { id: 'choir', label: 'Chœur', emoji: '👥', low: 48, high: 81, gain: 1.3 },
 }
 
 export const DEFAULT_INSTRUMENT: InstrumentId = 'piano'

@@ -144,6 +144,8 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   guitar: ['romance', 'gran-vals', 'greensleeves', 'asturias'],
   flute: ['morning', 'faune', 'badinerie'],
   'electric-guitar': ['rising-sun', 'paganini-24', 'mountain-king'],
+  // Au chœur, des morceaux dans sa tessiture : le Te Deum de Charpentier, Bella ciao, le Cygne en legato.
+  choir: ['te-deum', 'bella-ciao', 'swan'],
 }
 
 /**
