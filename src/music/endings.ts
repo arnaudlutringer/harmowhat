@@ -61,7 +61,7 @@ export interface Ending {
 }
 
 export type EndingId =
-  | 'blues' | 'elise'| 'moonlight' | 'turkish-march'
+  | 'elise'| 'moonlight' | 'turkish-march'
   | 'bach-prelude' | 'swan' | 'dvorak' | 'hedwig'
   | 'te-deum' | 'taps'
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
@@ -72,7 +72,6 @@ export type EndingId =
   | 'spring' | 'bella-ciao' | 'romance' | 'tico-tico'
 
 const PIECES: Record<EndingId, Ending> = {
-  blues: { id: 'blues', title: 'Slow Piano Blues', composer: 'Juliush', notes: [], unit: 1, recording: 'music/slow-piano-blues.mp3' },
   elise: { id: 'elise', title: 'La Lettre à Élise', composer: 'Beethoven', notes: FUR_ELISE, unit: FUR_ELISE_SIXTEENTH },
   moonlight: { id: 'moonlight', title: 'Sonate au clair de lune (3ᵉ mvt)', composer: 'Beethoven', notes: MOONLIGHT, unit: MOONLIGHT_SIXTEENTH },
   'turkish-march': {
@@ -134,7 +133,7 @@ for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSecon
 
 /** Morceaux proposés pour chaque instrument ; le premier est celui par défaut. */
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
-  piano: ['blues', 'elise', 'moonlight', 'turkish-march'],
+  piano: ['elise', 'moonlight', 'turkish-march'],
   violin: ['spring', 'mendelssohn', 'danse-macabre'],
   cello: ['bach-prelude', 'swan', 'dvorak', 'hedwig'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],
@@ -160,21 +159,11 @@ export function endingsFor(instrument: InstrumentId): Ending[] {
 
 const STORAGE_KEY = 'harmowhat.endings'
 
-const BLUES_KEY = 'harmowhat.endings.blues'
-
 function loadChoices(): Partial<Record<InstrumentId, EndingId>> {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-    const choices = raw && typeof raw === 'object' ? raw : {}
-    // Le Slow Piano Blues remplace une fois la Lettre à Élise, jusque-là jouée par défaut au piano (et mémorisée comme choisie).
-    if (!localStorage.getItem(BLUES_KEY)) {
-      localStorage.setItem(BLUES_KEY, '1')
-      if (choices.piano === 'elise' || choices.piano === 'kenz') {
-        choices.piano = 'blues'
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(choices))
-      }
-    }
-    return choices
+    // Un morceau retiré depuis (ex. le Slow Piano Blues) n'est plus proposé : endingFor revient au premier.
+    return raw && typeof raw === 'object' ? raw : {}
   } catch {
     return {}
   }

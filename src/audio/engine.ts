@@ -199,7 +199,7 @@ export async function playSequence(
 }
 
 /**
- * Joue un enregistrement (fichier de public/, ex. `music/slow-piano-blues.mp3`) pendant `seconds` au plus,
+ * Joue un enregistrement (fichier de public/, ex. `music/morceau.mp3`) pendant `seconds` au plus,
  * avec un fondu de sortie. Coupé comme les autres sons par stopAll. Renvoie la durée jouée, en secondes.
  */
 export async function playRecording(path: string, seconds: number, velocity = 0.8): Promise<number> {
