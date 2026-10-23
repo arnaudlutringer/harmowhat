@@ -37,6 +37,8 @@ describe('Chante l’harmonie', () => {
     expect(wrong).toMatchObject({ cents: 100, correct: false })
     expect(wrong.sung.midi).toBe(q.target.midi + 1)
     expect(spelledPitchName(wrong.sung)).not.toBe(spelledPitchName(q.target))
+    // Un demi-ton au-dessus d'une touche blanche s'écrit avec une autre lettre : il ne chevauche pas la note attendue.
+    if (q.target.alter === 0 && wrong.sung.alter !== 0) expect(wrong.sung.letter).not.toBe(q.target.letter)
   })
 
   it('ignore des réglages invalides', () => {

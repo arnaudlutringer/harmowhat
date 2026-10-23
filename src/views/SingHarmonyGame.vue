@@ -9,13 +9,14 @@
     no-tuning-fork
   >
     <template #player>
-      <!-- Après la réponse : la portée remplace les boutons, avec la note jouée, la note attendue (vert) et la note chantée (rouge). -->
+      <!-- Après la réponse : la portée remplace les boutons, avec la note jouée, puis sur la même pulsation la note attendue (vert) et la note chantée (rouge). -->
       <div v-if="quiz.feedback.value && result" class="staff">
         <chord-staff
           :notes="staffNotes"
           melodic
           :correct="[1]"
           :wrong="result.correct ? [] : [2]"
+          :together="[2]"
           :label="staffLabel"
         />
       </div>

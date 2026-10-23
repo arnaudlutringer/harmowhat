@@ -110,8 +110,10 @@ export function judge(frequency: number, q: Question): Verdict {
   const midi = midiOf(frequency)
   const cents = centsFromPitchClass(midi, q.target.midi % 12)
   const correct = Math.abs(cents) <= TOLERANCE
-  // Sur la portée, la note chantée est placée au plus près de la note attendue, dans la même orthographe.
+  // Sur la portée, la note chantée est placée au plus près de la note attendue, sur la même pulsation :
+  // elle s'écrit avec une autre lettre quand c'est possible (Ré♭ plutôt que Do♯ à côté d'un Do), pour ne pas la chevaucher.
   const sungMidi = q.target.midi + Math.round(cents / 100)
-  const sung = correct ? q.target : spell(sungMidi, q.target.alter < 0 ? 'flat' : 'sharp')
+  const spellings = [spell(sungMidi, q.target.alter < 0 ? 'flat' : 'sharp'), spell(sungMidi, q.target.alter < 0 ? 'sharp' : 'flat')]
+  const sung = correct ? q.target : (spellings.find((s) => s.letter !== q.target.letter) ?? spellings[0])
   return { sung, cents, correct }
 }
