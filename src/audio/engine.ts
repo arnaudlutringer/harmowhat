@@ -69,11 +69,13 @@ interface PlayOptions {
   velocity?: number
   /** Instrument qui joue (par défaut celui choisi par le joueur). */
   instrument?: Instrument
+  /** Départ dans l'échantillon, en secondes (pour sauter une attaque lente). */
+  offset?: number
 }
 
 function schedule(buffer: AudioBuffer, sample: number, midi: number, at: number, o: PlayOptions): Voice {
   const { ctx, out } = audio()
-  const { duration = 2.5, fadeIn = 0, fadeOut = 0.4, velocity = 0.8, instrument: inst = currentInstrument() } = o
+  const { duration = 2.5, fadeIn = 0, fadeOut = 0.4, velocity = 0.8, instrument: inst = currentInstrument(), offset = 0 } = o
   const src = ctx.createBufferSource()
   src.buffer = buffer
   src.playbackRate.value = Math.pow(2, (fitToRange(inst, midi) - sample) / 12)
@@ -88,7 +90,7 @@ function schedule(buffer: AudioBuffer, sample: number, midi: number, at: number,
   g.gain.setValueAtTime(peak, at + Math.max(fadeIn, duration - fadeOut))
   g.gain.linearRampToValueAtTime(0, at + duration)
   src.connect(g).connect(out)
-  src.start(at)
+  src.start(at, offset)
   src.stop(at + duration + 0.05)
   const voice = { src, gain: g }
   active.add(voice)
@@ -188,13 +190,17 @@ export async function playSequence(
   if (gen !== generation) return { duration: 0, stop() {} }
   const { ctx } = audio()
   const t0 = ctx.currentTime + 0.05
+  const { legato } = instrument
   const voices = notes.map((n, i) => {
-    const duration = Math.max(0.3, n.len * unit + 0.15)
+    // Lié (chœur) : chaque note démarre après son attaque et déborde sur la suivante, qui entre en fondu.
+    const duration = Math.max(0.3, n.len * unit + (legato?.overlap ?? 0.15))
     return schedule(loaded[i], nearestSample(n.midi, instrument), n.midi, t0 + n.at * unit, {
       duration,
-      fadeOut: Math.min(0.4, duration / 2),
+      fadeIn: legato ? 0.06 : 0,
+      fadeOut: Math.min(legato ? legato.overlap : 0.4, duration / 2),
       velocity: n.velocity ?? velocity,
       instrument,
+      offset: legato?.offset,
     })
   })
   return {

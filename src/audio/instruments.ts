@@ -21,6 +21,11 @@ export interface Instrument {
   gain: number
   /** Notes échantillonnées, quand elles ne suivent pas la grille par tierces mineures depuis la note la plus grave. */
   samples?: readonly number[]
+  /**
+   * Jeu lié dans les morceaux (sons à attaque lente, comme le chœur) : chaque note démarre `offset` secondes
+   * après le début de l'échantillon et déborde de `overlap` secondes sur la suivante.
+   */
+  legato?: { offset: number; overlap: number }
 }
 
 /** Guitare électrique (tonejs-instruments) : mi grave, puis une note toutes les tierces mineures de fa♯ à do aigu. */
@@ -37,7 +42,7 @@ export const INSTRUMENTS: Record<InstrumentId, Instrument> = {
   flute: { id: 'flute', label: 'Flûte traversière', emoji: '🪈', low: 60, high: 96, gain: 1.2 },
   'electric-guitar': { id: 'electric-guitar', label: 'Guitare électrique', emoji: '⚡', low: 40, high: 86, gain: 0.23, samples: ELECTRIC_GUITAR_SAMPLES },
   // Chœur mixte (Choir Aahs) : des basses aux sopranos, de Do2 à La4.
-  choir: { id: 'choir', label: 'Chœur', emoji: '👥', low: 48, high: 81, gain: 1.3 },
+  choir: { id: 'choir', label: 'Chœur', emoji: '👥', low: 48, high: 81, gain: 1.3, legato: { offset: 0.25, overlap: 0.35 } },
 }
 
 export const DEFAULT_INSTRUMENT: InstrumentId = 'piano'
