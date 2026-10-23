@@ -7,6 +7,7 @@ import { LEVELS as CHORD_LEVELS, QUESTION_COUNTS as CHORD_COUNTS } from './chord
 import { LEVELS as HARMONY_LEVELS, QUESTION_COUNTS as HARMONY_COUNTS } from './makeHarmony'
 import { LEVELS as KEY_LEVELS, QUESTION_COUNTS as KEY_COUNTS } from './keySignature'
 import { LEVELS as MODALITY_LEVELS, QUESTION_COUNTS as MODALITY_COUNTS } from './modality'
+import { LEVELS as SING_LEVELS, QUESTION_COUNTS as SING_COUNTS } from './singTheNote'
 import { profile, saveProfile } from '@/player/profile'
 import { SCORING_VERSION } from './scoring'
 
@@ -16,7 +17,7 @@ import { SCORING_VERSION } from './scoring'
  * Les scores sont aussi envoyés au classement mondial (voir worldScores.ts).
  */
 
-export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note' | 'fais-harmonie' | 'tonalite' | 'modalite'
+export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note' | 'fais-harmonie' | 'tonalite' | 'modalite' | 'chante-note'
 
 /** Un classement : le jeu, le niveau (identifiant) et le nombre de questions. */
 export interface Board {
@@ -98,6 +99,12 @@ export const GAMES: Record<GameId, GameInfo> = {
     emoji: '🎭',
     levels: Object.entries(MODALITY_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: MODALITY_COUNTS,
+  },
+  'chante-note': {
+    title: 'Chante la note',
+    emoji: '🎤',
+    levels: Object.entries(SING_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: SING_COUNTS,
   },
 }
 

@@ -78,6 +78,13 @@ const earGames = [
     title: 'La modalité',
     description: "Devine la modalité à l'oreille.",
   },
+  {
+    path: '/games/chante-note',
+    color: 'var(--hw-game-9)',
+    emoji: GAMES['chante-note'].emoji,
+    title: 'Chante la note',
+    description: 'Le diapason sonne : chante dans le micro la note demandée, au plus juste.',
+  },
 ]
 
 const theoryGames = [

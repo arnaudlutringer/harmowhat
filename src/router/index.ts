@@ -30,6 +30,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/tonalite/jouer', component: () => import('@/views/KeySignatureGame.vue') },
   { path: '/games/modalite', component: () => import('@/views/ModalitySettings.vue') },
   { path: '/games/modalite/jouer', component: () => import('@/views/ModalityGame.vue') },
+  { path: '/games/chante-note', component: () => import('@/views/SingTheNoteSettings.vue') },
+  { path: '/games/chante-note/jouer', component: () => import('@/views/SingTheNoteGame.vue') },
 ]
 
 const router = createRouter({
