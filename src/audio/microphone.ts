@@ -1,3 +1,4 @@
+import { audioContext } from './engine'
 import { detectPitch, type Pitch } from './pitch'
 
 /**
@@ -17,8 +18,7 @@ export async function listenToMicrophone(onPitch: (pitch: Pitch | null) => void)
     // Ni annulation d'écho ni réduction de bruit : elles déforment une voix tenue.
     audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
   })
-  const ctx = new AudioContext()
-  if (ctx.state === 'suspended') await ctx.resume()
+  const ctx = audioContext()
   const source = ctx.createMediaStreamSource(stream)
   const analyser = ctx.createAnalyser()
   analyser.fftSize = 2048
@@ -33,7 +33,6 @@ export async function listenToMicrophone(onPitch: (pitch: Pitch | null) => void)
       clearInterval(timer)
       source.disconnect()
       stream.getTracks().forEach((t) => t.stop())
-      void ctx.close()
     },
   }
 }

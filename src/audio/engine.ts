@@ -26,6 +26,14 @@ function audio(): { ctx: AudioContext; out: GainNode } {
   return { ctx, out: master! }
 }
 
+/**
+ * Contexte audio de l'appli, déjà débloqué par les touchers précédents : le micro s'y branche
+ * (iOS laisse en pause un contexte créé hors d'un geste du joueur).
+ */
+export function audioContext(): AudioContext {
+  return audio().ctx
+}
+
 function nearestSample(midi: number, inst: Instrument = currentInstrument()): number {
   return nearestInstrumentSample(inst, fitToRange(inst, midi))
 }
