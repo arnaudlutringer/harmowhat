@@ -32,6 +32,7 @@ import { ROMANCE, ROMANCE_BEAT } from './romance'
 import { TICO_TICO, TICO_TICO_EIGHTH } from './ticoTico'
 import { VALSE_MUSETTE, VALSE_MUSETTE_EIGHTH } from './valseMusette'
 import { HEDWIG, HEDWIG_EIGHTH } from './hedwig'
+import { PIANO_JAZZ, PIANO_JAZZ_EIGHTH } from './pianoJazz'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -61,7 +62,7 @@ export interface Ending {
 }
 
 export type EndingId =
-  | 'elise'| 'moonlight' | 'turkish-march'
+  | 'elise'| 'moonlight' | 'turkish-march' | 'piano-jazz'
   | 'bach-prelude' | 'swan' | 'dvorak' | 'hedwig'
   | 'te-deum' | 'taps'
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
@@ -81,6 +82,7 @@ const PIECES: Record<EndingId, Ending> = {
     notes: TURKISH_MARCH,
     unit: TURKISH_MARCH_SIXTEENTH,
   },
+  'piano-jazz': { id: 'piano-jazz', title: 'Piano Jazz in E♭', composer: 'Holly Vose', notes: PIANO_JAZZ, unit: PIANO_JAZZ_EIGHTH },
   'bach-prelude': {
     id: 'bach-prelude',
     title: 'Prélude de la Suite n° 1',
@@ -133,7 +135,7 @@ for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSecon
 
 /** Morceaux proposés pour chaque instrument ; le premier est celui par défaut. */
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
-  piano: ['elise', 'moonlight', 'turkish-march'],
+  piano: ['elise', 'moonlight', 'turkish-march', 'piano-jazz'],
   violin: ['spring', 'mendelssohn', 'danse-macabre'],
   cello: ['bach-prelude', 'swan', 'dvorak', 'hedwig'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],

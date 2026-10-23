@@ -55,6 +55,10 @@ describe('Musique de fin', () => {
     expect(first('valse-musette', 10)).toEqual(['Do', 'Mi', 'Sol', 'Do', 'Si', 'Do', 'Mi', 'Sol', 'Si', 'La'])
     const musette = ENDINGS['valse-musette'].notes.filter((n) => (n.velocity ?? 1) >= 0.4)
     expect(pitchClassName(musette[musette.length - 1].midi)).toBe('La')
+    // Piano Jazz in E♭ : levée do mi♭ fa, sol tenu, puis fa mi♭ do, fa sol do ; la phrase se pose sur le mi♭ grave.
+    expect(first('piano-jazz', 4)).toEqual(['Do', 'Ré♯', 'Fa', 'Sol'])
+    const jazz = ENDINGS['piano-jazz'].notes
+    expect(jazz[jazz.length - 1].midi).toBe(39)
     expect(first('morning', 6)).toEqual(['Si', 'Sol♯', 'Fa♯', 'Mi', 'Fa♯', 'Sol♯'])
     expect(first('faune', 7)).toEqual(['Do♯', 'Do', 'Si', 'La♯', 'La', 'Sol♯', 'Sol'])
     expect(first('badinerie', 6)).toEqual(['Si', 'Ré', 'Si', 'Fa♯', 'Si', 'Fa♯'])
@@ -97,7 +101,7 @@ describe('Musique de fin', () => {
   })
 
   it('propose plusieurs morceaux au piano et joue celui choisi, s’il est proposé pour l’instrument', () => {
-    expect(endingsFor('piano').map((e) => e.title)).toEqual(['La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque'])
+    expect(endingsFor('piano').map((e) => e.title)).toEqual(['La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque', 'Piano Jazz in E♭'])
     expect(endingFor('piano', { piano: 'moonlight' }).id).toBe('moonlight')
     expect(endingFor('violin', { violin: 'moonlight' }).id).toBe('spring')
     expect(endingFor('piano', {}).id).toBe('elise')
