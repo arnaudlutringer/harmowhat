@@ -7,3 +7,4 @@ ios
 # Configuration locale (Supabase) : voir .env.example
 .env
 .env.local
+build
