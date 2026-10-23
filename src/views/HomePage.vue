@@ -14,7 +14,7 @@
         </ion-button>
       </div>
       <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
-      <!-- Les jeux, rangés par catégorie : l'oreille (on écoute), le solfège (on lit la partition). -->
+      <!-- Les jeux, rangés par catégorie : l'oreille (on écoute), le solfège (on lit la partition), la voix (on chante). -->
       <section v-for="category in categories" :key="category.title" class="category">
         <h2>{{ category.title }}</h2>
         <div class="games">
@@ -78,12 +78,15 @@ const earGames = [
     title: 'La modalité',
     description: "Devine la modalité à l'oreille.",
   },
+]
+
+const voiceGames = [
   {
     path: '/games/chante-note',
     color: 'var(--hw-game-9)',
     emoji: GAMES['chante-note'].emoji,
     title: 'Chante la note',
-    description: 'Le diapason sonne : chante dans le micro la note demandée, au plus juste.',
+    description: 'Chante dans le micro la note demandée, au plus juste.',
   },
 ]
 
@@ -114,6 +117,7 @@ const theoryGames = [
 const categories = [
   { title: "L'oreille", games: earGames },
   { title: 'Le solfège', games: theoryGames },
+  { title: 'La voix', games: voiceGames },
 ]
 </script>
 
