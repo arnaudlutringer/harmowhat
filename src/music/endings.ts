@@ -30,6 +30,7 @@ import { SKATERS, SKATERS_BEAT } from './skatersWaltz'
 import { BELLA_CIAO, BELLA_CIAO_EIGHTH } from './bellaCiao'
 import { ROMANCE, ROMANCE_BEAT } from './romance'
 import { TICO_TICO, TICO_TICO_EIGHTH } from './ticoTico'
+import { VALSE_MUSETTE, VALSE_MUSETTE_EIGHTH } from './valseMusette'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -62,7 +63,7 @@ export type EndingId =
   | 'blues' | 'elise'| 'moonlight' | 'turkish-march'
   | 'bach-prelude' | 'swan' | 'dvorak'
   | 'te-deum' | 'taps'
-  | 'skaters' | 'over-the-waves' | 'blue-danube'
+  | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
   | 'morning' | 'faune' | 'badinerie'
   | 'rising-sun' | 'paganini-24' | 'mountain-king'
   | 'mendelssohn' | 'danse-macabre'
@@ -114,6 +115,13 @@ const PIECES: Record<EndingId, Ending> = {
   taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
+  'valse-musette': {
+    id: 'valse-musette',
+    title: 'Une valse musette',
+    composer: 'Philippe Brédif',
+    notes: VALSE_MUSETTE,
+    unit: VALSE_MUSETTE_EIGHTH,
+  },
   'bella-ciao': { id: 'bella-ciao', title: 'Bella ciao', composer: 'chant populaire italien', notes: BELLA_CIAO, unit: BELLA_CIAO_EIGHTH },
   'tico-tico': { id: 'tico-tico', title: 'Tico-Tico', composer: 'Zequinha de Abreu', notes: TICO_TICO, unit: TICO_TICO_EIGHTH },
   romance: { id: 'romance', title: 'Romance (Jeux interdits)', composer: 'Anonyme', notes: ROMANCE, unit: ROMANCE_BEAT },
@@ -129,7 +137,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   cello: ['bach-prelude', 'swan', 'dvorak'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],
   trumpet: ['te-deum', 'taps'],
-  accordion: ['skaters', 'over-the-waves', 'blue-danube'],
+  accordion: ['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'],
   guitar: ['romance', 'gran-vals', 'greensleeves', 'asturias'],
   flute: ['morning', 'faune', 'badinerie'],
   'electric-guitar': ['rising-sun', 'paganini-24', 'mountain-king'],

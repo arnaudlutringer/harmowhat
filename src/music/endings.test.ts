@@ -36,7 +36,7 @@ describe('Musique de fin', () => {
   it('violoncelle, trompette et accordéon proposent chacun plusieurs morceaux', () => {
     expect(INSTRUMENT_ENDINGS.cello).toEqual(['bach-prelude', 'swan', 'dvorak'])
     expect(INSTRUMENT_ENDINGS.trumpet).toEqual(['te-deum', 'taps'])
-    expect(INSTRUMENT_ENDINGS.accordion).toEqual(['skaters', 'over-the-waves', 'blue-danube'])
+    expect(INSTRUMENT_ENDINGS.accordion).toEqual(['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'])
   })
 
   it('premières notes des nouveaux morceaux', () => {
@@ -48,6 +48,10 @@ describe('Musique de fin', () => {
     expect(first('te-deum', 6)).toEqual(['La', 'Ré', 'Ré', 'Mi', 'Fa♯', 'Ré'])
     expect(first('over-the-waves', 4)).toEqual(['Si', 'La♯', 'Si', 'Ré'])
     expect(first('blue-danube', 4)).toEqual(['Ré', 'Ré', 'Fa♯', 'La'])
+    // Une valse musette : levée do mi sol do, si tenu, puis do mi sol si, la tenu ; la phrase se pose sur le la de « muguet ».
+    expect(first('valse-musette', 10)).toEqual(['Do', 'Mi', 'Sol', 'Do', 'Si', 'Do', 'Mi', 'Sol', 'Si', 'La'])
+    const musette = ENDINGS['valse-musette'].notes.filter((n) => (n.velocity ?? 1) >= 0.4)
+    expect(pitchClassName(musette[musette.length - 1].midi)).toBe('La')
     expect(first('morning', 6)).toEqual(['Si', 'Sol♯', 'Fa♯', 'Mi', 'Fa♯', 'Sol♯'])
     expect(first('faune', 7)).toEqual(['Do♯', 'Do', 'Si', 'La♯', 'La', 'Sol♯', 'Sol'])
     expect(first('badinerie', 6)).toEqual(['Si', 'Ré', 'Si', 'Fa♯', 'Si', 'Fa♯'])
