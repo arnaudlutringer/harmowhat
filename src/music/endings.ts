@@ -31,6 +31,7 @@ import { BELLA_CIAO, BELLA_CIAO_EIGHTH } from './bellaCiao'
 import { ROMANCE, ROMANCE_BEAT } from './romance'
 import { TICO_TICO, TICO_TICO_EIGHTH } from './ticoTico'
 import { VALSE_MUSETTE, VALSE_MUSETTE_EIGHTH } from './valseMusette'
+import { HEDWIG, HEDWIG_EIGHTH } from './hedwig'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -61,7 +62,7 @@ export interface Ending {
 
 export type EndingId =
   | 'blues' | 'elise'| 'moonlight' | 'turkish-march'
-  | 'bach-prelude' | 'swan' | 'dvorak'
+  | 'bach-prelude' | 'swan' | 'dvorak' | 'hedwig'
   | 'te-deum' | 'taps'
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
   | 'morning' | 'faune' | 'badinerie'
@@ -90,6 +91,7 @@ const PIECES: Record<EndingId, Ending> = {
   },
   swan: { id: 'swan', title: 'Le Cygne', composer: 'Saint-Saëns', notes: SWAN, unit: SWAN_BEAT },
   dvorak: { id: 'dvorak', title: 'Concerto pour violoncelle', composer: 'Dvořák', notes: DVORAK_CONCERTO, unit: DVORAK_BEAT },
+  hedwig: { id: 'hedwig', title: 'Hedwig’s Theme (Harry Potter)', composer: 'John Williams', notes: HEDWIG, unit: HEDWIG_EIGHTH },
   'te-deum': { id: 'te-deum', title: 'Te Deum, Prélude', composer: 'Charpentier', notes: TE_DEUM, unit: TE_DEUM_BEAT },
   'over-the-waves': { id: 'over-the-waves', title: 'Sobre las olas', composer: 'Rosas', notes: OVER_THE_WAVES, unit: OVER_THE_WAVES_BEAT },
   'blue-danube': { id: 'blue-danube', title: 'Le Beau Danube bleu', composer: 'Strauss', notes: BLUE_DANUBE, unit: BLUE_DANUBE_BEAT },
@@ -134,7 +136,7 @@ for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSecon
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   piano: ['blues', 'elise', 'moonlight', 'turkish-march'],
   violin: ['spring', 'mendelssohn', 'danse-macabre'],
-  cello: ['bach-prelude', 'swan', 'dvorak'],
+  cello: ['bach-prelude', 'swan', 'dvorak', 'hedwig'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],
   trumpet: ['te-deum', 'taps'],
   accordion: ['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'],

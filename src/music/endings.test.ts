@@ -34,7 +34,7 @@ describe('Musique de fin', () => {
   })
 
   it('violoncelle, trompette et accordéon proposent chacun plusieurs morceaux', () => {
-    expect(INSTRUMENT_ENDINGS.cello).toEqual(['bach-prelude', 'swan', 'dvorak'])
+    expect(INSTRUMENT_ENDINGS.cello).toEqual(['bach-prelude', 'swan', 'dvorak', 'hedwig'])
     expect(INSTRUMENT_ENDINGS.trumpet).toEqual(['te-deum', 'taps'])
     expect(INSTRUMENT_ENDINGS.accordion).toEqual(['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'])
   })
@@ -45,6 +45,9 @@ describe('Musique de fin', () => {
       ENDINGS[id].notes.filter((n) => (n.velocity ?? 1) >= 0.4).slice(0, count).map((n) => pitchClassName(n.midi))
     expect(first('swan', 6)).toEqual(['Sol', 'Fa♯', 'Si', 'Mi', 'Ré', 'Sol'])
     expect(first('dvorak', 4)).toEqual(['Si', 'Do♯', 'Ré', 'Si'])
+    // Hedwig's Theme : levée si mi sol, fa♯ mi si la… et la phrase se pose sur le si grave.
+    expect(first('hedwig', 7)).toEqual(['Si', 'Mi', 'Sol', 'Fa♯', 'Mi', 'Si', 'La'])
+    expect(ENDINGS.hedwig.notes[ENDINGS.hedwig.notes.length - 1].midi).toBe(47)
     expect(first('te-deum', 6)).toEqual(['La', 'Ré', 'Ré', 'Mi', 'Fa♯', 'Ré'])
     expect(first('over-the-waves', 4)).toEqual(['Si', 'La♯', 'Si', 'Ré'])
     expect(first('blue-danube', 4)).toEqual(['Ré', 'Ré', 'Fa♯', 'La'])
