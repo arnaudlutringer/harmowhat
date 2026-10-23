@@ -49,6 +49,8 @@ const props = defineProps<{
   playPath: string
   /** Lit des réglages enregistrés (avec repli sur les valeurs par défaut). */
   parse: (raw: { questions?: unknown; level?: unknown }) => { questions: number; level: string }
+  /** Écran qui suit les réglages, s'il dépend du niveau (ex. l'écran diapason en expert) ; sinon `playPath`. */
+  nextPath?: (settings: { questions: number; level: string }) => string
 }>()
 
 // On repropose les derniers réglages choisis.
@@ -72,7 +74,7 @@ function start() {
   } catch {
     // Stockage indisponible : on joue quand même.
   }
-  router.push(`${props.playPath}?questions=${settings.questions}&level=${settings.level}`)
+  router.push(props.nextPath?.(settings) ?? `${props.playPath}?questions=${settings.questions}&level=${settings.level}`)
 }
 </script>
 

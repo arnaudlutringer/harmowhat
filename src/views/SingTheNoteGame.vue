@@ -6,16 +6,25 @@
     :board="{ game: 'chante-note', level: settings.level, questions: settings.questions }"
     settings-href="/games/chante-note"
     :advance-bar="ADVANCE_DELAY"
-    no-tuning-fork
+    :no-tuning-fork="settings.level === 'expert'"
   >
-    <!-- Le bouton de lecture rejoue le diapason (La3) : la note demandée se trouve à partir de lui. -->
+    <!-- Pas de son à écouter : le bouton lance l'enregistrement de la voix, et le score est en pause pendant la prise. -->
+    <template #player>
+      <button
+        class="play record"
+        :class="{ 'is-playing': recording }"
+        :aria-label="recording ? 'Arrêter l’enregistrement' : 'Chanter : démarrer l’enregistrement'"
+        :disabled="!quiz.canAnswer.value"
+        @click="toggleRecording"
+      >
+        <ion-icon :icon="recording ? stop : mic" />
+      </button>
+      <p class="hint">{{ hint }}</p>
+    </template>
+
     <div class="mic">
-      <p v-if="micError" class="error">
-        {{ micError }}
-        <ion-button size="small" @click="openMicrophone">Réessayer</ion-button>
-      </p>
+      <p v-if="micError" class="error">{{ micError }}</p>
       <template v-else>
-        <div class="target">{{ quiz.question.value.name }}</div>
         <!-- Aiguille d'accordeur : l'écart avec la note demandée, d'un demi-ton trop bas à un demi-ton trop haut. -->
         <div class="meter" :class="meterClass" aria-hidden="true">
           <span class="zone" :style="{ width: `${tolerance}%` }" />
@@ -28,7 +37,6 @@
             {{ pitchClassName(shown.sung) }}
             <small>{{ shown.cents > 0 ? '+' : '' }}{{ shown.cents }} cents</small>
           </template>
-          <template v-else>{{ listening ? 'Chante…' : quiz.feedback.value ? ' ' : 'Écoute le diapason…' }}</template>
         </p>
         <div class="hold" aria-hidden="true"><span :style="{ width: `${hold * 100}%` }" /></div>
       </template>
@@ -37,12 +45,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef } from 'vue'
 import { useRoute } from 'vue-router'
-import { IonButton } from '@ionic/vue'
+import { IonIcon } from '@ionic/vue'
+import { mic, stop } from 'ionicons/icons'
 import GameShell from '@/components/GameShell.vue'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
-import { playTuningFork } from '@/audio/engine'
+import { stopAll } from '@/audio/engine'
 import { listenToMicrophone, type Listening } from '@/audio/microphone'
 import type { Pitch } from '@/audio/pitch'
 import { pitchClassName } from '@/music/notes'
@@ -51,16 +60,12 @@ import { createQuestion, HeldNote, judge, LEVELS, parseSettings, type Question, 
 const settings = parseSettings(useRoute().query)
 const tolerance = LEVELS[settings.level].tolerance
 
-/** Durée du diapason : on n'écoute le joueur qu'une fois qu'il s'est tu. */
-const FORK_MS = 2000
-
 let previous: Question | undefined
 const quiz = useQuiz<Question>({
   total: settings.questions,
   createQuestion: () => (previous = createQuestion(settings.level, previous)),
-  play: () => playTuningFork(),
-  // Le décompte des points (et l'écoute) démarre à la fin du diapason.
-  countdownStart: () => FORK_MS,
+  // Rien à écouter : la question s'affiche et le décompte des points démarre aussitôt.
+  play: () => Promise.resolve(0),
 })
 
 const held = new HeldNote()
@@ -68,25 +73,61 @@ const held = new HeldNote()
 const live = shallowRef<Verdict | null>(null)
 const result = shallowRef<Verdict | null>(null)
 const hold = ref(0)
+const recording = ref(false)
 const micError = ref('')
-let mic: Listening | null = null
+let session: Listening | null = null
 
-// On écoute pendant la question, une fois le diapason éteint.
-const listening = computed(() => quiz.canAnswer.value && !quiz.playing.value)
-const shown = computed(() => (quiz.feedback.value ? result.value : listening.value ? live.value : null))
+const shown = computed(() => (quiz.feedback.value ? result.value : recording.value ? live.value : null))
 const meterClass = computed(() => {
   if (!shown.value) return ''
   if (quiz.feedback.value) return quiz.feedback.value.correct ? 'ok' : 'ko'
   return Math.abs(shown.value.cents) <= tolerance ? 'near' : ''
 })
+const hint = computed(() => {
+  if (quiz.feedback.value) return ' '
+  if (recording.value) return 'Chante et tiens la note… (score en pause)'
+  return 'Appuie pour chanter'
+})
+
+/** Démarre la prise : le score se met en pause jusqu'à la note retenue (ou l'arrêt). */
+async function startRecording() {
+  micError.value = ''
+  stopAll()
+  held.reset()
+  live.value = null
+  hold.value = 0
+  recording.value = true
+  quiz.pause()
+  try {
+    session = await listenToMicrophone(onPitch)
+    // Arrêté pendant l'ouverture du micro.
+    if (!recording.value) stopMicrophone()
+  } catch {
+    micError.value = 'Le micro n’est pas accessible : autorise-le pour cette appli, puis réessaie.'
+    stopRecording()
+  }
+}
+
+function stopMicrophone() {
+  session?.stop()
+  session = null
+}
+
+/** Arrête la prise : le score reprend là où il s'était arrêté. */
+function stopRecording() {
+  stopMicrophone()
+  recording.value = false
+  hold.value = 0
+  quiz.resume()
+}
+
+function toggleRecording() {
+  if (recording.value) stopRecording()
+  else if (quiz.canAnswer.value) void startRecording()
+}
 
 function onPitch(pitch: Pitch | null) {
-  if (!listening.value) {
-    held.reset()
-    hold.value = 0
-    if (!quiz.feedback.value) live.value = null
-    return
-  }
+  if (!recording.value || !quiz.canAnswer.value) return
   const q = quiz.question.value
   live.value = pitch && pitch.clarity >= 0.85 ? judge(pitch.frequency, q, settings.level) : null
   const frequency = held.push(pitch)
@@ -94,7 +135,7 @@ function onPitch(pitch: Pitch | null) {
   if (frequency === null) return
   const verdict = judge(frequency, q, settings.level)
   result.value = verdict
-  hold.value = 0
+  stopRecording()
   const sung = pitchClassName(verdict.sung)
   const gap = `${Math.abs(verdict.cents)} cents trop ${verdict.cents > 0 ? 'haut' : 'bas'}`
   quiz.answer(
@@ -107,32 +148,32 @@ function onPitch(pitch: Pitch | null) {
   )
 }
 
-async function openMicrophone() {
-  micError.value = ''
-  try {
-    mic = await listenToMicrophone(onPitch)
-  } catch {
-    micError.value = 'Le micro n’est pas accessible : autorise-le pour cette appli, puis réessaie.'
-  }
-}
-
-onMounted(openMicrophone)
-onBeforeUnmount(() => mic?.stop())
+onBeforeUnmount(stopMicrophone)
 </script>
 
 <style scoped>
+.record {
+  width: 140px;
+  height: 140px;
+  font-size: 64px;
+  display: grid;
+  place-items: center;
+}
+.record:active {
+  transform: scale(0.95);
+}
+.record:disabled {
+  opacity: 0.5;
+}
+.hint {
+  color: var(--ion-color-medium);
+  margin: 12px 0 28px;
+}
 .mic {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-}
-.target {
-  font-size: 56px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--ion-color-primary);
-  margin-bottom: 20px;
 }
 .meter {
   position: relative;
