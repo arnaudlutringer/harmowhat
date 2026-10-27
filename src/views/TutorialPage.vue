@@ -27,10 +27,10 @@
             <!-- 2. Les jeux -->
             <template v-else-if="step === 2">
               <div class="big" aria-hidden="true">🎹🎼🎵👀</div>
-              <p class="lead">
-                Plein de mini-jeux sont là pour tester ton oreille musicale. Écoute d'accord, écoute d'harmonie, lecture de note,
-                et même un choix grave/aigu pour te mettre en jambe.
-              </p>
+              <div class="lines">
+                <p class="lead">Plein de mini-jeux sont là pour tester ton oreille, mais pas que&nbsp;!</p>
+                <p class="lead">Harmonie, Accords, Tonalités... Pour tout niveau, teste ton talent musical.</p>
+              </div>
               <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
             </template>
 
@@ -266,6 +266,12 @@ onIonViewWillLeave(stopAll)
   margin: 0;
   font-size: 20px;
   line-height: 1.4;
+}
+/* Deux phrases bien séparées. */
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 .lead strong {
   font-family: 'Dancing Script', cursive;
