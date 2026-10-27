@@ -43,6 +43,14 @@
         </div>
         <p class="hint">{{ hint }}</p>
         <p v-if="micError" class="error">{{ micError }}</p>
+        <!-- Accordeur : la note chantée et sa justesse propre (écart au demi-ton le plus proche), sans dévoiler la note attendue. -->
+        <tuner-gauge
+          v-else
+          :cents="sung?.cents ?? null"
+          :tolerance="SELF_TUNING"
+          :label="sung?.name ?? ''"
+          :tone="sung && Math.abs(sung.cents) <= SELF_TUNING ? 'near' : ''"
+        />
         <div class="hold" aria-hidden="true"><span :style="{ width: `${hold * 100}%` }" /></div>
       </template>
     </template>
@@ -56,6 +64,7 @@ import { IonIcon } from '@ionic/vue'
 import { mic, play, stop, volumeHigh } from 'ionicons/icons'
 import GameShell from '@/components/GameShell.vue'
 import ChordStaff from '@/components/ChordStaff.vue'
+import TunerGauge from '@/components/TunerGauge.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { useRecording } from '@/composables/useRecording'
 import { playPiano } from '@/audio/engine'
@@ -100,8 +109,18 @@ function toggle() {
 }
 onBeforeUnmount(() => clearTimeout(replayTimer))
 
+/** Zone verte de l'accordeur : une note chantée juste, à 15 cents près. */
+const SELF_TUNING = 15
+/** Note chantée en direct, arrondie au demi-ton, et son écart à ce demi-ton. */
+const sung = computed(() => {
+  if (!recording.value || !live.value) return null
+  const midi = midiOf(live.value.frequency)
+  const nearest = Math.round(midi)
+  return { name: pitchClassName(nearest), cents: Math.round((midi - nearest) * 100) }
+})
+
 const hint = computed(() => {
-  if (recording.value) return live.value ? `${pitchClassName(Math.round(midiOf(live.value.frequency)))}… (score en pause)` : 'Chante et tiens la note… (score en pause)'
+  if (recording.value) return 'Chante et tiens la note… (score en pause)'
   if (quiz.playing.value) return 'Écoute…'
   return 'Appuie sur Micro pour chanter'
 })

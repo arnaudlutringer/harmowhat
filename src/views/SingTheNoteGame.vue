@@ -25,19 +25,14 @@
     <div class="mic">
       <p v-if="micError" class="error">{{ micError }}</p>
       <template v-else>
-        <!-- Aiguille d'accordeur : l'écart avec la note demandée, d'un demi-ton trop bas à un demi-ton trop haut. -->
-        <div class="meter" :class="meterClass" aria-hidden="true">
-          <span class="zone" :style="{ width: `${tolerance}%` }" />
-          <span class="center" />
-          <span v-if="shown" class="needle" :style="{ left: `${50 + (Math.max(-100, Math.min(100, shown.cents)) / 100) * 50}%` }" />
-        </div>
-        <div class="scale" aria-hidden="true"><span>trop bas</span><span>trop haut</span></div>
-        <p class="sung" aria-live="polite">
-          <template v-if="shown">
-            {{ pitchClassName(shown.sung) }}
-            <small>{{ shown.cents > 0 ? '+' : '' }}{{ shown.cents }} cents</small>
-          </template>
-        </p>
+        <!-- Accordeur : l'écart avec la note demandée, d'un demi-ton trop bas à un demi-ton trop haut. -->
+        <tuner-gauge
+          :cents="shown?.cents ?? null"
+          :tolerance="tolerance"
+          :label="shown ? pitchClassName(shown.sung) : ''"
+          :tone="meterClass"
+          aria-live="polite"
+        />
         <div class="hold" aria-hidden="true"><span :style="{ width: `${hold * 100}%` }" /></div>
       </template>
     </div>
@@ -50,6 +45,7 @@ import { useRoute } from 'vue-router'
 import { IonIcon } from '@ionic/vue'
 import { mic, stop } from 'ionicons/icons'
 import GameShell from '@/components/GameShell.vue'
+import TunerGauge from '@/components/TunerGauge.vue'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { useRecording } from '@/composables/useRecording'
 import { pitchClassName } from '@/music/notes'
@@ -73,7 +69,7 @@ const { recording, live: livePitch, hold, micError, toggle } = useRecording(quiz
 const live = computed(() => (livePitch.value ? judge(livePitch.value.frequency, quiz.question.value, settings.level) : null))
 
 const shown = computed(() => (quiz.feedback.value ? result.value : recording.value ? live.value : null))
-const meterClass = computed(() => {
+const meterClass = computed<'' | 'near' | 'ok' | 'ko'>(() => {
   if (!shown.value) return ''
   if (quiz.feedback.value) return quiz.feedback.value.correct ? 'ok' : 'ko'
   return Math.abs(shown.value.cents) <= tolerance ? 'near' : ''
@@ -124,69 +120,6 @@ function onNote(frequency: number) {
   flex-direction: column;
   align-items: center;
   width: 100%;
-}
-.meter {
-  position: relative;
-  width: 100%;
-  height: 28px;
-  border-radius: 14px;
-  background: rgba(108, 92, 231, 0.12);
-  overflow: hidden;
-}
-/* Zone de justesse acceptée par le niveau, de part et d'autre du centre. */
-.zone {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 168, 132, 0.25);
-}
-.center {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2px;
-  transform: translateX(-50%);
-  background: var(--ion-color-medium);
-}
-.needle {
-  position: absolute;
-  top: 2px;
-  bottom: 2px;
-  width: 8px;
-  border-radius: 4px;
-  transform: translateX(-50%);
-  background: var(--ion-color-primary);
-  transition: left 0.08s linear;
-}
-.meter.near .needle,
-.meter.ok .needle {
-  background: var(--ion-color-success);
-}
-.meter.ko .needle {
-  background: var(--ion-color-danger);
-}
-.scale {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  font-size: 12px;
-  color: var(--ion-color-medium);
-  margin-top: 4px;
-}
-.sung {
-  min-height: 32px;
-  margin: 12px 0 8px;
-  font-size: 24px;
-  font-weight: 700;
-}
-.sung small {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--ion-color-medium);
-  margin-left: 6px;
 }
 /* Note tenue : la barre se remplit pendant le chant ; pleine, la note est jugée. */
 .hold {
