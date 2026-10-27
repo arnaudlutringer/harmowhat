@@ -23,7 +23,7 @@
       <template v-else>
         <div class="buttons">
           <div class="button">
-            <button class="play" :class="{ 'is-playing': quiz.playing.value }" aria-label="Réécouter la note" :disabled="recording" @click="quiz.listen()">
+            <button class="play" :class="{ 'is-playing': quiz.playing.value }" aria-label="Réécouter la note" :disabled="recording" @click="replay">
               <ion-icon :icon="quiz.playing.value ? volumeHigh : play" />
             </button>
             <span>Son</span>
@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, shallowRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonIcon } from '@ionic/vue'
 import { mic, play, stop, volumeHigh } from 'ionicons/icons'
@@ -66,10 +66,15 @@ import { createQuestion, judge, parseSettings, type Question, type Verdict } fro
 
 const settings = parseSettings(useRoute().query)
 
+/** Durée de la note jouée. */
+const NOTE_MS = 2500
+
 const quiz = useQuiz<Question>({
   total: settings.questions,
   createQuestion: () => createQuestion(settings.level),
-  play: (question) => playPiano(question.base.midi),
+  play: (question) => playPiano(question.base.midi, { duration: NOTE_MS / 1000 }),
+  // Le décompte des points démarre aux 80 % de la note jouée.
+  countdownStart: () => NOTE_MS * 0.8,
   // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
   advanceDelay: null,
 })
@@ -77,7 +82,23 @@ const q = computed(() => quiz.question.value)
 
 /** La note retenue, après la réponse. */
 const result = shallowRef<Verdict | null>(null)
-const { recording, live, hold, micError, toggle } = useRecording(quiz, onNote)
+const { recording, live, hold, micError, toggle: toggleRecording } = useRecording(quiz, onNote)
+
+// Réécoute : le score se met en pause pendant la première moitié de la note.
+let replayTimer: ReturnType<typeof setTimeout> | undefined
+function replay() {
+  clearTimeout(replayTimer)
+  void quiz.listen()
+  quiz.pause()
+  replayTimer = setTimeout(quiz.resume, NOTE_MS / 2)
+}
+
+// Le micro garde la pause à son compte : elle ne doit pas s'arrêter à la fin de la réécoute.
+function toggle() {
+  clearTimeout(replayTimer)
+  toggleRecording()
+}
+onBeforeUnmount(() => clearTimeout(replayTimer))
 
 const hint = computed(() => {
   if (recording.value) return live.value ? `${pitchClassName(Math.round(midiOf(live.value.frequency)))}… (score en pause)` : 'Chante et tiens la note… (score en pause)'
