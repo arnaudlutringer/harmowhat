@@ -14,7 +14,7 @@
         </ion-button>
       </div>
       <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
-      <!-- Les jeux, rangés par catégorie : l'oreille (on écoute), le solfège (on lit la partition), la voix (on chante). -->
+      <!-- Les jeux, rangés par catégorie : l'oreille (on écoute), la voix (on chante), le solfège (on lit la partition). -->
       <section v-for="category in categories" :key="category.title" class="category">
         <h2>{{ category.title }}</h2>
         <div class="games">
@@ -123,8 +123,8 @@ const theoryGames = [
 
 const categories = [
   { title: "L'oreille", games: earGames },
-  { title: 'Le solfège', games: theoryGames },
   { title: 'La voix', games: voiceGames },
+  { title: 'Le solfège', games: theoryGames },
 ]
 </script>
 
