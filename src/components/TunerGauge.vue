@@ -1,6 +1,7 @@
 <template>
   <!-- Cadran d'accordeur en demi-cercle, comme un voltmètre : l'aiguille penche à gauche si c'est trop bas, à droite si c'est trop haut. -->
-  <div class="gauge" :class="tone" role="img" :aria-label="ariaLabel">
+  <div class="gauge" :class="tone" :aria-label="ariaLabel">
+    <div class="dial">
     <svg viewBox="0 0 200 116" aria-hidden="true">
       <path class="track" :d="arc(-100, 100)" />
       <path class="zone" :d="arc(-tolerance, tolerance)" />
@@ -16,9 +17,12 @@
       <g class="needle" :style="{ transform: `rotate(${angle}deg)`, opacity: cents === null ? 0.25 : 1 }">
         <line x1="100" y1="100" x2="100" y2="24" />
       </g>
-      <circle class="hub" cx="100" cy="100" r="6" />
+      <circle v-if="!$slots.default" class="hub" cx="100" cy="100" r="6" />
     </svg>
-    <p class="reading">
+    <!-- Contenu au centre du cadran, à la place du moyeu de l'aiguille (ex. le bouton micro). -->
+    <div v-if="$slots.default" class="center"><slot /></div>
+    </div>
+    <p class="reading" :class="{ below: $slots.default }">
       <template v-if="label">
         {{ label }}
         <small v-if="cents !== null">{{ cents > 0 ? '+' : '' }}{{ cents }} cents</small>
@@ -73,16 +77,28 @@ const ariaLabel = computed(() =>
 <style scoped>
 .gauge {
   width: 100%;
-  max-width: 280px;
+  max-width: 300px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+.dial {
+  position: relative;
+  width: 100%;
+}
 svg {
+  display: block;
   width: 100%;
   height: auto;
   overflow: visible;
+}
+/* Centré sur le moyeu de l'aiguille : (100, 100) dans un cadran de 200 × 116. */
+.center {
+  position: absolute;
+  left: 50%;
+  top: calc(100% * 100 / 116);
+  transform: translate(-50%, -50%);
 }
 .track {
   fill: none;
@@ -138,6 +154,10 @@ svg {
   margin: 4px 0 8px;
   font-size: 24px;
   font-weight: 700;
+}
+/* Sous un bouton placé au centre du cadran, qui déborde vers le bas. */
+.reading.below {
+  margin-top: 36px;
 }
 .reading small {
   font-size: 15px;
