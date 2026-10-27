@@ -21,32 +21,36 @@
         />
       </div>
       <template v-else>
-        <div class="button">
-          <button class="play sound" :class="{ 'is-playing': quiz.playing.value }" aria-label="Réécouter la note" :disabled="recording" @click="replay">
-            <ion-icon :icon="quiz.playing.value ? volumeHigh : play" />
-          </button>
-          <span>Son</span>
+        <div class="buttons">
+          <div class="button">
+            <button class="play" :class="{ 'is-playing': quiz.playing.value }" aria-label="Réécouter la note" :disabled="recording" @click="replay">
+              <ion-icon :icon="quiz.playing.value ? volumeHigh : play" />
+            </button>
+            <span>Son</span>
+          </div>
+          <div class="button">
+            <button
+              class="play"
+              :class="{ 'is-playing': recording }"
+              :aria-label="recording ? 'Arrêter l’enregistrement' : 'Chanter : démarrer l’enregistrement'"
+              :disabled="!quiz.canAnswer.value"
+              @click="toggle"
+            >
+              <ion-icon :icon="recording ? stop : mic" />
+            </button>
+            <span>Micro</span>
+          </div>
         </div>
-        <!-- Accordeur : la note chantée et sa justesse propre (écart au demi-ton le plus proche), sans dévoiler la note
-             attendue ; le bouton micro est au centre du cadran. -->
+        <p class="hint">{{ hint }}</p>
+        <p v-if="micError" class="error">{{ micError }}</p>
+        <!-- Accordeur : la note chantée et sa justesse propre (écart au demi-ton le plus proche), sans dévoiler la note attendue. -->
         <tuner-gauge
+          v-else
           :cents="sung?.cents ?? null"
           :tolerance="SELF_TUNING"
           :label="sung?.name ?? ''"
           :tone="sung && Math.abs(sung.cents) <= SELF_TUNING ? 'near' : ''"
-        >
-          <button
-            class="play record"
-            :class="{ 'is-playing': recording }"
-            :aria-label="recording ? 'Arrêter l’enregistrement' : 'Chanter : démarrer l’enregistrement'"
-            :disabled="!quiz.canAnswer.value"
-            @click="toggle"
-          >
-            <ion-icon :icon="recording ? stop : mic" />
-          </button>
-        </tuner-gauge>
-        <p class="hint">{{ hint }}</p>
-        <p v-if="micError" class="error">{{ micError }}</p>
+        />
         <div class="hold" aria-hidden="true"><span :style="{ width: `${hold * 100}%` }" /></div>
       </template>
     </template>
@@ -139,31 +143,27 @@ function onNote(frequency: number) {
 </script>
 
 <style scoped>
+.buttons {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+}
 .button {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
   color: var(--ion-color-medium);
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
 }
 .play {
+  width: 110px;
+  height: 110px;
+  font-size: 52px;
   display: grid;
   place-items: center;
-}
-.sound {
-  width: 72px;
-  height: 72px;
-  font-size: 34px;
-}
-/* Bouton micro au centre du cadran : assez petit pour laisser voir l'aiguille. */
-.record {
-  width: 96px;
-  height: 96px;
-  font-size: 44px;
 }
 .play:active {
   transform: scale(0.95);

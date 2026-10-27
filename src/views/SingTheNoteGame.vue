@@ -8,30 +8,34 @@
     :advance-bar="ADVANCE_DELAY"
     :no-tuning-fork="settings.level === 'expert'"
   >
-    <!-- Pas de son à écouter : l'accordeur montre l'écart avec la note demandée (d'un demi-ton trop bas à un demi-ton
-         trop haut), et le bouton micro, au centre du cadran, lance l'enregistrement ; le score est en pause pendant la prise. -->
+    <!-- Pas de son à écouter : le bouton lance l'enregistrement de la voix, et le score est en pause pendant la prise. -->
     <template #player>
-      <tuner-gauge
-        :cents="shown?.cents ?? null"
-        :tolerance="tolerance"
-        :label="shown ? pitchClassName(shown.sung) : ''"
-        :tone="meterClass"
-        aria-live="polite"
+      <button
+        class="play record"
+        :class="{ 'is-playing': recording }"
+        :aria-label="recording ? 'Arrêter l’enregistrement' : 'Chanter : démarrer l’enregistrement'"
+        :disabled="!quiz.canAnswer.value"
+        @click="toggle"
       >
-        <button
-          class="play record"
-          :class="{ 'is-playing': recording }"
-          :aria-label="recording ? 'Arrêter l’enregistrement' : 'Chanter : démarrer l’enregistrement'"
-          :disabled="!quiz.canAnswer.value"
-          @click="toggle"
-        >
-          <ion-icon :icon="recording ? stop : mic" />
-        </button>
-      </tuner-gauge>
+        <ion-icon :icon="recording ? stop : mic" />
+      </button>
       <p class="hint">{{ hint }}</p>
-      <p v-if="micError" class="error">{{ micError }}</p>
-      <div class="hold" aria-hidden="true"><span :style="{ width: `${hold * 100}%` }" /></div>
     </template>
+
+    <div class="mic">
+      <p v-if="micError" class="error">{{ micError }}</p>
+      <template v-else>
+        <!-- Accordeur : l'écart avec la note demandée, d'un demi-ton trop bas à un demi-ton trop haut. -->
+        <tuner-gauge
+          :cents="shown?.cents ?? null"
+          :tolerance="tolerance"
+          :label="shown ? pitchClassName(shown.sung) : ''"
+          :tone="meterClass"
+          aria-live="polite"
+        />
+        <div class="hold" aria-hidden="true"><span :style="{ width: `${hold * 100}%` }" /></div>
+      </template>
+    </div>
   </game-shell>
 </template>
 
@@ -94,11 +98,10 @@ function onNote(frequency: number) {
 </script>
 
 <style scoped>
-/* Bouton micro au centre du cadran : assez petit pour laisser voir l'aiguille. */
 .record {
-  width: 96px;
-  height: 96px;
-  font-size: 44px;
+  width: 140px;
+  height: 140px;
+  font-size: 64px;
   display: grid;
   place-items: center;
 }
@@ -110,13 +113,18 @@ function onNote(frequency: number) {
 }
 .hint {
   color: var(--ion-color-medium);
-  margin: 0 0 8px;
+  margin: 12px 0 28px;
+}
+.mic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 /* Note tenue : la barre se remplit pendant le chant ; pleine, la note est jugée. */
 .hold {
   width: 120px;
   height: 4px;
-  margin-bottom: 20px;
   border-radius: 2px;
   background: rgba(108, 92, 231, 0.18);
   overflow: hidden;
