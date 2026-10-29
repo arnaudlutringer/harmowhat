@@ -58,6 +58,7 @@
             <!-- 4. L'instrument -->
             <template v-else-if="step === 4">
               <p class="lead">Quel est ton instrument de prédilection ?</p>
+              <p class="how">Touche un instrument pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
               <div class="list">
                 <div v-for="inst in INSTRUMENTS" :key="inst.id" class="row">
                   <ion-button class="main" @click="pickInstrument(inst.id)">{{ inst.emoji }} {{ inst.label }}</ion-button>
@@ -76,6 +77,7 @@
             <!-- 5. Le morceau -->
             <template v-else-if="step === 5">
               <p class="lead">Quel est ton morceau favori parmi ceux-là ?</p>
+              <p class="how">Touche un morceau pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
               <div class="list">
                 <div v-for="e in endingsFor(selectedInstrument)" :key="e.id" class="row">
                   <ion-button class="main" @click="pickEnding(e.id)">
@@ -367,18 +369,28 @@ onIonViewWillLeave(stopAll)
   opacity: 0.7;
   font-size: 12px;
 }
+/* Bouton d'écoute discret (au trait) : le bloc de l'instrument ou du morceau reste l'élément principal. */
 .listen {
   flex: none;
-  width: 44px;
-  height: 44px;
-  border: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--ion-color-primary);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 20px;
-  color: #fff;
-  background: var(--ion-color-primary);
+  font-size: 18px;
+  color: var(--ion-color-primary);
+  background: transparent;
   cursor: pointer;
+}
+.listen.is-playing {
+  border-color: var(--ion-color-secondary);
+}
+/* Consigne sous la question des écrans de choix. */
+.how {
+  margin: -8px 0 4px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
 }
 /* Passage d'une étape à l'autre : fondu avec un léger glissement. */
 .step-enter-active,
