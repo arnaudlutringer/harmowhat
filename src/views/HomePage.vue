@@ -13,7 +13,7 @@
           <ion-icon slot="icon-only" :icon="settingsOutline" />
         </ion-button>
       </div>
-      <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
+      <p class="intro">Tu penses avoir l'oreille absolue&nbsp;?<br />Prouve-le&nbsp;!</p>
       <!-- Les jeux, rangés par catégorie : l'oreille (on écoute), la voix (on chante), le solfège (on lit la partition). -->
       <section v-for="category in categories" :key="category.title" class="category">
         <h2>{{ category.title }}</h2>
