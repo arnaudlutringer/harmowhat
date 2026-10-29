@@ -321,8 +321,8 @@ onIonViewWillLeave(stopAll)
 }
 /* Sur un petit bouton d'écoute : un doigt plus petit, au même endroit relatif. */
 .pointer.small {
-  top: -14px;
-  right: -18px;
+  top: -28px;
+  right: -26px;
   font-size: 34px;
 }
 @keyframes point {
