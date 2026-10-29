@@ -34,13 +34,15 @@
           </ion-item>
         </ion-radio-group>
 
-        <ion-button expand="block" size="large" class="start" @click="start">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" size="large" class="start" @click="start()">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" class="trial" @click="start(true)">Essayer une question</ion-button>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
+import { withTrial } from '@/games/ready'
 import { ref } from 'vue'
 import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
@@ -65,7 +67,7 @@ const level = ref<Level>(saved.level)
 const precision = ref<Precision>(saved.precision)
 const router = useIonRouter()
 
-function start() {
+function start(trial = false) {
   const settings = { questions: questions.value, level: level.value, precision: precision.value }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
@@ -73,7 +75,7 @@ function start() {
     // Stockage indisponible : on joue quand même.
   }
   // Pas besoin de diapason pour reconnaître un intervalle : on lance directement le jeu.
-  router.push(`/games/harmonies/jouer?questions=${settings.questions}&level=${settings.level}&precision=${settings.precision}`)
+  router.push(withTrial(`/games/harmonies/jouer?questions=${settings.questions}&level=${settings.level}&precision=${settings.precision}`, trial))
 }
 </script>
 

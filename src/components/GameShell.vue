@@ -32,7 +32,8 @@
           <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
           <div class="progress">
             <span>Question {{ quiz.number.value }} / {{ quiz.total }}</span>
-            <span class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
+            <span v-if="quiz.trial" class="trial">Essai</span>
+            <span v-else class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
           </div>
           <!-- Points gagnés à la question : « +350pts » en biais, qui s'envole des points de la question vers le total (1,5 s). -->
           <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}pts</strong>
@@ -56,14 +57,16 @@
             <strong>{{ quiz.feedback.value.correct ? 'Bonne réponse !' : 'Mauvaise réponse' }}</strong>
             <span>{{ quiz.feedback.value.message }}</span>
             <!-- Passage automatique : une barre se remplit jusqu'à la question suivante. -->
+            <!-- Essai : pas de question suivante, on revient aux réglages quand on a compris. -->
+            <ion-button v-if="quiz.trial" class="understood" @click="backToSettings">J'ai compris</ion-button>
             <span
-              v-if="advanceBar"
+              v-else-if="advanceBar"
               :key="quiz.number.value"
               class="advance-bar"
               :style="{ animationDuration: `${advanceBar}ms` }"
               aria-hidden="true"
             />
-            <button v-if="swipeToNext" class="next-hint" @click="quiz.next()">
+            <button v-if="swipeToNext && !quiz.trial" class="next-hint" @click="quiz.next()">
               Glisse vers la gauche pour {{ quiz.number.value < quiz.total ? 'la question suivante' : 'voir ton score' }} ›
             </button>
           </template>
@@ -75,7 +78,7 @@
 
 <script setup lang="ts">
 import {
-  alertController, IonContent, IonIcon, IonPage, onIonViewWillLeave, useBackButton, useIonRouter,
+  alertController, IonButton, IonContent, IonIcon, IonPage, onIonViewWillLeave, useBackButton, useIonRouter,
 } from '@ionic/vue'
 import { useRoute } from 'vue-router'
 import { play, volumeHigh } from 'ionicons/icons'
@@ -153,7 +156,7 @@ function onPointerDown(e: PointerEvent) {
 function onPointerUp(e: PointerEvent) {
   const start = swipeStart.value
   swipeStart.value = null
-  if (!start || !props.swipeToNext || !props.quiz.feedback.value) return
+  if (!start || !props.swipeToNext || props.quiz.trial || !props.quiz.feedback.value) return
   const dx = e.clientX - start.x
   const dy = e.clientY - start.y
   if (dx < -60 && Math.abs(dx) > Math.abs(dy) * 1.5) props.quiz.next()
@@ -189,6 +192,11 @@ async function confirmQuit() {
   const { role } = await alert.onDidDismiss()
   confirming = false
   if (role !== 'confirm') return props.quiz.resume()
+  backToSettings()
+}
+
+/** Retour aux réglages du jeu (ou à l'accueil pour un jeu sans réglages), qui reproposent les derniers choisis. */
+function backToSettings() {
   stopAll()
   const target = props.settingsHref ?? '/home'
   // On vient en général des réglages : on y revient dans l'historique plutôt que d'en empiler une copie.
@@ -281,6 +289,16 @@ useBackButton(20, (processNextHandler) => {
 .total {
   display: inline-block;
   transform-origin: right center;
+}
+/* Mode essai : « Essai » en rouge à la place du total. */
+.trial {
+  color: var(--ion-color-danger);
+  font-weight: 700;
+}
+.understood {
+  margin-top: 12px;
+  --border-radius: 0;
+  font-weight: 700;
 }
 .total.bump {
   animation: bump 0.25s ease-out;

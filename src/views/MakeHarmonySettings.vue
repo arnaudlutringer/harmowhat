@@ -22,13 +22,15 @@
           </ion-item>
         </ion-radio-group>
 
-        <ion-button expand="block" size="large" class="start" @click="start">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" size="large" class="start" @click="start()">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" class="trial" @click="start(true)">Essayer une question</ion-button>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
+import { withTrial } from '@/games/ready'
 import { ref } from 'vue'
 import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
@@ -52,14 +54,14 @@ const questions = ref<number>(saved.questions)
 const level = ref<Level>(saved.level)
 const router = useIonRouter()
 
-function start() {
+function start(trial = false) {
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
   } catch {
     // Stockage indisponible : on joue quand même.
   }
-  router.push(`/games/fais-harmonie/jouer?questions=${settings.questions}&level=${settings.level}`)
+  router.push(withTrial(`/games/fais-harmonie/jouer?questions=${settings.questions}&level=${settings.level}`, trial))
 }
 </script>
 

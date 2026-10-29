@@ -14,6 +14,18 @@ export function readyGame(raw: unknown): ReadyGame {
   return READY_GAMES[(typeof raw === 'string' && raw in READY_GAMES ? raw : 'quelle-note') as keyof typeof READY_GAMES]
 }
 
+/**
+ * Mode essai : une seule question du niveau choisi, sans score ni question suivante,
+ * puis « J'ai compris » ramène aux réglages. Il passe par `essai=1` dans l'adresse du jeu.
+ */
+export function withTrial(path: string, trial: boolean): string {
+  return trial ? `${path}${path.includes('?') ? '&' : '?'}essai=1` : path
+}
+
+export function isTrial(query: { essai?: unknown }): boolean {
+  return query.essai === '1'
+}
+
 /** Écran suivant les réglages : l'écran diapason si le jeu n'en a pas pendant les questions, sinon le jeu. */
 export function afterSettings(slug: keyof typeof READY_GAMES, noTuningFork: boolean, query: string): string {
   return `/games/${slug}/${noTuningFork ? 'pret' : 'jouer'}?${query}`

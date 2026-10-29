@@ -86,6 +86,16 @@ ion-content.ion-padding {
   font-weight: 600;
 }
 
+/* Bouton secondaire des réglages (« Essayer une question ») : sous « C'est parti ! », sans fond, bordure violette. */
+.hw-square ion-button.trial {
+  margin-top: 12px;
+  --background: transparent;
+  --border-color: var(--hw-button-text);
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: none;
+}
+
 /* Bouton de lecture : rond, violet. */
 .hw-square .play {
   border-radius: 50%;

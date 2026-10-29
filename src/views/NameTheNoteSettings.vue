@@ -23,7 +23,8 @@
           </ion-item>
         </ion-radio-group>
 
-        <ion-button expand="block" size="large" class="start" @click="start">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" size="large" class="start" @click="start()">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" class="trial" @click="start(true)">Essayer une question</ion-button>
       </div>
     </ion-content>
   </ion-page>
@@ -37,7 +38,7 @@ import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
-import { afterSettings } from '@/games/ready'
+import { afterSettings, withTrial } from '@/games/ready'
 import { levelRange, LEVELS, parseSettings, QUESTION_COUNTS, type Level } from '@/games/nameTheNote'
 import { currentInstrument } from '@/audio/instruments'
 import { noteName } from '@/music/notes'
@@ -63,7 +64,7 @@ const router = useIonRouter()
 // Le diapason s'arrête dès qu'on quitte l'écran.
 onIonViewWillLeave(stopAll)
 
-function start() {
+function start(trial = false) {
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
@@ -71,7 +72,7 @@ function start() {
     // Stockage indisponible : on joue quand même.
   }
   // En expert, pas de diapason pendant les questions : il est proposé sur l'écran « Je suis prêt ».
-  router.push(afterSettings('quelle-note', settings.level === 'expert', `questions=${settings.questions}&level=${settings.level}`))
+  router.push(withTrial(afterSettings('quelle-note', settings.level === 'expert', `questions=${settings.questions}&level=${settings.level}`), trial))
 }
 </script>
 

@@ -1,7 +1,9 @@
 import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { COUNTDOWN_DELAY_MS, MIN_POINTS, QuestionClock, REPLAY_PENALTY, summarize, TUNING_FORK_PENALTY, type QuestionResult } from '@/games/scoring'
 import { usePlaying } from './usePlaying'
+import { useRoute } from 'vue-router'
 import { stopAll } from '@/audio/engine'
+import { isTrial } from '@/games/ready'
 
 export interface Feedback {
   correct: boolean
@@ -32,6 +34,12 @@ export interface QuizOptions<Q> {
 export const ADVANCE_DELAY = 1500
 
 export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart }: QuizOptions<Q>) {
+  // Mode essai (`essai=1` dans l'adresse du jeu) : une seule question, sans passage automatique ni score.
+  const trial = getCurrentInstance() ? isTrial(useRoute()?.query ?? {}) : false
+  if (trial) {
+    total = 1
+    advanceDelay = null
+  }
   const index = ref(0)
   const question = shallowRef<Q>(createQuestion())
   const hasListened = ref(false)
@@ -209,6 +217,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   }
 
   return {
+    trial,
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
     playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, restart, pause, resume,
   }
