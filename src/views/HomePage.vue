@@ -27,14 +27,17 @@
           </ion-card>
         </div>
       </section>
-      <ion-button class="hall" expand="block" router-link="/hall-of-fame">
-        <ion-icon slot="start" :icon="trophyOutline" />
-        Hall of fame
-      </ion-button>
-      <ion-button class="hall mine" expand="block" fill="outline" router-link="/trophees">
-        <ion-icon slot="start" :icon="medalOutline" />
-        Mes trophées
-      </ion-button>
+      <!-- Hall of fame et Mes trophées, côte à côte, chacun sur la moitié de l'écran. -->
+      <div class="bottom">
+        <ion-button class="hall" router-link="/hall-of-fame">
+          <ion-icon slot="start" :icon="trophyOutline" />
+          Hall of fame
+        </ion-button>
+        <ion-button class="hall" fill="outline" router-link="/trophees">
+          <ion-icon slot="start" :icon="medalOutline" />
+          Mes trophées
+        </ion-button>
+      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -188,11 +191,14 @@ ion-card-content {
   font-size: 36px;
   color: var(--hw-card-ink);
 }
-.hall.mine {
-  margin-top: 10px;
+.bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
 }
 .hall {
-  margin: 20px 0 0;
+  margin: 0;
   --border-radius: 0;
   font-weight: 700;
 }
