@@ -36,10 +36,10 @@ const SVGS: Record<GameId, string> = {
     head(130, 404) + `<path d="M182 388V210" ${S}/>` +
     head(372, 300) + `<path d="M424 284V106" ${S}/>` +
     `<path d="M120 150q100-110 210-40M296 82l34 28-40 22" ${S}/>`,
-  // Une gamme qui monte, marche après marche.
+  // Trois notes qui montent, un arc entre chacune : les intervalles (tons et demi-tons) qui font le mode.
   modalite:
-    `<path d="M40 456h96v-80h96v-80h96v-80h96v-80h48" ${S}/>` +
-    head(88, 404, 34, 26) + head(184, 324, 34, 26) + head(280, 244, 34, 26) + head(376, 164, 34, 26),
+    head(96, 410, 58, 42) + head(256, 330, 58, 42) + head(416, 250, 58, 42) +
+    `<path d="M100 340q60-110 140-62M260 260q60-110 140-62" ${S}/>`,
   // Un micro et une note.
   'chante-note': MIC + head(350, 380) + `<path d="M404 362V110c0 56 60 66 60 130" ${S}/>`,
   // Un micro et deux notes : un intervalle à chanter.
