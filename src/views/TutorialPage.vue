@@ -107,11 +107,16 @@
               <p class="lead">Sinon ce sera la catastrophe…</p>
               <div class="row single disaster">
                 <span class="piece">{{ ending.title }} <small>5 bonnes réponses sur 10</small></span>
-                <button class="listen" :class="{ 'is-playing': sound.current.value === 'drunk' }" aria-label="Écouter le morceau mal joué" @click="listenDrunk">
-                  <ion-icon :icon="sound.current.value === 'drunk' ? stop : play" />
-                </button>
+                <div class="fork-wrap">
+                  <button class="listen" :class="{ 'is-playing': sound.current.value === 'drunk' }" aria-label="Écouter le morceau mal joué" @click="listenDrunk">
+                    <ion-icon :icon="sound.current.value === 'drunk' ? stop : play" />
+                  </button>
+                  <!-- Le même doigt que pour le diapason, jusqu'à la première écoute. -->
+                  <span v-if="!drunkTried" class="pointer small" aria-hidden="true">👇</span>
+                </div>
               </div>
-              <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
+              <!-- « Suivant » ne s'ouvre qu'après avoir écouté le morceau raté. -->
+              <ion-button expand="block" size="large" :disabled="!drunkTried" @click="next">Suivant</ion-button>
             </template>
 
             <!-- 7. C'est parti -->
@@ -182,7 +187,11 @@ function listenEnding(e: Ending, key: string) {
 }
 
 // Le même morceau joué comme après une partie à 5 bonnes réponses sur 10 (voir music/drunk.ts).
+/** Le morceau raté a été écouté : le doigt qui le montre disparaît et « Suivant » s'ouvre. */
+const drunkTried = ref(false)
+
 function listenDrunk() {
+  drunkTried.value = true
   toggle('drunk', () => playEnding(ending.value, selectedInstrument.value, 0.5))
 }
 
@@ -309,6 +318,12 @@ onIonViewWillLeave(stopAll)
   line-height: 1;
   pointer-events: none;
   animation: point 1s ease-in-out infinite;
+}
+/* Sur un petit bouton d'écoute : un doigt plus petit, au même endroit relatif. */
+.pointer.small {
+  top: -14px;
+  right: -18px;
+  font-size: 34px;
 }
 @keyframes point {
   0%,
