@@ -5,7 +5,7 @@
       <!-- Deux onglets : l'instrument (et sa musique de fin), Mon compte (nom et pays du joueur). -->
       <ion-segment :value="tab" class="tabs" @ion-change="switchTab($event.detail.value as Tab)">
         <ion-segment-button value="instrument">
-          <ion-label>🎻 Instrument</ion-label>
+          <ion-label>{{ instrument.emoji }} Instrument</ion-label>
         </ion-segment-button>
         <ion-segment-button value="joueur">
           <ion-label>{{ flag(profile.country) }} Mon compte</ion-label>
