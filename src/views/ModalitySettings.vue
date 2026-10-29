@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="La modalité" back-href="/home" />
+      <page-nav title="La modalité" back-href="/home" game="modalite" />
       <div class="settings hw-square">
         <game-intro game="modalite" />
         <h2 class="hw-section-title">Paramètres</h2>

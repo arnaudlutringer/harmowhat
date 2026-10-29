@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="Lecture de note" back-href="/home" />
+      <page-nav title="Lecture de note" back-href="/home" game="lecture-note" />
       <div class="settings hw-square">
         <game-intro game="lecture-note" />
         <h2 class="hw-section-title">Paramètres</h2>

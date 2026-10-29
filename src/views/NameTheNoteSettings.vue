@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="Quelle est la note ?" back-href="/home" />
+      <page-nav title="Quelle est la note ?" back-href="/home" game="quelle-note" />
       <div class="settings hw-square">
         <game-intro game="quelle-note" />
         <h2 class="hw-section-title">Paramètres</h2>

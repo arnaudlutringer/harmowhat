@@ -39,39 +39,37 @@
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonPage,
 } from '@ionic/vue'
-import {
-  chatbubblesOutline, contrastOutline, earOutline, eyeOutline, gitMergeOutline, informationCircleOutline, keyOutline,
-  layersOutline, micOutline, musicalNotesOutline, settingsOutline, swapVerticalOutline, trophyOutline,
-} from 'ionicons/icons'
+import { informationCircleOutline, settingsOutline, trophyOutline } from 'ionicons/icons'
+import { GAME_ICONS } from '@/games/icons'
 
 const earGames = [
   {
     path: '/games/grave-ou-aigu',
-    icon: swapVerticalOutline,
+    icon: GAME_ICONS['grave-ou-aigu'],
     title: 'Grave ou aigu ?',
     description: 'La note jouée est-elle plus grave ou plus aiguë que le La3 du diapason ?',
   },
   {
     path: '/games/quelle-note',
-    icon: earOutline,
+    icon: GAME_ICONS['quelle-note'],
     title: 'Quelle est la note ?',
     description: 'Retrouve la note jouée parmi plusieurs propositions.',
   },
   {
     path: '/games/accords',
-    icon: layersOutline,
+    icon: GAME_ICONS.accords,
     title: 'Les accords',
     description: 'Trois notes jouées ensemble, entre La2 et La4 : retrouve-les toutes les trois.',
   },
   {
     path: '/games/harmonies',
-    icon: musicalNotesOutline,
+    icon: GAME_ICONS.harmonies,
     title: 'Les harmonies',
     description: "Deux notes l'une après l'autre : trouve l'intervalle (tierce, quinte, sixte…).",
   },
   {
     path: '/games/modalite',
-    icon: contrastOutline,
+    icon: GAME_ICONS.modalite,
     title: 'La modalité',
     description: "Devine la modalité à l'oreille.",
   },
@@ -80,13 +78,13 @@ const earGames = [
 const voiceGames = [
   {
     path: '/games/chante-note',
-    icon: micOutline,
+    icon: GAME_ICONS['chante-note'],
     title: 'Chante la note',
     description: 'Chante dans le micro la note demandée, au plus juste.',
   },
   {
     path: '/games/chante-harmonie',
-    icon: chatbubblesOutline,
+    icon: GAME_ICONS['chante-harmonie'],
     title: "Chante l'harmonie",
     description: 'Une note est jouée : chante celle qui forme l’intervalle demandé (la quinte, la tierce majeure…).',
   },
@@ -95,19 +93,19 @@ const voiceGames = [
 const theoryGames = [
   {
     path: '/games/lecture-note',
-    icon: eyeOutline,
+    icon: GAME_ICONS['lecture-note'],
     title: 'Lecture de note',
     description: "Une note sur une portée, en clé de sol, de fa ou d'ut : quelle est cette note ?",
   },
   {
     path: '/games/fais-harmonie',
-    icon: gitMergeOutline,
+    icon: GAME_ICONS['fais-harmonie'],
     title: "Fais l'harmonie",
     description: 'Une note sur une portée et un intervalle : quelle note forme cette harmonie (la quinte du Do, la septième du Ré♯…) ?',
   },
   {
     path: '/games/tonalite',
-    icon: keyOutline,
+    icon: GAME_ICONS.tonalite,
     title: 'La tonalité',
     description: "Trouve la tonalité en regardant l'armure de la portée : ses dièses, ses bémols… ou rien.",
   },
