@@ -65,6 +65,8 @@ const quiz = useQuiz({
   play: (q) => playChord(q.notes, { duration: CHORD_MS / 1000 }),
   // Le décompte des points démarre à la moitié de l'accord joué.
   countdownStart: () => CHORD_MS / 2,
+  // On peut répondre dès 0,5 s de son.
+  answersOpen: () => 500,
   advanceDelay: null,
 })
 const q = computed(() => quiz.question.value)

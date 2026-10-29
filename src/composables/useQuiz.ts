@@ -24,6 +24,8 @@ export interface QuizOptions<Q> {
    * Avec ce réglage, les réponses ne s'ouvrent qu'à ce moment-là (ex. la dernière note d'une gamme).
    */
   countdownStart?: (question: Q) => number
+  /** Avec `countdownStart` : ouvre les réponses plus tôt, ce délai (ms) après le début du premier son. */
+  answersOpen?: (question: Q) => number
 }
 
 /**
@@ -33,7 +35,7 @@ export interface QuizOptions<Q> {
 /** Délai du passage automatique à la question suivante, après une réponse (ms). */
 export const ADVANCE_DELAY = 1500
 
-export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart }: QuizOptions<Q>) {
+export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart, answersOpen }: QuizOptions<Q>) {
   // Mode essai (`essai=1` dans l'adresse du jeu) : une seule question, sans passage automatique ni score.
   const trial = getCurrentInstance() ? isTrial(useRoute()?.query ?? {}) : false
   if (trial) {
@@ -54,6 +56,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   let plays = 0
   let timer: ReturnType<typeof setTimeout> | undefined
   let clockTimer: ReturnType<typeof setTimeout> | undefined
+  let openTimer: ReturnType<typeof setTimeout> | undefined
   let countdownTimer: ReturnType<typeof setTimeout> | undefined
   let frame: number | undefined
   /** Partie en pause (popin « Quitter la partie ? ») ; startPending : le décompte devait démarrer pendant la pause. */
@@ -97,6 +100,12 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
         if (!countdownStart || !first) hasListened.value = true
         if (!first) return
         const c = clock
+        // Réponses ouvertes avant le décompte : répondre avant qu'il démarre rapporte tous les points.
+        if (countdownStart && answersOpen) {
+          openTimer = setTimeout(() => {
+            if (c === clock && questionOpen()) hasListened.value = true
+          }, answersOpen(q))
+        }
         clockTimer = setTimeout(() => {
           if (c !== clock) return
           hasListened.value = true
@@ -168,6 +177,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   function startQuestion(first = false) {
     stopTicking()
     clearTimeout(clockTimer)
+    clearTimeout(openTimer)
     stopAll()
     clock = new QuestionClock()
     startPending = false
@@ -185,6 +195,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     if (index.value + 1 >= total) {
       finished.value = true
       clearTimeout(clockTimer)
+      clearTimeout(openTimer)
       stopAll()
       return
     }
@@ -210,6 +221,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     onBeforeUnmount(() => {
       clearTimeout(timer)
       clearTimeout(clockTimer)
+      clearTimeout(openTimer)
       clearTimeout(countdownTimer)
       stopTicking()
       stopAll()
