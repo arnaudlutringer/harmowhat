@@ -32,9 +32,10 @@
           <!-- Le diapason n'est disponible que pendant les questions (et jamais en mode expert). -->
           <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
           <div class="progress">
-            <span>Question {{ quiz.number.value }} / {{ quiz.total }}</span>
+            <!-- Essai : une seule question, sans total ; « Essai » en grand à la place. -->
             <span v-if="quiz.trial" class="trial">Essai</span>
-            <span v-else class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
+            <span v-if="!quiz.trial">Question {{ quiz.number.value }} / {{ quiz.total }}</span>
+            <span v-if="!quiz.trial" class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
           </div>
           <!-- Points gagnés à la question : « +350pts » en biais, qui s'envole des points de la question vers le total (1,5 s). -->
           <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}pts</strong>
@@ -294,7 +295,9 @@ useBackButton(20, (processNextHandler) => {
 /* Mode essai : « Essai » en rouge à la place du total. */
 .trial {
   color: var(--ion-color-danger);
+  font-size: 24px;
   font-weight: 700;
+  line-height: 1.2;
 }
 .countdown .countdown-trial {
   color: var(--ion-color-danger);
