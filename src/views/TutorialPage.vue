@@ -300,9 +300,10 @@ onIonViewWillLeave(stopAll)
 /* Doigt vers le bas tourné de 45° : il pointe vers le bas et la gauche, et s'avance vers le bouton. */
 .pointer {
   position: absolute;
-  top: -34px;
-  right: -46px;
-  font-size: 44px;
+  top: -22px;
+  right: -36px;
+  z-index: 1;
+  font-size: 64px;
   line-height: 1;
   pointer-events: none;
   animation: point 1s ease-in-out infinite;
