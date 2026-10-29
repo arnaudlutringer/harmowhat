@@ -4,7 +4,6 @@
       <page-nav title="Lecture de note" back-href="/home" game="lecture-note" />
       <div class="settings hw-square">
         <game-intro game="lecture-note" />
-        <h2 class="hw-section-title">Paramètres</h2>
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">

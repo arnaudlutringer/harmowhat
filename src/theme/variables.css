@@ -86,15 +86,6 @@ ion-content.ion-padding {
   font-weight: 600;
 }
 
-/* Titres de rubrique des écrans de réglages (« Présentation », « Paramètres ») : plus forts que les h2 propres à chaque écran. */
-.hw-square .hw-section-title {
-  margin: 16px 0 8px;
-  font-family: 'Dancing Script', cursive;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--ion-color-primary);
-}
-
 /* Choix segmentés des réglages (nombre de questions…) : le choix retenu est entouré de violet, sans soulignement. */
 .hw-square ion-segment-button {
   --indicator-height: 0;

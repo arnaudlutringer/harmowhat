@@ -4,7 +4,6 @@
       <page-nav :title="title" back-href="/home" :game="game" />
       <div class="settings hw-square">
         <game-intro :game="game" />
-        <h2 class="hw-section-title">Paramètres</h2>
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in questionCounts" :key="n" :value="n">

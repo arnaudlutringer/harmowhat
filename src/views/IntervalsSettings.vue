@@ -4,7 +4,6 @@
       <page-nav title="Les harmonies" back-href="/home" game="harmonies" />
       <div class="settings hw-square">
         <game-intro game="harmonies" />
-        <h2 class="hw-section-title">Paramètres</h2>
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">
