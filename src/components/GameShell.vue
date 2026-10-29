@@ -12,6 +12,7 @@
       />
 
       <div v-else-if="quiz.countdown.value !== null" class="countdown" aria-live="assertive">
+        <p v-if="quiz.trial" class="trial countdown-trial">Essai</p>
         <p>Prêt ?</p>
         <span :key="quiz.countdown.value" class="count">{{ quiz.countdown.value }}</span>
       </div>
@@ -294,6 +295,10 @@ useBackButton(20, (processNextHandler) => {
 .trial {
   color: var(--ion-color-danger);
   font-weight: 700;
+}
+.countdown .countdown-trial {
+  color: var(--ion-color-danger);
+  font-size: 26px;
 }
 .understood {
   margin-top: 12px;
