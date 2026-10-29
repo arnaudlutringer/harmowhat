@@ -24,10 +24,10 @@ const SVGS: Record<GameId, string> = {
     `<path d="M80 120v300M36 376l44 44 44-44" ${S}/>` +
     head(244, 360) + `<path d="M298 342V110" ${S}/>` +
     `<path d="M432 400V100M388 144l44-44 44 44" ${S}/>`,
-  // Une note et un point d'interrogation.
+  // Une note, et un petit point d'interrogation en exposant à sa droite.
   'quelle-note':
-    head(130, 390) + `<path d="M184 372V90c0 44 50 54 50 104" ${S}/>` +
-    `<path d="M326 190a76 76 0 1 1 112 66c-32 20-46 42-46 80" ${S}/><circle cx="392" cy="432" r="22"/>`,
+    head(190, 380, 66, 48) + `<path d="M252 358V96" ${S}/>` +
+    `<path d="M340 92a54 54 0 1 1 80 48c-24 14-34 30-34 58" ${S}/><circle cx="386" cy="262" r="18"/>`,
   // Trois notes ensemble sur la portée : un accord.
   accords: STAFF + head(230, 376, 44, 31) + head(230, 256, 44, 31) + head(230, 136, 44, 31) + `<path d="M272 366V40" ${S}/>`,
   // Deux notes l'une après l'autre, reliées par un arc : l'intervalle.
