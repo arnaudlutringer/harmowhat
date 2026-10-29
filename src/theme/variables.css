@@ -95,6 +95,18 @@ ion-content.ion-padding {
   color: var(--ion-color-primary);
 }
 
+/* Choix segmentés des réglages (nombre de questions…) : le choix retenu est entouré de violet, sans soulignement. */
+.hw-square ion-segment-button {
+  --indicator-height: 0;
+  border: 2px solid transparent;
+}
+.hw-square ion-segment-button::part(indicator) {
+  display: none;
+}
+.hw-square ion-segment-button.segment-button-checked {
+  border-color: var(--ion-color-primary);
+}
+
 /* Bouton secondaire des réglages (« Essayer une question ») : sous « C'est parti ! », sans fond, bordure violette. */
 .hw-square ion-button.trial {
   margin-top: 12px;
