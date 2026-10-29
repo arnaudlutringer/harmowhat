@@ -20,8 +20,8 @@
         <div class="games">
           <ion-card v-for="game in category.games" :key="game.path" button :router-link="game.path" :style="{ '--background': category.color }">
             <ion-card-header>
-              <ion-icon class="icon" :icon="game.icon" aria-hidden="true" />
               <ion-card-title>{{ game.title }}</ion-card-title>
+              <ion-icon class="icon" :icon="game.icon" aria-hidden="true" />
             </ion-card-header>
             <ion-card-content>{{ game.description }}</ion-card-content>
           </ion-card>
@@ -165,7 +165,7 @@ ion-card {
   --color: var(--hw-card-ink);
   box-shadow: 0 2px 6px rgba(45, 48, 71, 0.08);
 }
-/* En-tête de carte : l'icône du jeu à gauche, son titre à droite, aligné à droite. */
+/* En-tête de carte : le titre du jeu à gauche, son icône à droite. */
 ion-card-header {
   flex-direction: row;
   align-items: center;
@@ -177,7 +177,7 @@ ion-card-title {
   color: var(--hw-card-ink);
   font-size: 18px;
   font-weight: 700;
-  text-align: right;
+  text-align: left;
 }
 ion-card-content {
   color: var(--hw-card-ink);
