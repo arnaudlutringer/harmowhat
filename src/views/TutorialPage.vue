@@ -51,7 +51,8 @@
                 <strong class="hint">(clique dessus)</strong><br />
                 À moins que tu sois vraiment sûr de toi…
               </p>
-              <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
+              <!-- « Suivant » ne s'ouvre qu'après avoir essayé le diapason. -->
+              <ion-button expand="block" size="large" :disabled="!forkTried" @click="next">Suivant</ion-button>
             </template>
 
             <!-- 4. L'instrument -->
