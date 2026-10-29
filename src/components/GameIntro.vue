@@ -1,7 +1,7 @@
 <template>
   <!-- Présentation du jeu, repliable : ouverte tant qu'aucun score n'a été enregistré pour ce jeu, repliée ensuite. -->
   <section class="intro">
-    <button class="hw-section-title toggle" :aria-expanded="open" @click="open = !open">
+    <button class="toggle" :aria-expanded="open" @click="open = !open">
       Présentation
       <ion-icon :icon="open ? chevronUp : chevronDown" aria-hidden="true" />
     </button>
@@ -27,6 +27,12 @@ const open = ref(!hasLocalScores(props.game))
 </script>
 
 <style scoped>
+/* Discrète : un encadré pâle, titre et texte en gris, plus petits que les réglages. */
+.intro {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(108, 92, 231, 0.05);
+}
 .toggle {
   display: flex;
   align-items: center;
@@ -37,13 +43,20 @@ const open = ref(!hasLocalScores(props.game))
   border: none;
   cursor: pointer;
   text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ion-color-medium);
 }
 .toggle ion-icon {
-  font-size: 22px;
+  font-size: 16px;
+}
+.text {
+  margin-top: 6px;
 }
 .text p {
-  margin: 0 0 10px;
-  line-height: 1.45;
-  font-size: 15px;
+  margin: 0 0 6px;
+  line-height: 1.4;
+  font-size: 13px;
+  color: var(--ion-color-medium);
 }
 </style>
