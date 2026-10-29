@@ -19,11 +19,11 @@ const MIC =
   `<path d="M125 315v125M70 440h110" ${S}/>`
 
 const SVGS: Record<GameId, string> = {
-  // Une note, plus grave ou plus aiguë : flèches vers le haut et vers le bas.
+  // Une note, plus grave ou plus aiguë : flèche vers le bas à sa gauche, vers le haut à sa droite.
   'grave-ou-aigu':
-    head(190, 340) + `<path d="M244 322V90" ${S}/>` +
-    `<path d="M400 230V60M350 110l50-50 50 50" ${S}/>` +
-    `<path d="M400 282v170M350 402l50 50 50-50" ${S}/>`,
+    `<path d="M80 120v300M36 376l44 44 44-44" ${S}/>` +
+    head(244, 360) + `<path d="M298 342V110" ${S}/>` +
+    `<path d="M432 400V100M388 144l44-44 44 44" ${S}/>`,
   // Une note et un point d'interrogation.
   'quelle-note':
     head(130, 390) + `<path d="M184 372V90c0 44 50 54 50 104" ${S}/>` +
