@@ -181,7 +181,7 @@ ion-card-content {
 /* Icône au trait, de la couleur du texte. */
 .icon {
   flex: none;
-  font-size: 30px;
+  font-size: 36px;
   color: var(--hw-card-ink);
 }
 .hall {
