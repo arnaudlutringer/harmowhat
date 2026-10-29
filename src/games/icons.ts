@@ -12,11 +12,11 @@ const S = 'class="ionicon-fill-none ionicon-stroke-width" stroke-linecap="round"
 const STAFF = [136, 196, 256, 316, 376].map((y) => `<line x1="32" y1="${y}" x2="480" y2="${y}" class="ionicon-fill-none" stroke-width="12"/>`).join('')
 /** Tête de note pleine, penchée comme sur une partition. */
 const head = (cx: number, cy: number, rx = 56, ry = 40) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(-20 ${cx} ${cy})"/>`
-/** Micro, en petit à gauche (jeux chantés). */
+/** Micro, à gauche (jeux chantés) ; les notes viennent en exposant, en haut à droite. */
 const MIC =
-  `<rect x="70" y="56" width="110" height="190" rx="55" ${S}/>` +
-  `<path d="M30 220a95 95 0 0 0 190 0" ${S}/>` +
-  `<path d="M125 315v125M70 440h110" ${S}/>`
+  `<rect x="110" y="64" width="140" height="230" rx="70" ${S}/>` +
+  `<path d="M50 250a130 130 0 0 0 260 0" ${S}/>` +
+  `<path d="M180 380v80M110 460h140" ${S}/>`
 
 const SVGS: Record<GameId, string> = {
   // Une note, plus grave ou plus aiguë : flèche vers le bas à sa gauche, vers le haut à sa droite.
@@ -41,9 +41,9 @@ const SVGS: Record<GameId, string> = {
     head(96, 340, 58, 42) + head(256, 260, 58, 42) + head(416, 180, 58, 42) +
     `<path d="M96 410q100 70 160-80M256 330q100 70 160-80" ${S}/>`,
   // Un micro et une note.
-  'chante-note': MIC + head(350, 380) + `<path d="M404 362V110c0 56 60 66 60 130" ${S}/>`,
+  'chante-note': MIC + head(392, 196, 42, 30) + `<path d="M432 184V48" ${S}/>`,
   // Un micro et deux notes : un intervalle à chanter.
-  'chante-harmonie': MIC + head(300, 412, 48, 34) + `<path d="M346 398V250" ${S}/>` + head(420, 300, 48, 34) + `<path d="M466 286V120" ${S}/>`,
+  'chante-harmonie': MIC + head(338, 222, 38, 27) + `<path d="M374 212V96" ${S}/>` + head(440, 166, 38, 27) + `<path d="M476 156V40" ${S}/>`,
   // Une ronde sur la portée, à lire.
   'lecture-note': STAFF + `<ellipse cx="256" cy="286" rx="74" ry="48" transform="rotate(-20 256 286)" ${S}/>`,
   // Une note écrite, une flèche, et la note à trouver (en pointillé) qui forme l'intervalle.
