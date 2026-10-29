@@ -57,8 +57,8 @@
             <div class="current-text">
               <span class="current-label">Ton choix</span>
               <strong>{{ instrument.emoji }} {{ instrument.label }}</strong>
-              <span class="piece">{{ ending.title }} <small>{{ ending.composer }}</small></span>
-              <small class="range">Joue de {{ noteName(instrument.low) }} à {{ noteName(instrument.high) }}, dans tous les jeux.</small>
+              <span class="piece">{{ ending.title }}</span>
+              <small class="composer">{{ ending.composer }}</small>
             </div>
             <button
               class="listen"
@@ -91,7 +91,6 @@ import { profile } from '@/player/profile'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { playArpeggio, preloadPiano, stopAll } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
-import { noteName } from '@/music/notes'
 import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding, type EndingId } from '@/music/endings'
 
 // Onglet ouvert : celui demandé par le lien (?onglet=joueur, depuis l'accueil ou la fin de partie), sinon l'instrument.
@@ -240,8 +239,7 @@ onIonViewWillLeave(stopAll)
 .current strong {
   font-size: 20px;
 }
-.range {
-  margin-top: 4px;
+.composer {
   color: var(--ion-color-medium);
 }
 .list {
