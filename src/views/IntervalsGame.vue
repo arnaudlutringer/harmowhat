@@ -40,6 +40,7 @@ import { useRoute } from 'vue-router'
 import { IonButton, IonIcon } from '@ionic/vue'
 import { arrowForward } from 'ionicons/icons'
 import GameShell from '@/components/GameShell.vue'
+import { trophyEvent } from '@/games/trophies'
 import ChordStaff from '@/components/ChordStaff.vue'
 import FlipPlayer from '@/components/FlipPlayer.vue'
 import { useQuiz } from '@/composables/useQuiz'
@@ -77,6 +78,7 @@ function choose(id: string) {
   const [a, b] = q.value.notes.map(spelledName)
   const { label, direction } = q.value.answer
   const sens = direction ? (direction === 'up' ? ' ascendante' : ' descendante') : ''
+  if (id === q.value.answer.id) trophyEvent({ type: 'interval', semitones: q.value.interval.semitones })
   quiz.answer(id === q.value.answer.id, `${label}${sens} : ${a} puis ${b}.`)
 }
 

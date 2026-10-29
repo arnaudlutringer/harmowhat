@@ -8,6 +8,8 @@
         :total="quiz.total"
         :board="board"
         :settings-href="settingsHref"
+        :fork-available="!noTuningFork"
+        :fork-used="quiz.forkUsed.value"
         @restart="quiz.restart"
       />
 

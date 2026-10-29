@@ -36,6 +36,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
+import { trophyEvent } from '@/games/trophies'
 import ScaleStaff from '@/components/ScaleStaff.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { playSequence } from '@/audio/engine'
@@ -75,6 +76,7 @@ function choose(id: ModeId) {
   if (!quiz.canAnswer.value) return
   q.value.picked = id
   const { mode, notes } = q.value
+  if (id === mode.id) trophyEvent({ type: 'mode', id })
   quiz.answer(id === mode.id, `C'était le mode ${mode.label.toLowerCase()} sur ${spelledPitchName(notes[0])} (comme de ${mode.white} à ${mode.white} sur les touches blanches).`)
 }
 

@@ -46,6 +46,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
+import { trophyEvent } from '@/games/trophies'
 import ChordStaff from '@/components/ChordStaff.vue'
 import FlipPlayer from '@/components/FlipPlayer.vue'
 import { useQuiz } from '@/composables/useQuiz'
@@ -89,6 +90,7 @@ function toggle(midi: number) {
 
 function validate() {
   const ok = isCorrect(selected.value, q.value.notes)
+  if (ok && quiz.canAnswer.value) trophyEvent({ type: 'chord' })
   quiz.answer(ok, ok ? 'Bien entendu !' : `C'était ${chordName.value}.`)
   void quiz.listen()
 }

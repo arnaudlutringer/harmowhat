@@ -10,6 +10,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/parametres', component: () => import('@/views/SettingsPage.vue') },
   { path: '/infos', component: () => import('@/views/InfoPage.vue') },
   { path: '/hall-of-fame', component: () => import('@/views/HallOfFamePage.vue') },
+  { path: '/trophees', component: () => import('@/views/TrophiesPage.vue') },
   // L'écran Joueur est un onglet des paramètres.
   { path: '/joueur', redirect: '/parametres?onglet=joueur' },
   { path: '/scores/:game', component: () => import('@/views/ScoresPage.vue') },

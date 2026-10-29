@@ -31,6 +31,10 @@
         <ion-icon slot="start" :icon="trophyOutline" />
         Hall of fame
       </ion-button>
+      <ion-button class="hall mine" expand="block" fill="outline" router-link="/trophees">
+        <ion-icon slot="start" :icon="medalOutline" />
+        Mes trophées
+      </ion-button>
     </ion-content>
   </ion-page>
 </template>
@@ -39,7 +43,7 @@
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonPage,
 } from '@ionic/vue'
-import { informationCircleOutline, settingsOutline, trophyOutline } from 'ionicons/icons'
+import { informationCircleOutline, medalOutline, settingsOutline, trophyOutline } from 'ionicons/icons'
 import { GAME_ICONS } from '@/games/icons'
 
 const earGames = [
@@ -183,6 +187,9 @@ ion-card-content {
   flex: none;
   font-size: 36px;
   color: var(--hw-card-ink);
+}
+.hall.mine {
+  margin-top: 10px;
 }
 .hall {
   margin: 20px 0 0;

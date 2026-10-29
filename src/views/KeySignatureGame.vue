@@ -40,6 +40,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
+import { trophyEvent } from '@/games/trophies'
 import KeySignatureStaff from '@/components/KeySignatureStaff.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { playSequence } from '@/audio/engine'
@@ -77,6 +78,7 @@ const fullName = (k: Key) => `${k.label.slice(0, -2)} ${k.mode === 'M' ? 'majeur
 function choose(id: string) {
   if (!quiz.canAnswer.value) return
   q.value.picked = id
+  if (id === q.value.key.id) trophyEvent({ type: 'key', id, major: q.value.key.mode === 'M' })
   quiz.answer(id === q.value.key.id, `C'était ${fullName(q.value.key)} (${signatureText(q.value.key.fifths)}).`)
   void quiz.listen()
 }

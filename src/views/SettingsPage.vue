@@ -44,7 +44,7 @@
               :listen-label="`Écouter ${e.title}`"
               :playing="preview.current.value === e.id"
               @pick="pickEnding(e.id)"
-              @listen="listen(e.id, () => playEnding(e, selectedInstrument))"
+              @listen="listenEnding(e)"
             >
               <span class="piece">{{ e.title }} <small>{{ e.composer }}</small></span>
             </choice-row>
@@ -64,7 +64,7 @@
               class="listen"
               :class="{ 'is-playing': preview.current.value === 'current' }"
               :aria-label="`Écouter ${ending.title}`"
-              @click="listen('current', () => playEnding(ending, selectedInstrument))"
+              @click="listenEnding(ending, 'current')"
             >
               <ion-icon :icon="preview.current.value === 'current' ? stop : play" />
             </button>
@@ -91,7 +91,8 @@ import { profile } from '@/player/profile'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { playArpeggio, preloadPiano, stopAll } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
-import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding, type EndingId } from '@/music/endings'
+import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
+import { trophyEvent } from '@/games/trophies'
 
 // Onglet ouvert : celui demandé par le lien (?onglet=joueur, depuis l'accueil ou la fin de partie), sinon l'instrument.
 type Tab = 'instrument' | 'joueur'
@@ -153,6 +154,12 @@ function listen(key: string, start: () => Promise<number>) {
   const wasPlaying = preview.current.value === key
   stopAll()
   if (!wasPlaying) preview.track(start(), key).catch(() => {})
+}
+
+// Écouter un morceau de fin compte pour le trophée « Mélomane ».
+function listenEnding(e: Ending, key: string = e.id) {
+  if (preview.current.value !== key) trophyEvent({ type: 'ending', instrument: selectedInstrument.value, id: e.id })
+  listen(key, () => playEnding(e, selectedInstrument.value))
 }
 
 onIonViewWillLeave(stopAll)

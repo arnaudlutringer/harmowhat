@@ -63,6 +63,7 @@ import { useRoute } from 'vue-router'
 import { IonIcon } from '@ionic/vue'
 import { mic, play, stop, volumeHigh } from 'ionicons/icons'
 import GameShell from '@/components/GameShell.vue'
+import { trophyEvent } from '@/games/trophies'
 import ChordStaff from '@/components/ChordStaff.vue'
 import TunerGauge from '@/components/TunerGauge.vue'
 import { useQuiz } from '@/composables/useQuiz'
@@ -131,6 +132,7 @@ const staffLabel = computed(() => staffNotes.value.map(spelledName).join(', '))
 function onNote(frequency: number) {
   const verdict = judge(frequency, q.value)
   result.value = verdict
+  if (verdict.correct) trophyEvent({ type: 'harmony-sung', semitones: q.value.interval.semitones })
   const { base, target, label } = q.value
   const expected = `${label} de ${spelledPitchName(base)}, c'est ${spelledPitchName(target)}`
   quiz.answer(

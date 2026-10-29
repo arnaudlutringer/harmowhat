@@ -34,6 +34,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
+import { trophyEvent } from '@/games/trophies'
 import ChordStaff from '@/components/ChordStaff.vue'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
@@ -54,6 +55,7 @@ const revealed = computed(() => quiz.feedback.value !== null)
 function choose(pc: number) {
   if (!quiz.canAnswer.value) return
   q.value.picked = pc
+  if (pc === q.value.answer) trophyEvent({ type: 'clef', clef: q.value.clef })
   quiz.answer(pc === q.value.answer, `C'était un ${q.value.fullName}.`)
   void quiz.listen()
 }

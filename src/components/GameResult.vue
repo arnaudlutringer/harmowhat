@@ -1,5 +1,10 @@
 <template>
   <div class="result hw-square">
+    <!-- Mes trophées, en haut à droite : les trophées gagnés s'y envolent. -->
+    <ion-button class="trophies" fill="clear" router-link="/trophees" aria-label="Mes trophées" title="Mes trophées">
+      <ion-icon slot="icon-only" :icon="medalOutline" />
+    </ion-button>
+    <trophy-unlocked :queue="unlocked" />
     <div class="emoji" aria-hidden="true">{{ emoji }}</div>
     <h1>{{ summary.points }} <small>pts</small></h1>
     <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
@@ -62,7 +67,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
-import { musicalNote, musicalNotes, stop } from 'ionicons/icons'
+import { medalOutline, musicalNote, musicalNotes, stop } from 'ionicons/icons'
 import { playRecording, playSequence, stopAll, tierForScore } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { summarize, type QuestionResult } from '@/games/scoring'
@@ -75,11 +80,35 @@ import {
 import { cachedBoard, fetchBoard, submitScore, worldEnabled } from '@/games/worldScores'
 import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
+import { evaluateGame, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
+import TrophyUnlocked from './TrophyUnlocked.vue'
 
-const props = defineProps<{ results: QuestionResult[]; total: number; board: Board; settingsHref?: string }>()
+const props = defineProps<{
+  results: QuestionResult[]
+  total: number
+  board: Board
+  settingsHref?: string
+  /** Le diapason était proposé pendant les questions, et a servi (trophée « Sans filet »). */
+  forkAvailable?: boolean
+  forkUsed?: boolean
+}>()
 const emit = defineEmits<{ restart: [] }>()
 
 const summary = computed(() => summarize(props.results))
+
+// Trophées : la partie est comptée une fois, à l'arrivée sur cet écran ; les nouveaux trophées s'annoncent un par un.
+const unlocked = ref<{ trophy: Trophy; tier?: Tier }[]>([])
+function countTrophies() {
+  evaluateGame({
+    board: props.board,
+    results: props.results,
+    instrument: selectedInstrument.value,
+    forkAvailable: !!props.forkAvailable,
+    forkUsed: !!props.forkUsed,
+  })
+  unlocked.value = takePendingTrophies()
+}
+onMounted(countTrophies)
 
 // Meilleurs scores : si la partie entre dans le top 10 du monde, du pays du joueur ou du téléphone, le joueur
 // peut l'enregistrer (nom pré-rempli avec celui de Mon compte). Le score est alors enregistré partout :
@@ -168,9 +197,19 @@ onBeforeUnmount(stopAll)
 
 <style scoped>
 .result {
+  position: relative;
   text-align: center;
   max-width: 360px;
   margin: 6vh auto 24px;
+}
+/* « Mes trophées » en haut à droite de l'écran (la popin des trophées gagnés s'envole vers lui). */
+.trophies {
+  position: fixed;
+  top: calc(8px + var(--ion-safe-area-top, 0px));
+  right: 8px;
+  z-index: 5;
+  --color: var(--ion-color-primary);
+  font-size: 22px;
 }
 .emoji {
   font-size: 64px;

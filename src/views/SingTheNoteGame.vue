@@ -45,6 +45,7 @@ import { useRoute } from 'vue-router'
 import { IonIcon } from '@ionic/vue'
 import { mic, stop } from 'ionicons/icons'
 import GameShell from '@/components/GameShell.vue'
+import { trophyEvent } from '@/games/trophies'
 import TunerGauge from '@/components/TunerGauge.vue'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { useRecording } from '@/composables/useRecording'
@@ -84,6 +85,7 @@ function onNote(frequency: number) {
   const q = quiz.question.value
   const verdict = judge(frequency, q, settings.level)
   result.value = verdict
+  if (verdict.correct) trophyEvent({ type: 'sung', pitchClass: q.pitchClass, cents: verdict.cents })
   const sung = pitchClassName(verdict.sung)
   const gap = `${Math.abs(verdict.cents)} cents trop ${verdict.cents > 0 ? 'haut' : 'bas'}`
   quiz.answer(

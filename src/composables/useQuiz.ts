@@ -4,6 +4,7 @@ import { usePlaying } from './usePlaying'
 import { useRoute } from 'vue-router'
 import { stopAll } from '@/audio/engine'
 import { isTrial } from '@/games/ready'
+import { trophyEvent } from '@/games/trophies'
 
 export interface Feedback {
   correct: boolean
@@ -49,6 +50,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   const finished = ref(false)
   const results = ref<QuestionResult[]>([])
   const points = ref(0)
+  /** Le diapason a servi pendant la partie (trophée « Sans filet »). */
+  const forkUsed = ref(false)
   /** Compte à rebours avant la première question (3, 2, 1), null le reste du temps. */
   const countdown = ref<number | null>(null)
   const sound = usePlaying()
@@ -120,6 +123,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   /** Coup de diapason pendant une question : 100 points de moins. */
   function penalizeTuningFork() {
     if (!questionOpen()) return
+    forkUsed.value = true
     clock.penalize(TUNING_FORK_PENALTY)
     tick()
   }
@@ -130,6 +134,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     points.value = clock.stop()
     results.value = [...results.value, { correct, points: correct ? points.value : 0 }]
     feedback.value = { correct, message }
+    if (trial) trophyEvent({ type: 'trial' })
     if (advanceDelay !== null) timer = setTimeout(next, advanceDelay)
   }
 
@@ -208,6 +213,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     clearTimeout(timer)
     index.value = 0
     results.value = []
+    forkUsed.value = false
     finished.value = false
     startQuestion(true)
   }
@@ -230,6 +236,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   return {
     trial,
+    forkUsed,
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
     playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, restart, pause, resume,
   }

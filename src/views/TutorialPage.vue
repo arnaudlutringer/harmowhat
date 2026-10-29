@@ -138,6 +138,7 @@ import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } fro
 import { usePlaying } from '@/composables/usePlaying'
 import { chooseEnding, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
 import { markTutorialDone } from '@/tutorial'
+import { trophyEvent } from '@/games/trophies'
 
 const STEPS = 7
 const step = ref(1)
@@ -204,6 +205,7 @@ function pickEnding(id: EndingId) {
 function finish() {
   stopAll()
   markTutorialDone()
+  trophyEvent({ type: 'tutorial' })
   closing.value = true
   setTimeout(() => router.navigate('/home', 'root', 'replace'), 600)
 }
