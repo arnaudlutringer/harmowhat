@@ -165,7 +165,7 @@ ion-card-header {
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  padding: 14px 12px 8px;
+  padding: 6px 12px 6px;
 }
 ion-card-title {
   flex: 1;
@@ -176,8 +176,8 @@ ion-card-title {
 }
 ion-card-content {
   color: var(--hw-card-ink);
-  padding: 0 12px 14px;
-  font-size: 13px;
+  padding: 0 12px 12px;
+  font-size: 10.5px;
   line-height: 1.35;
 }
 /* Icône au trait, de la couleur du texte. */
