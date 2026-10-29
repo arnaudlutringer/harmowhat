@@ -1,5 +1,6 @@
 <template>
   <game-settings
+    game="accords"
     title="Les accords"
     :levels="LEVELS"
     :question-counts="QUESTION_COUNTS"

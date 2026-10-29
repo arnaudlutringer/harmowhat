@@ -3,6 +3,8 @@
     <ion-content class="ion-padding">
       <page-nav title="Les harmonies" back-href="/home" />
       <div class="settings hw-square">
+        <game-intro game="harmonies" />
+        <h2 class="hw-section-title">Paramètres</h2>
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">
@@ -48,6 +50,7 @@ import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
+import GameIntro from '@/components/GameIntro.vue'
 import { LEVELS, parseSettings, PRECISIONS, QUESTION_COUNTS, type Level, type Precision } from '@/games/intervals'
 
 const STORAGE_KEY = 'harmowhat.harmonies.settings'

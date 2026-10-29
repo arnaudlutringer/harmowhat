@@ -3,6 +3,8 @@
     <ion-content class="ion-padding">
       <page-nav :title="title" back-href="/home" />
       <div class="settings hw-square">
+        <game-intro :game="game" />
+        <h2 class="hw-section-title">Paramètres</h2>
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in questionCounts" :key="n" :value="n">
@@ -36,6 +38,8 @@ import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
+import GameIntro from '@/components/GameIntro.vue'
+import type { GameId } from '@/games/highScores'
 
 /**
  * Écran de réglages d'un jeu : nombre de questions et niveau, mémorisés sur l'appareil,
@@ -43,6 +47,8 @@ import PageNav from '@/components/PageNav.vue'
  */
 const props = defineProps<{
   title: string
+  /** Jeu, pour sa présentation. */
+  game: GameId
   levels: Record<string, { label: string; description: string }>
   questionCounts: readonly number[]
   /** Clé de stockage des derniers réglages choisis. */

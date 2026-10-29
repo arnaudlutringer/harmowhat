@@ -232,6 +232,11 @@ export function localScoreList(): { key: string; entry: ScoreEntry }[] {
   return Object.entries(loadAll()).flatMap(([key, list]) => (Array.isArray(list) ? list.map((entry) => ({ key, entry })) : []))
 }
 
+/** Au moins un score enregistré sur l'appareil pour ce jeu (tous niveaux confondus) ? */
+export function hasLocalScores(game: GameId): boolean {
+  return localScoreList().some(({ key }) => boardOfKey(key).game === game)
+}
+
 /** Enregistre un score sur l'appareil et renvoie son rang (0 = premier, -1 s'il n'entre pas). */
 export function saveScore(board: Board, entry: ScoreEntry): number {
   const all = loadAll()

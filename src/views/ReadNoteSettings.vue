@@ -3,6 +3,8 @@
     <ion-content class="ion-padding">
       <page-nav title="Lecture de note" back-href="/home" />
       <div class="settings hw-square">
+        <game-intro game="lecture-note" />
+        <h2 class="hw-section-title">Paramètres</h2>
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">
@@ -36,6 +38,7 @@ import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
+import GameIntro from '@/components/GameIntro.vue'
 import { LEVELS, parseSettings, QUESTION_COUNTS, type Level } from '@/games/readNote'
 
 const STORAGE_KEY = 'harmowhat.lecture-note.settings'

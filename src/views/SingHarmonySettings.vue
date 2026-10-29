@@ -1,5 +1,6 @@
 <template>
   <game-settings
+    game="chante-harmonie"
     title="Chante l'harmonie"
     :levels="LEVELS"
     :question-counts="QUESTION_COUNTS"

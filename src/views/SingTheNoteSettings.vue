@@ -1,5 +1,6 @@
 <template>
   <game-settings
+    game="chante-note"
     title="Chante la note"
     :levels="LEVELS"
     :question-counts="QUESTION_COUNTS"
