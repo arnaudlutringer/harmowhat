@@ -32,12 +32,12 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Rapide | Toutes les réponses d'un questionnaire à 7 000 points ou plus |
 | Très rapide | Toutes les réponses d'un questionnaire à 8 000 points ou plus |
 | Fulgurant | Toutes les réponses d'un questionnaire à 9 000 points ou plus |
-| Éclair | Une bonne réponse à 9 700 points ou plus |
+| Éclair | Une bonne réponse à 10 000 points |
 | Réflexe | 10 bonnes réponses de suite à 9 000 points ou plus |
 
-## 4. GOAT, 9 500 points ou plus à chaque question d'un questionnaire (10 × 3 niveaux)
+## 4. GOAT, 10 000 points à chaque question d'un questionnaire (10 × 3 niveaux)
 
-10 000 points pile est hors d'atteinte : le décompte démarre 50 ms après le début du son. Le seuil est réglable (GOAT_POINTS dans src/games/trophies.ts).
+Les 10 000 points s'obtiennent en répondant pendant la marge de 0,3 s qui précède le décompte des points (GRACE_MS dans src/games/scoring.ts).
 
 Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (Expert).
 

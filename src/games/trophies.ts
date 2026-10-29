@@ -32,9 +32,9 @@ export interface Trophy {
   game?: GameId
 }
 
-/** GOAT : chaque réponse d'un questionnaire à ce score au moins (10 000 est hors d'atteinte : le décompte part 50 ms après le son). */
-export const GOAT_POINTS = 9500
-const ECLAIR_POINTS = 9700
+/** GOAT : chaque réponse d'un questionnaire à 10 000 points, c'est-à-dire donnée pendant la marge avant le décompte. */
+export const GOAT_POINTS = 10000
+const ECLAIR_POINTS = 10000
 
 const GOAT_TITLES: Record<GameId, string> = {
   'grave-ou-aigu': 'Sismographe',
@@ -86,7 +86,7 @@ export const TROPHIES: Trophy[] = [
   { id: 'rapide', family: 'rapidite', icon: '🐇', title: 'Rapide', condition: "Toutes les réponses d'un questionnaire à 7 000 points ou plus" },
   { id: 'tres-rapide', family: 'rapidite', icon: '🚀', title: 'Très rapide', condition: "Toutes les réponses d'un questionnaire à 8 000 points ou plus" },
   { id: 'fulgurant', family: 'rapidite', icon: '☄️', title: 'Fulgurant', condition: "Toutes les réponses d'un questionnaire à 9 000 points ou plus" },
-  { id: 'eclair', family: 'rapidite', icon: '⚡', title: 'Éclair', condition: `Une bonne réponse à ${ECLAIR_POINTS.toLocaleString('fr-FR')} points ou plus` },
+  { id: 'eclair', family: 'rapidite', icon: '⚡', title: 'Éclair', condition: `Une bonne réponse à ${ECLAIR_POINTS.toLocaleString('fr-FR')} points` },
   { id: 'reflexe', family: 'rapidite', icon: '🎯', title: 'Réflexe', condition: '10 bonnes réponses de suite à 9 000 points ou plus' },
 
   ...ALL_GAMES.map((game): Trophy => ({
@@ -94,7 +94,7 @@ export const TROPHIES: Trophy[] = [
     family: 'goat',
     icon: '🐐',
     title: GOAT_TITLES[game],
-    condition: `${GAME_NAMES[game]} : chaque réponse d'un questionnaire à ${GOAT_POINTS.toLocaleString('fr-FR')} points ou plus`,
+    condition: `${GAME_NAMES[game]} : chaque réponse d'un questionnaire à ${GOAT_POINTS.toLocaleString('fr-FR')} points`,
     game,
   })),
 

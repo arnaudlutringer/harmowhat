@@ -1,6 +1,6 @@
 /**
- * Points d'une question : 10 000 au départ ; le décompte démarre 50 ms après le début du premier son
- * et descend jusqu'au plancher de 100 en 9 s (1,1 point par milliseconde) ; moins 200 par réécoute et
+ * Points d'une question : 10 000 au départ ; le décompte démarre 50 ms après le début du premier son,
+ * plus une marge de 0,3 s (voir GRACE_MS), et descend jusqu'au plancher de 100 en 9 s (1,1 point par milliseconde) ; moins 200 par réécoute et
  * 200 par coup de diapason. Jamais en dessous de 100 : une bonne réponse rapporte toujours un minimum.
  */
 
@@ -11,6 +11,8 @@ export const COUNTDOWN_MS = 9000
 export const POINTS_PER_MS = (START_POINTS - MIN_POINTS) / COUNTDOWN_MS
 /** Délai entre le début du premier son et le début du décompte. */
 export const COUNTDOWN_DELAY_MS = 50
+/** Marge en plus, pendant laquelle on peut déjà répondre : une réponse très rapide garde les 10 000 points. */
+export const GRACE_MS = 300
 export const REPLAY_PENALTY = 200
 export const TUNING_FORK_PENALTY = 200
 /** Version du barème : les scores d'un barème précédent ne sont pas comparables (voir highScores.ts). */
