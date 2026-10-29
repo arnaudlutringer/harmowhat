@@ -115,7 +115,15 @@
               <ion-button expand="block" size="large" :disabled="!drunkTried" @click="next">Suivant</ion-button>
             </template>
 
-            <!-- 7. C'est parti -->
+            <!-- 7. Le compte du joueur : nom et pays, pour les classements. -->
+            <template v-else-if="step === 7">
+              <p class="lead">Comment t'appelles-tu, et d'où joues-tu ?</p>
+              <player-settings class="account" hide-id />
+              <p class="later">Tu pourras modifier ces informations plus tard, dans Paramètres › Mon compte.</p>
+              <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
+            </template>
+
+            <!-- 8. C'est parti -->
             <template v-else>
               <div class="big" aria-hidden="true">🏆</div>
               <p class="lead">Maintenant tu es prêt !</p>
@@ -134,13 +142,14 @@ import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillLeave, useIonRout
 import { chevronBack, play, stop } from 'ionicons/icons'
 import { playArpeggio, playTuningFork, stopAll } from '@/audio/engine'
 import ChoiceRow from '@/components/ChoiceRow.vue'
+import PlayerSettings from '@/components/PlayerSettings.vue'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { usePlaying } from '@/composables/usePlaying'
 import { chooseEnding, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
 import { markTutorialDone } from '@/tutorial'
 import { trophyEvent } from '@/games/trophies'
 
-const STEPS = 7
+const STEPS = 8
 const step = ref(1)
 const closing = ref(false)
 const router = useIonRouter()
@@ -390,6 +399,16 @@ onIonViewWillLeave(stopAll)
 }
 .listen.is-playing {
   border-color: var(--ion-color-secondary);
+}
+/* Écran du compte : le formulaire sur toute la largeur, la mention « modifiable plus tard » en petit. */
+.account {
+  width: 100%;
+  text-align: left;
+}
+.later {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ion-color-medium);
 }
 /* Consigne sous la question des écrans de choix. */
 .how {

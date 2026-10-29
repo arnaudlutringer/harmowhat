@@ -23,7 +23,7 @@
     </button>
 
     <!-- Identifiant technique : reconnaît les scores du joueur même s'il change de nom ou de pays. -->
-    <div class="player-id">
+    <div v-if="!hideId" class="player-id">
       <span>Identifiant joueur</span>
       <code>{{ profile.id }}</code>
       <button class="copy" @click="copyId">{{ copied ? 'Copié ✓' : 'Copier' }}</button>
@@ -73,6 +73,9 @@ import { checkmark } from 'ionicons/icons'
 import { countryByCode, searchCountries, type CountryCode } from '@/player/countries'
 import { profile, saveProfile } from '@/player/profile'
 import { cleanName, MAX_NAME_LENGTH } from '@/games/highScores'
+
+/** `hideId` : sans l'identifiant technique (dans le tutoriel). */
+defineProps<{ hideId?: boolean }>()
 
 // Le nom est enregistré à chaque frappe (nettoyé : espaces en trop retirés) ; le champ garde ce que le joueur tape.
 const name = ref(profile.value.name)
