@@ -56,10 +56,15 @@ import { CHORD_SIZE, createChordQuestion, isCorrect, parseSettings } from '@/gam
 const settings = parseSettings(useRoute().query)
 
 // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
+/** Durée de l'accord joué. */
+const CHORD_MS = 2500
+
 const quiz = useQuiz({
   total: settings.questions,
   createQuestion: () => createChordQuestion(settings.level),
-  play: (q) => playChord(q.notes),
+  play: (q) => playChord(q.notes, { duration: CHORD_MS / 1000 }),
+  // Le décompte des points démarre à la moitié de l'accord joué.
+  countdownStart: () => CHORD_MS / 2,
   advanceDelay: null,
 })
 const q = computed(() => quiz.question.value)
