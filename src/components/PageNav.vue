@@ -39,8 +39,9 @@ h1 {
   font-size: 22px;
   font-weight: 700;
 }
+/* Icône du jeu, poussée contre le bord droit de l'en-tête. */
 .icon {
-  margin-left: 8px;
+  margin-left: auto;
   font-size: 24px;
   color: var(--hw-card-ink);
 }
