@@ -36,12 +36,16 @@
 
             <!-- 3. Le diapason -->
             <template v-else-if="step === 3">
-              <button class="play fork" :class="{ 'is-playing': sound.current.value === 'fork' }" aria-label="Écouter le diapason, La3 440 Hz" @click="listenFork">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8 2v8a4 4 0 0 0 8 0V2" />
-                  <path d="M12 14v8" />
-                </svg>
-              </button>
+              <div class="fork-wrap">
+                <button class="play fork" :class="{ 'is-playing': sound.current.value === 'fork' }" aria-label="Écouter le diapason, La3 440 Hz" @click="listenFork">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 2v8a4 4 0 0 0 8 0V2" />
+                    <path d="M12 14v8" />
+                  </svg>
+                </button>
+                <!-- Un doigt, en haut à droite, pointe le diapason vers le bas et la gauche, jusqu'au premier appui. -->
+                <span v-if="!forkTried" class="pointer" aria-hidden="true">👇</span>
+              </div>
               <p class="lead">
                 Bien sûr, le diapason est là pour t'aider !<br />
                 <strong class="hint">(clique dessus)</strong><br />
@@ -154,7 +158,11 @@ function toggle(key: string, start: () => Promise<number>) {
   if (!wasPlaying) sound.track(start(), key).catch(() => {})
 }
 
+/** Le diapason a été essayé : le doigt qui le montre disparaît. */
+const forkTried = ref(false)
+
 function listenFork() {
+  forkTried.value = true
   toggle('fork', playTuningFork)
 }
 
@@ -284,6 +292,28 @@ onIonViewWillLeave(stopAll)
   font-size: 16px;
   font-weight: 700;
   color: inherit;
+}
+.fork-wrap {
+  position: relative;
+}
+/* Doigt vers le bas tourné de 45° : il pointe vers le bas et la gauche, et s'avance vers le bouton. */
+.pointer {
+  position: absolute;
+  top: -34px;
+  right: -46px;
+  font-size: 44px;
+  line-height: 1;
+  pointer-events: none;
+  animation: point 1s ease-in-out infinite;
+}
+@keyframes point {
+  0%,
+  100% {
+    transform: rotate(45deg) translate(0, 0);
+  }
+  50% {
+    transform: rotate(45deg) translate(0, 8px);
+  }
 }
 .fork {
   width: 120px;
