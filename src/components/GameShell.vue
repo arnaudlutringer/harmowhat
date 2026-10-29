@@ -293,11 +293,12 @@ useBackButton(20, (processNextHandler) => {
   transform-origin: right center;
 }
 /* Mode essai : « Essai » en rouge à la place du total. */
+/* Même taille et même hauteur de ligne que les points de la question : sur la même ligne qu'eux. */
 .trial {
   color: var(--ion-color-danger);
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: normal;
 }
 .countdown .countdown-trial {
   color: var(--ion-color-danger);
