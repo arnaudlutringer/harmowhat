@@ -14,45 +14,63 @@
 
       <player-settings v-if="tab === 'joueur'" class="settings" />
       <div v-else class="settings hw-square">
-        <!-- En tête : l'instrument et le morceau choisis. -->
-        <section class="current">
-          <span class="current-label">Ton choix</span>
-          <strong>{{ instrument.emoji }} {{ instrument.label }}</strong>
-          <span class="piece">{{ ending.title }} <small>{{ ending.composer }}</small></span>
-          <small class="range">Joue de {{ noteName(instrument.low) }} à {{ noteName(instrument.high) }}, dans tous les jeux.</small>
-        </section>
+        <!-- Changement en deux écrans, comme dans le tutoriel : l'instrument, puis le morceau. -->
+        <template v-if="picking === 'instrument'">
+          <button class="back" @click="cancel"><ion-icon :icon="chevronBack" aria-hidden="true" /> Annuler</button>
+          <p class="lead">Quel est ton instrument de prédilection ?</p>
+          <p class="how">Touche un instrument pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
+          <div class="list">
+            <choice-row
+              v-for="inst in INSTRUMENTS"
+              :key="inst.id"
+              :listen-label="`Écouter ${inst.label.toLowerCase()}`"
+              :playing="preview.current.value === inst.id"
+              @pick="choose(inst.id)"
+              @listen="listen(inst.id, () => playArpeggio(inst))"
+            >
+              {{ inst.emoji }} {{ inst.label }}
+            </choice-row>
+          </div>
+        </template>
 
-        <!-- Pour changer : les mêmes listes que dans le tutoriel, le choix actuel encadré de violet. -->
-        <h2>Changer d'instrument</h2>
-        <div class="list">
-          <choice-row
-            v-for="inst in INSTRUMENTS"
-            :key="inst.id"
-            :chosen="inst.id === selectedInstrument"
-            :listen-label="`Écouter ${inst.label.toLowerCase()}`"
-            :playing="preview.current.value === inst.id"
-            @pick="choose(inst.id)"
-            @listen="listen(inst.id, () => playArpeggio(inst))"
-          >
-            {{ inst.emoji }} {{ inst.label }}
-          </choice-row>
-        </div>
+        <template v-else-if="picking === 'piece'">
+          <button class="back" @click="showStep('instrument')"><ion-icon :icon="chevronBack" aria-hidden="true" /> Instrument</button>
+          <p class="lead">Quel est ton morceau favori parmi ceux-là ?</p>
+          <p class="how">Touche un morceau pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
+          <div class="list">
+            <choice-row
+              v-for="e in endingsFor(selectedInstrument)"
+              :key="e.id"
+              :listen-label="`Écouter ${e.title}`"
+              :playing="preview.current.value === e.id"
+              @pick="pickEnding(e.id)"
+              @listen="listen(e.id, () => playEnding(e, selectedInstrument))"
+            >
+              <span class="piece">{{ e.title }} <small>{{ e.composer }}</small></span>
+            </choice-row>
+          </div>
+        </template>
 
-        <h2>Changer de morceau</h2>
-        <p class="hint">La musique de fin de partie, jouée par ton instrument.</p>
-        <div class="list">
-          <choice-row
-            v-for="e in endingsFor(selectedInstrument)"
-            :key="e.id"
-            :chosen="e.id === ending.id"
-            :listen-label="`Écouter ${e.title}`"
-            :playing="preview.current.value === e.id"
-            @pick="chooseEnding(selectedInstrument, e.id)"
-            @listen="listen(e.id, () => playEnding(e, selectedInstrument))"
-          >
-            <span class="piece">{{ e.title }} <small>{{ e.composer }}</small></span>
-          </choice-row>
-        </div>
+        <template v-else>
+          <!-- En tête : l'instrument et le morceau choisis, avec de quoi écouter le morceau. -->
+          <section class="current">
+            <div class="current-text">
+              <span class="current-label">Ton choix</span>
+              <strong>{{ instrument.emoji }} {{ instrument.label }}</strong>
+              <span class="piece">{{ ending.title }} <small>{{ ending.composer }}</small></span>
+              <small class="range">Joue de {{ noteName(instrument.low) }} à {{ noteName(instrument.high) }}, dans tous les jeux.</small>
+            </div>
+            <button
+              class="listen"
+              :class="{ 'is-playing': preview.current.value === 'current' }"
+              :aria-label="`Écouter ${ending.title}`"
+              @click="listen('current', () => playEnding(ending, selectedInstrument))"
+            >
+              <ion-icon :icon="preview.current.value === 'current' ? stop : play" />
+            </button>
+          </section>
+          <ion-button expand="block" class="change" @click="startChange">Changer d'instrument</ion-button>
+        </template>
       </div>
     </ion-content>
   </ion-page>
@@ -62,8 +80,9 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  IonContent, IonLabel, IonPage, IonSegment, IonSegmentButton, onIonViewWillEnter, onIonViewWillLeave,
+  IonButton, IonContent, IonIcon, IonLabel, IonPage, IonSegment, IonSegmentButton, onIonViewWillEnter, onIonViewWillLeave,
 } from '@ionic/vue'
+import { chevronBack, play, stop } from 'ionicons/icons'
 import PageNav from '@/components/PageNav.vue'
 import PlayerSettings from '@/components/PlayerSettings.vue'
 import ChoiceRow from '@/components/ChoiceRow.vue'
@@ -73,7 +92,7 @@ import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } fro
 import { playArpeggio, preloadPiano, stopAll } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { noteName } from '@/music/notes'
-import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding } from '@/music/endings'
+import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding, type EndingId } from '@/music/endings'
 
 // Onglet ouvert : celui demandé par le lien (?onglet=joueur, depuis l'accueil ou la fin de partie), sinon l'instrument.
 type Tab = 'instrument' | 'joueur'
@@ -91,12 +110,41 @@ function switchTab(next: Tab) {
   tab.value = next
 }
 
-// Nouvel instrument : sa première musique de fin est choisie, et ses sons se chargent.
-function choose(id: InstrumentId) {
+/** Écran du changement d'instrument en cours, ou null pour le choix actuel. */
+const picking = ref<'instrument' | 'piece' | null>(null)
+
+function showStep(step: 'instrument' | 'piece' | null) {
   stopAll()
+  picking.value = step
+}
+
+// Annuler revient au choix d'avant, retenu à l'ouverture du changement.
+let before: { instrument: InstrumentId; ending: EndingId } | null = null
+function startChange() {
+  before = { instrument: selectedInstrument.value, ending: ending.value.id }
+  showStep('instrument')
+}
+
+function cancel() {
+  if (before) {
+    setInstrument(before.instrument)
+    chooseEnding(before.instrument, before.ending)
+  }
+  showStep(null)
+}
+
+// Nouvel instrument : sa première musique de fin est choisie, ses sons se chargent, puis vient le choix du morceau.
+function choose(id: InstrumentId) {
   setInstrument(id)
   chooseEnding(id, endingsFor(id)[0].id)
   void preloadPiano().catch(() => undefined)
+  showStep('piece')
+}
+
+function pickEnding(id: EndingId) {
+  chooseEnding(selectedInstrument.value, id)
+  before = null
+  showStep(null)
 }
 
 // Un appui sur ▶ fait écouter (l'instrument ou le morceau) ; un second appui l'arrête.
@@ -124,15 +172,66 @@ onIonViewWillLeave(stopAll)
 .tabs ion-label {
   text-transform: none;
 }
-/* Choix actuel, en tête de l'onglet. */
+/* Choix actuel, en tête de l'onglet, avec le bouton d'écoute du morceau à droite. */
 .current {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 12px;
   margin-top: 16px;
   padding: 12px 14px;
   background: var(--hw-button-active);
   border-left: 4px solid var(--ion-color-primary);
+}
+.current-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.listen {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--ion-color-primary);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  color: var(--ion-color-primary);
+  background: transparent;
+  cursor: pointer;
+}
+.listen.is-playing {
+  border-color: var(--ion-color-secondary);
+}
+.change {
+  margin-top: 16px;
+}
+/* Écrans du changement : retour, question et consigne, comme dans le tutoriel. */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 12px 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ion-color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lead {
+  margin: 16px 0 4px;
+  font-size: 20px;
+  line-height: 1.4;
+  text-align: center;
+}
+.how {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
+  text-align: center;
 }
 .current-label {
   font-size: 12px;
@@ -143,14 +242,6 @@ onIonViewWillLeave(stopAll)
 }
 .range {
   margin-top: 4px;
-  color: var(--ion-color-medium);
-}
-h2 {
-  font-size: 18px;
-  margin: 24px 0 8px;
-}
-.hint {
-  margin: -4px 0 8px;
   color: var(--ion-color-medium);
 }
 .list {
