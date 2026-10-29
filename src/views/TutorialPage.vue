@@ -60,17 +60,16 @@
               <p class="lead">Quel est ton instrument de prédilection ?</p>
               <p class="how">Touche un instrument pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
               <div class="list">
-                <div v-for="inst in INSTRUMENTS" :key="inst.id" class="row">
-                  <ion-button class="main" @click="pickInstrument(inst.id)">{{ inst.emoji }} {{ inst.label }}</ion-button>
-                  <button
-                    class="listen"
-                    :class="{ 'is-playing': sound.current.value === inst.id }"
-                    :aria-label="`Écouter ${inst.label.toLowerCase()}`"
-                    @click="listenInstrument(inst.id)"
-                  >
-                    <ion-icon :icon="sound.current.value === inst.id ? stop : play" />
-                  </button>
-                </div>
+                <choice-row
+                  v-for="inst in INSTRUMENTS"
+                  :key="inst.id"
+                  :listen-label="`Écouter ${inst.label.toLowerCase()}`"
+                  :playing="sound.current.value === inst.id"
+                  @pick="pickInstrument(inst.id)"
+                  @listen="listenInstrument(inst.id)"
+                >
+                  {{ inst.emoji }} {{ inst.label }}
+                </choice-row>
               </div>
             </template>
 
@@ -79,19 +78,16 @@
               <p class="lead">Quel est ton morceau favori parmi ceux-là ?</p>
               <p class="how">Touche un morceau pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
               <div class="list">
-                <div v-for="e in endingsFor(selectedInstrument)" :key="e.id" class="row">
-                  <ion-button class="main" @click="pickEnding(e.id)">
-                    <span class="piece">{{ e.title }} <small>{{ e.composer }}</small></span>
-                  </ion-button>
-                  <button
-                    class="listen"
-                    :class="{ 'is-playing': sound.current.value === e.id }"
-                    :aria-label="`Écouter ${e.title}`"
-                    @click="listenEnding(e, e.id)"
-                  >
-                    <ion-icon :icon="sound.current.value === e.id ? stop : play" />
-                  </button>
-                </div>
+                <choice-row
+                  v-for="e in endingsFor(selectedInstrument)"
+                  :key="e.id"
+                  :listen-label="`Écouter ${e.title}`"
+                  :playing="sound.current.value === e.id"
+                  @pick="pickEnding(e.id)"
+                  @listen="listenEnding(e, e.id)"
+                >
+                  <span class="piece">{{ e.title }} <small>{{ e.composer }}</small></span>
+                </choice-row>
               </div>
             </template>
 
@@ -136,7 +132,8 @@
 import { computed, ref } from 'vue'
 import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
 import { chevronBack, play, stop } from 'ionicons/icons'
-import { playSequence, playTuningFork, stopAll } from '@/audio/engine'
+import { playArpeggio, playTuningFork, stopAll } from '@/audio/engine'
+import ChoiceRow from '@/components/ChoiceRow.vue'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { usePlaying } from '@/composables/usePlaying'
 import { chooseEnding, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
@@ -176,20 +173,17 @@ function listenFork() {
 
 /** Un petit arpège au milieu de la tessiture, pour entendre l'instrument. */
 function listenInstrument(id: InstrumentId) {
-  const inst = INSTRUMENTS[id]
-  const root = Math.round((inst.low + inst.high) / 2) - 6
-  const arpeggio = [0, 4, 7, 12, 7, 4, 0].map((d, i) => ({ midi: root + d, at: i, len: i === 6 ? 3 : 1.2 }))
-  toggle(id, () => playSequence(arpeggio, 0.22, undefined, inst).then((p) => p.duration))
+  toggle(id, () => playArpeggio(INSTRUMENTS[id]))
 }
 
 function listenEnding(e: Ending, key: string) {
   toggle(key, () => playEnding(e, selectedInstrument.value))
 }
 
-// Le même morceau joué comme après une partie à 5 bonnes réponses sur 10 (voir music/drunk.ts).
 /** Le morceau raté a été écouté : le doigt qui le montre disparaît et « Suivant » s'ouvre. */
 const drunkTried = ref(false)
 
+// Le même morceau joué comme après une partie à 5 bonnes réponses sur 10 (voir music/drunk.ts).
 function listenDrunk() {
   drunkTried.value = true
   toggle('drunk', () => playEnding(ending.value, selectedInstrument.value, 0.5))
@@ -359,12 +353,6 @@ onIonViewWillLeave(stopAll)
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.row .main {
-  flex: 1;
-  margin: 0;
-  text-transform: none;
-  --padding-start: 12px;
 }
 .row.single {
   width: 100%;

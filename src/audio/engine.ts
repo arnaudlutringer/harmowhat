@@ -248,6 +248,13 @@ export async function playRecording(path: string, seconds: number, velocity = 0.
   return duration
 }
 
+/** Un petit arpège au milieu de la tessiture d'un instrument, pour l'entendre. */
+export function playArpeggio(inst: Instrument): Promise<number> {
+  const root = Math.round((inst.low + inst.high) / 2) - 6
+  const arpeggio = [0, 4, 7, 12, 7, 4, 0].map((d, i) => ({ midi: root + d, at: i, len: i === 6 ? 3 : 1.2 }))
+  return playSequence(arpeggio, 0.22, undefined, inst).then((p) => p.duration)
+}
+
 /** Diapason : La3 (440 Hz) joué par l'instrument choisi, 2 s, avec fondu d'ouverture et de fermeture. */
 export function playTuningFork(): Promise<number> {
   return playPiano(A440, { duration: 2, fadeIn: 0.15, fadeOut: 0.5 })
