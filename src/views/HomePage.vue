@@ -18,9 +18,9 @@
       <section v-for="category in categories" :key="category.title" class="category">
         <h2>{{ category.title }}</h2>
         <div class="games">
-          <ion-card v-for="game in category.games" :key="game.path" button :router-link="game.path" :style="{ '--background': game.color }">
+          <ion-card v-for="game in category.games" :key="game.path" button :router-link="game.path" :style="{ '--background': category.color }">
             <ion-card-header>
-              <div class="emoji" aria-hidden="true">{{ game.emoji }}</div>
+              <ion-icon class="icon" :icon="game.icon" aria-hidden="true" />
               <ion-card-title>{{ game.title }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>{{ game.description }}</ion-card-content>
@@ -39,42 +39,39 @@
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonPage,
 } from '@ionic/vue'
-import { informationCircleOutline, settingsOutline, trophyOutline } from 'ionicons/icons'
-import { GAMES } from '@/games/highScores'
+import {
+  chatbubblesOutline, contrastOutline, earOutline, eyeOutline, gitMergeOutline, informationCircleOutline, keyOutline,
+  layersOutline, micOutline, musicalNotesOutline, settingsOutline, swapVerticalOutline, trophyOutline,
+} from 'ionicons/icons'
 
 const earGames = [
   {
     path: '/games/grave-ou-aigu',
-    color: 'var(--hw-game-1)',
-    emoji: GAMES['grave-ou-aigu'].emoji,
+    icon: swapVerticalOutline,
     title: 'Grave ou aigu ?',
     description: 'La note jouée est-elle plus grave ou plus aiguë que le La3 du diapason ?',
   },
   {
     path: '/games/quelle-note',
-    color: 'var(--hw-game-2)',
-    emoji: GAMES['quelle-note'].emoji,
+    icon: earOutline,
     title: 'Quelle est la note ?',
     description: 'Retrouve la note jouée parmi plusieurs propositions.',
   },
   {
     path: '/games/accords',
-    color: 'var(--hw-game-3)',
-    emoji: GAMES['accords'].emoji,
+    icon: layersOutline,
     title: 'Les accords',
     description: 'Trois notes jouées ensemble, entre La2 et La4 : retrouve-les toutes les trois.',
   },
   {
     path: '/games/harmonies',
-    color: 'var(--hw-game-4)',
-    emoji: GAMES['harmonies'].emoji,
+    icon: musicalNotesOutline,
     title: 'Les harmonies',
     description: "Deux notes l'une après l'autre : trouve l'intervalle (tierce, quinte, sixte…).",
   },
   {
     path: '/games/modalite',
-    color: 'var(--hw-game-8)',
-    emoji: GAMES.modalite.emoji,
+    icon: contrastOutline,
     title: 'La modalité',
     description: "Devine la modalité à l'oreille.",
   },
@@ -83,15 +80,13 @@ const earGames = [
 const voiceGames = [
   {
     path: '/games/chante-note',
-    color: 'var(--hw-game-9)',
-    emoji: GAMES['chante-note'].emoji,
+    icon: micOutline,
     title: 'Chante la note',
     description: 'Chante dans le micro la note demandée, au plus juste.',
   },
   {
     path: '/games/chante-harmonie',
-    color: 'var(--hw-game-10)',
-    emoji: GAMES['chante-harmonie'].emoji,
+    icon: chatbubblesOutline,
     title: "Chante l'harmonie",
     description: 'Une note est jouée : chante celle qui forme l’intervalle demandé (la quinte, la tierce majeure…).',
   },
@@ -100,31 +95,29 @@ const voiceGames = [
 const theoryGames = [
   {
     path: '/games/lecture-note',
-    color: 'var(--hw-game-5)',
-    emoji: GAMES['lecture-note'].emoji,
+    icon: eyeOutline,
     title: 'Lecture de note',
     description: "Une note sur une portée, en clé de sol, de fa ou d'ut : quelle est cette note ?",
   },
   {
     path: '/games/fais-harmonie',
-    color: 'var(--hw-game-6)',
-    emoji: GAMES['fais-harmonie'].emoji,
+    icon: gitMergeOutline,
     title: "Fais l'harmonie",
     description: 'Une note sur une portée et un intervalle : quelle note forme cette harmonie (la quinte du Do, la septième du Ré♯…) ?',
   },
   {
     path: '/games/tonalite',
-    color: 'var(--hw-game-7)',
-    emoji: GAMES.tonalite.emoji,
+    icon: keyOutline,
     title: 'La tonalité',
     description: "Trouve la tonalité en regardant l'armure de la portée : ses dièses, ses bémols… ou rien.",
   },
 ]
 
+// Une teinte douce par catégorie, un peu plus foncée que le fond crème.
 const categories = [
-  { title: "L'oreille", games: earGames },
-  { title: 'La voix', games: voiceGames },
-  { title: 'Le solfège', games: theoryGames },
+  { title: "L'oreille", color: 'var(--hw-category-ear)', games: earGames },
+  { title: 'La voix', color: 'var(--hw-category-voice)', games: voiceGames },
+  { title: 'Le solfège', color: 'var(--hw-category-theory)', games: theoryGames },
 ]
 </script>
 
@@ -160,12 +153,12 @@ h1 {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
-/* Cartes des jeux : angles droits, une couleur vive par jeu, texte blanc. */
+/* Cartes des jeux : angles droits, la teinte douce de leur catégorie, texte et icône foncés. */
 ion-card {
   margin: 0;
   border-radius: 0;
-  --color: #fff;
-  box-shadow: 0 6px 16px rgba(45, 48, 71, 0.15);
+  --color: var(--hw-card-ink);
+  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.08);
 }
 /* En-tête de carte : l'icône du jeu à gauche, son titre à droite, aligné à droite. */
 ion-card-header {
@@ -176,22 +169,22 @@ ion-card-header {
 }
 ion-card-title {
   flex: 1;
-  color: #fff;
+  color: var(--hw-card-ink);
   font-size: 18px;
   font-weight: 700;
   text-align: right;
 }
 ion-card-content {
-  color: #fff;
+  color: var(--hw-card-ink);
   padding: 0 12px 14px;
   font-size: 13px;
   line-height: 1.35;
 }
-.emoji {
+/* Icône au trait, de la couleur du texte. */
+.icon {
   flex: none;
   font-size: 30px;
-  line-height: 1;
-  text-shadow: none;
+  color: var(--hw-card-ink);
 }
 .hall {
   margin: 20px 0 0;

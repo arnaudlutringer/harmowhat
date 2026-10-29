@@ -56,17 +56,11 @@
   --hw-button-active: #efecff;
   --hw-button-text: #4b3fc4;
 
-  /* Une couleur par jeu, sur l'accueil. */
-  --hw-game-1: #ff7675;
-  --hw-game-2: #0984e3;
-  --hw-game-3: #00a884;
-  --hw-game-4: #e17055;
-  --hw-game-5: #e84393;
-  --hw-game-6: #6c5ce7;
-  --hw-game-7: #0097a7;
-  --hw-game-8: #d35400;
-  --hw-game-9: #8e44ad;
-  --hw-game-10: #16a085;
+  /* Accueil : une teinte douce par catégorie de jeux, un peu plus foncée que le fond, texte et icônes foncés. */
+  --hw-category-ear: #f6dccc;
+  --hw-category-voice: #e7ddf3;
+  --hw-category-theory: #d9ebe4;
+  --hw-card-ink: #3a3350;
 }
 
 /* Les boutons et champs HTML (hors composants Ionic) prennent aussi la police de l'appli. */
