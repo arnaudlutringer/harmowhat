@@ -10,7 +10,7 @@ import { LEVELS as MODALITY_LEVELS, QUESTION_COUNTS as MODALITY_COUNTS } from '.
 import { LEVELS as SING_LEVELS, QUESTION_COUNTS as SING_COUNTS } from './singTheNote'
 import { LEVELS as SING_HARMONY_LEVELS, QUESTION_COUNTS as SING_HARMONY_COUNTS } from './singHarmony'
 import { LEVELS as RHYTHM_LEVELS, QUESTION_COUNTS as RHYTHM_COUNTS } from './rhythm'
-import { impossibleUnlocked } from './trophies'
+import { impossibleShown } from './trophies'
 import { profile, saveProfile } from '@/player/profile'
 import { SCORING_VERSION } from './scoring'
 
@@ -130,7 +130,7 @@ export const GAMES: Record<GameId, GameInfo> = {
 }
 
 /** Le niveau Impossible (seul ou avec une précision) est encore caché pour ce joueur. */
-export const isHiddenLevel = (game: GameId, level: string) => level.startsWith('impossible') && !impossibleUnlocked.value.includes(game)
+export const isHiddenLevel = (game: GameId, level: string) => level.startsWith('impossible') && !impossibleShown(game)
 
 /** Niveaux à montrer dans les classements : « Impossible » seulement une fois débloqué. */
 export const shownLevels = (game: GameId) => GAMES[game].levels.filter((l) => !isHiddenLevel(game, l.id))

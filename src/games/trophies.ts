@@ -196,6 +196,26 @@ export const pendingTrophyCount = ref(load().pending.length)
 /** Jeux dont le niveau Impossible est débloqué (réactif, pour les réglages). */
 export const impossibleUnlocked = ref<GameId[]>(load().stats.impossible)
 
+/**
+ * Tests en local (npm run dev seulement, jamais dans l'APK) : ajouter ?impossible=1 à l'adresse d'un écran
+ * montre les niveaux Impossible de tous les jeux, ?impossible=0 revient à la normale. Le choix est mémorisé.
+ */
+const DEV_KEY = 'harmowhat.dev.impossible'
+function devShowAll(): boolean {
+  if (!import.meta.env?.DEV || typeof location === 'undefined') return false
+  try {
+    const flag = new URLSearchParams(location.search).get('impossible')
+    if (flag === '1') localStorage.setItem(DEV_KEY, '1')
+    if (flag === '0') localStorage.removeItem(DEV_KEY)
+    return localStorage.getItem(DEV_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Le niveau Impossible de ce jeu est proposé : débloqué, ou montré pour les tests en local. */
+export const impossibleShown = (game: GameId) => impossibleUnlocked.value.includes(game) || devShowAll()
+
 function save(state: State) {
   earnedTrophies.value = { ...state.earned }
   pendingTrophyCount.value = state.pending.length
@@ -406,6 +426,6 @@ function unlockNotice(id: string): Trophy | null {
 
 /** Niveaux d'un jeu à proposer : « Impossible » seulement une fois débloqué. */
 export function visibleLevels<K extends string, T>(game: GameId, levels: Record<K, T>): Record<K, T> {
-  if (impossibleUnlocked.value.includes(game)) return levels
+  if (impossibleShown(game)) return levels
   return Object.fromEntries(Object.entries(levels).filter(([id]) => id !== 'impossible')) as Record<K, T>
 }
