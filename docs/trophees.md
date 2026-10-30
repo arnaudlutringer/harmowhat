@@ -11,8 +11,8 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Premiers pas | Termine ton premier questionnaire |
 | Bien préparé | Terminer le tutoriel |
 | Curieux | Essaie une question dans le mode essai |
-| Touche-à-tout | Termine un questionnaire dans chacune des 3 catégories (L'oreille, La voix, Le solfège) |
-| Explorateur | Termine un questionnaire dans les 10 jeux |
+| Touche-à-tout | Termine un questionnaire dans chacune des 4 catégories (L'oreille, La voix, Le solfège, Le rythme) |
+| Explorateur | Termine un questionnaire dans les 12 jeux |
 | Homme-orchestre | Joue un questionnaire avec 5 instruments différents |
 
 ## 2. Sans faute (5)
@@ -23,7 +23,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Oreille de lynx | Un questionnaire sans faute en expert |
 | Sans filet | Un questionnaire sans faute sans toucher au diapason |
 | Marathonien | Un questionnaire de 50 questions sans faute |
-| Grand chelem | Au moins un sans faute dans chacun des 10 jeux |
+| Grand chelem | Au moins un sans faute dans chacun des 12 jeux |
 
 ## 3. Rapidité (5)
 
@@ -53,6 +53,8 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 | Lecture de note | Déchiffreur |
 | Fais l'harmonie | Architecte de l'harmonie |
 | La tonalité | Maître des clés |
+| Quel rythme ? | Métronome humain |
+| Joue le rythme | Batteur de génie |
 
 ## 5. Persévérance (7)
 

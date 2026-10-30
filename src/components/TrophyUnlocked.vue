@@ -99,7 +99,7 @@ onBeforeUnmount(() => timers.forEach(clearTimeout))
   gap: 6px;
   width: min(80vw, 300px);
   padding: 22px 20px;
-  background: #fff;
+  background: var(--hw-surface);
   color: var(--ion-text-color);
   box-shadow: 0 12px 40px rgba(45, 48, 71, 0.3);
   text-align: center;

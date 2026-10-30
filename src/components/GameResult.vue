@@ -8,6 +8,10 @@
     <img class="emoji" :src="tierImage" alt="" />
     <h1>{{ summary.points }} <small>pts</small></h1>
     <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
+    <ion-button class="share" fill="clear" size="small" :disabled="sharing" @click="share('score')">
+      <ion-icon slot="start" :icon="shareSocialOutline" />
+      Partager mon score
+    </ion-button>
 
     <!-- Le score entre dans au moins un classement (monde, pays, téléphone) : on propose de l'enregistrer dans les trois. -->
     <!-- Sauvegarde automatique (Mon compte) : le score est déjà enregistré ; on montre sous quel nom, et le classement. -->
@@ -20,6 +24,10 @@
       </p>
       <p class="country">Enregistré au nom de <strong>{{ autoSaved.name }}</strong><template v-if="worldEnabled"> · {{ country?.flag }} {{ country?.name }}</template></p>
       <ion-button expand="block" @click="openScores(autoSaved.rank, autoSaved.name)">Voir les meilleurs scores</ion-button>
+      <ion-button expand="block" fill="outline" :disabled="sharing" @click="share('rank')">
+        <ion-icon slot="start" :icon="shareSocialOutline" />
+        Partager mon classement
+      </ion-button>
     </div>
     <form v-else-if="record" class="record" @submit.prevent="saveRecord">
       <strong>🏅 Tu entres dans les meilleurs scores !</strong>
@@ -78,7 +86,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
-import { medalOutline, musicalNote, musicalNotes, stop } from 'ionicons/icons'
+import { medalOutline, musicalNote, musicalNotes, shareSocialOutline, stop } from 'ionicons/icons'
 import { playRecording, playSequence, stopAll, tierForScore } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { summarize, type QuestionResult } from '@/games/scoring'
@@ -86,13 +94,14 @@ import { drunk } from '@/music/drunk'
 import { ENDING_SECONDS, endingFor } from '@/music/endings'
 import { selectedInstrument } from '@/audio/instruments'
 import {
-  cleanName, getScores, lastPlayerName, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
+  cleanName, GAMES, getScores, lastPlayerName, levelLabel, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
 } from '@/games/highScores'
 import { cachedBoard, fetchBoard, submitScore, worldEnabled } from '@/games/worldScores'
 import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
 import { evaluateGame, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
 import TrophyUnlocked from './TrophyUnlocked.vue'
+import { shareImage } from '@/share/shareImage'
 
 const props = defineProps<{
   results: QuestionResult[]
@@ -126,6 +135,8 @@ onMounted(countTrophies)
 // sur le téléphone, et dans la base mondiale, qui alimente les classements du monde et des pays.
 const router = useIonRouter()
 const tops = reactive({ monde: false, pays: false, appareil: qualifies(getScores(props.board), summary.value.points) })
+/** Rang du score dans le classement du monde et du pays. */
+const ranks = reactive({ monde: 0, pays: 0 })
 const saved = ref(false)
 const record = computed(() => !saved.value && (tops.monde || tops.pays || tops.appareil))
 const playerName = ref(lastPlayerName())
@@ -140,13 +151,17 @@ onMounted(() => {
   // D'abord le cache chargé au lancement (réponse immédiate, même hors connexion), puis la base à jour.
   const world = cachedBoard(props.board)
   const local = cachedBoard(props.board, code)
-  if (world) tops.monde = qualifies(world, points)
-  if (local) tops.pays = qualifies(local, points)
+  const update = (scope: 'monde' | 'pays', rows: { points: number }[]) => {
+    tops[scope] = qualifies(rows as never, points)
+    ranks[scope] = rows.filter((r) => r.points > points).length + 1
+  }
+  if (world) update('monde', world)
+  if (local) update('pays', local)
   fetchBoard(props.board)
-    .then((rows) => (tops.monde = qualifies(rows, points)))
+    .then((rows) => update('monde', rows))
     .catch(() => {})
   fetchBoard(props.board, code)
-    .then((rows) => (tops.pays = qualifies(rows, points)))
+    .then((rows) => update('pays', rows))
     .catch(() => {})
 })
 
@@ -222,6 +237,32 @@ function toggleElise() {
   else playElise()
 }
 
+// Partage : l'image du score, ou de la place dans le plus beau des classements où il entre.
+const sharing = ref(false)
+async function share(kind: 'score' | 'rank') {
+  if (sharing.value) return
+  sharing.value = true
+  const game = GAMES[props.board.game].title
+  const { points, correct } = summary.value
+  try {
+    if (kind === 'score') {
+      await shareImage({ kind, game, level: levelLabel(props.board), points, correct, total: props.total, tierImage: tierImage.value })
+    } else {
+      const [rank, where] =
+        tops.monde && ranks.monde
+          ? [ranks.monde, 'au monde']
+          : tops.pays && ranks.pays
+            ? [ranks.pays, `en ${country.value?.name ?? ''}`]
+            : [autoSaved.value?.rank ?? 1, 'sur mon téléphone']
+      await shareImage({ kind, game, gameId: props.board.game, rank, where, name: autoSaved.value?.name ?? '', points })
+    }
+  } catch {
+    // Partage annulé ou impossible : rien à signaler.
+  } finally {
+    sharing.value = false
+  }
+}
+
 function restart() {
   stopAll()
   emit('restart')
@@ -263,7 +304,10 @@ h1 small {
 }
 .answers {
   font-size: 18px;
-  margin: 4px 0 16px;
+  margin: 4px 0 4px;
+}
+.share {
+  margin: 0 0 12px;
 }
 .notes {
   list-style: none;

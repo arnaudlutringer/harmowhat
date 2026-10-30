@@ -51,6 +51,16 @@ const SVGS: Record<GameId, string> = {
     STAFF + head(110, 346, 46, 32) +
     `<path d="M196 330l84-74M240 252h44v44" ${S}/>` +
     `<ellipse cx="392" cy="226" rx="54" ry="38" transform="rotate(-20 392 226)" ${S} stroke-dasharray="30 22"/>`,
+  // Deux croches liées, et un petit point d'interrogation en exposant : quel rythme ?
+  'quel-rythme':
+    head(100, 400, 54, 38) + head(280, 400, 54, 38) + `<path d="M150 384V150M330 384V150M150 150h180" ${S} stroke-width="40"/>` +
+    `<path d="M376 92a48 48 0 1 1 72 42c-22 12-30 26-30 52" ${S}/><circle cx="418" cy="240" r="17"/>`,
+  // Un tambour et ses deux baguettes : joue le rythme.
+  'joue-rythme':
+    `<ellipse cx="256" cy="270" rx="176" ry="56" ${S}/>` +
+    `<path d="M80 270v120c0 31 79 56 176 56s176-25 176-56V270" ${S}/>` +
+    `<path d="M80 330l88 108M432 330l-88 108M256 326v120" ${S}/>` +
+    `<path d="M120 60l116 184M392 60L276 244" ${S}/><circle cx="114" cy="50" r="22"/><circle cx="398" cy="50" r="22"/>`,
   // Une armure : deux dièses sur la portée.
   tonalite:
     STAFF +
@@ -62,4 +72,10 @@ const SVGS: Record<GameId, string> = {
 const dataUrl = (content: string) =>
   `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' class='ionicon' viewBox='0 0 512 512'>${content.replaceAll('"', "'")}</svg>`
 
-export const GAME_ICONS = Object.fromEntries(Object.entries(SVGS).map(([id, svg]) => [id, dataUrl(svg)])) as Record<GameId, string>
+/** L'icône en SVG autonome, d'une couleur (sans les styles d'Ionicons), pour la dessiner dans une image (partage). */
+export function gameIconSvg(game: GameId, color: string): string {
+  const style = `<style>*{fill:${color};stroke:${color}}.ionicon-fill-none{fill:none}.ionicon-stroke-width{stroke-width:32px}</style>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">${style}${SVGS[game]}</svg>`
+}
+
+export const GAME_ICONS =Object.fromEntries(Object.entries(SVGS).map(([id, svg]) => [id, dataUrl(svg)])) as Record<GameId, string>

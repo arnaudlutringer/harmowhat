@@ -21,6 +21,16 @@
                 <small>{{ t.condition }}</small>
                 <small v-if="earnedTrophies[t.id]" class="date">Gagné le {{ formatDate(earnedTrophies[t.id].date) }}</small>
               </span>
+              <ion-button
+                v-if="earnedTrophies[t.id]"
+                class="share"
+                fill="clear"
+                :aria-label="`Partager le trophée ${t.title}`"
+                title="Partager"
+                @click="share(t)"
+              >
+                <ion-icon slot="icon-only" :icon="shareSocialOutline" />
+              </ion-button>
             </div>
           </div>
         </section>
@@ -31,13 +41,21 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { IonContent, IonPage } from '@ionic/vue'
+import { IonButton, IonContent, IonIcon, IonPage } from '@ionic/vue'
+import { shareSocialOutline } from 'ionicons/icons'
 import PageNav from '@/components/PageNav.vue'
-import { earnedTrophies, FAMILIES, TIER_LABELS, TROPHIES, type TrophyFamily } from '@/games/trophies'
+import { earnedTrophies, FAMILIES, TIER_LABELS, TROPHIES, type Trophy, type TrophyFamily } from '@/games/trophies'
+import { shareImage } from '@/share/shareImage'
 
 const earnedCount = computed(() => TROPHIES.filter((t) => earnedTrophies.value[t.id]).length)
 const byFamily = (family: TrophyFamily) => TROPHIES.filter((t) => t.family === family)
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+/** Image de partage d'un trophée gagné (avec sa médaille pour un GOAT). */
+function share(t: Trophy) {
+  const tier = earnedTrophies.value[t.id]?.tier
+  const label = tier ? `${TIER_LABELS[tier].medal} GOAT · Niveau ${TIER_LABELS[tier].label}` : undefined
+  shareImage({ kind: 'trophy', title: t.title, condition: t.condition, icon: t.icon, game: t.game, tier: label }).catch(() => {})
+}
+const formatDate =(iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 </script>
 
 <style scoped>
@@ -83,7 +101,7 @@ h2 {
   filter: grayscale(1);
 }
 .trophy.earned {
-  background: #fff;
+  background: var(--hw-surface);
   opacity: 1;
   box-shadow: 0 2px 0 rgba(108, 92, 231, 0.35), 0 4px 10px rgba(45, 48, 71, 0.08);
 }
@@ -91,8 +109,14 @@ h2 {
   filter: none;
 }
 .text {
+  flex: 1;
   display: flex;
   flex-direction: column;
+}
+.share {
+  flex: none;
+  margin: 0;
+  --color: var(--ion-color-primary);
 }
 .text small {
   font-size: 12px;

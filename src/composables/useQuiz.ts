@@ -27,6 +27,8 @@ export interface QuizOptions<Q> {
   countdownStart?: (question: Q) => number
   /** Avec `countdownStart` : ouvre les réponses plus tôt, ce délai (ms) après le début du premier son. */
   answersOpen?: (question: Q) => number
+  /** Pas de chronomètre : les points viennent de la réponse elle-même (voir nswer), 0 en attendant. */
+  untimed?: boolean
 }
 
 /**
@@ -36,7 +38,7 @@ export interface QuizOptions<Q> {
 /** Délai du passage automatique à la question suivante, après une réponse (ms). */
 export const ADVANCE_DELAY = 1500
 
-export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart, answersOpen }: QuizOptions<Q>) {
+export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart, answersOpen, untimed = false }: QuizOptions<Q>) {
   // Mode essai (`essai=1` dans l'adresse du jeu) : une seule question, sans passage automatique ni score.
   const trial = getCurrentInstance() ? isTrial(useRoute()?.query ?? {}) : false
   if (trial) {
@@ -77,7 +79,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   // Rafraîchit l'affichage des points tant que le chronomètre tourne.
   function tick() {
-    points.value = clock.points
+    points.value = untimed ? 0 : clock.points
     frame = clock.running && typeof requestAnimationFrame === 'function' ? requestAnimationFrame(tick) : undefined
   }
 
@@ -102,7 +104,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
         if (question.value !== q || !questionOpen()) return
         // Délai propre au jeu : les réponses s'ouvrent avec le décompte ; sinon, dès le début du son.
         if (!countdownStart || !first) hasListened.value = true
-        if (!first) return
+        if (!first || untimed) return void (hasListened.value = true)
         const c = clock
         // Les réponses s'ouvrent avant le décompte (au moins GRACE_MS avant) : répondre pendant cette marge
         // rapporte les 10 000 points.
@@ -131,10 +133,12 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     tick()
   }
 
-  function answer(correct: boolean, message: string) {
+  /** Réponse du joueur ; `scored` remplace les points du chronomètre (jeux notés à la précision, comme « Joue le rythme »). */
+  function answer(correct: boolean, message: string, scored?: number) {
     if (!canAnswer.value) return
     stopTicking()
     points.value = clock.stop()
+    if (scored !== undefined) points.value = scored
     results.value = [...results.value, { correct, points: correct ? points.value : 0 }]
     feedback.value = { correct, message }
     if (trial) trophyEvent({ type: 'trial' })
@@ -166,7 +170,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     clearTimeout(countdownTimer)
     clock.pause()
     stopTicking()
-    points.value = clock.points
+    points.value = untimed ? 0 : clock.points
   }
 
   /** Reprend la partie là où elle en était. */
@@ -190,7 +194,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     clock = new QuestionClock()
     startPending = false
     plays = 0
-    points.value = clock.points
+    points.value = untimed ? 0 : clock.points
     question.value = createQuestion()
     hasListened.value = false
     feedback.value = null
@@ -224,7 +228,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   if (getCurrentInstance()) {
     // La première question est jouée dès la fin du compte à rebours.
     onMounted(() => {
-      points.value = clock.points
+      points.value = untimed ? 0 : clock.points
       startCountdown()
     })
     onBeforeUnmount(() => {

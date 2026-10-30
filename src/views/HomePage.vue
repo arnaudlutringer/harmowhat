@@ -118,11 +118,27 @@ const theoryGames = [
   },
 ]
 
+const rhythmGames = [
+  {
+    path: '/games/quel-rythme',
+    icon: GAME_ICONS['quel-rythme'],
+    title: 'Quel rythme ?',
+    description: 'Écoute un rythme de 3 temps et retrouve ses figures : noire, croches, soupir…',
+  },
+  {
+    path: '/games/joue-rythme',
+    icon: GAME_ICONS['joue-rythme'],
+    title: 'Joue le rythme',
+    description: 'Lis le rythme écrit et tape-le en mesure, au plus juste.',
+  },
+]
+
 // Une teinte douce par catégorie, un peu plus foncée que le fond crème.
 const categories = [
   { title: "L'oreille", color: 'var(--hw-category-ear)', games: earGames },
   { title: 'La voix', color: 'var(--hw-category-voice)', games: voiceGames },
   { title: 'Le solfège', color: 'var(--hw-category-theory)', games: theoryGames },
+  { title: 'Le rythme', color: 'var(--hw-category-rhythm)', games: rhythmGames },
 ]
 </script>
 
