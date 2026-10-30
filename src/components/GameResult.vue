@@ -249,8 +249,8 @@ onBeforeUnmount(stopAll)
 }
 .emoji {
   display: block;
-  width: 110px;
-  height: 110px;
+  width: 128px;
+  height: 128px;
   margin: 0 auto;
 }
 h1 {
