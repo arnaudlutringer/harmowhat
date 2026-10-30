@@ -26,7 +26,7 @@
 
             <!-- 2. Les jeux -->
             <template v-else-if="step === 2">
-              <!-- Un jeu par catégorie (l'oreille, la voix, le solfège), en tuiles inclinées comme des cartes posées. -->
+              <!-- Un jeu par catégorie (l'oreille, la voix, le solfège, le rythme), en tuiles inclinées comme des cartes posées. -->
               <div class="showcase" aria-hidden="true">
                 <span v-for="t in SHOWCASE" :key="t.game" class="tile" :style="{ background: t.color, transform: `rotate(${t.tilt}deg)` }">
                   <ion-icon :icon="GAME_ICONS[t.game]" />
@@ -159,9 +159,10 @@ const STEPS = 8
 
 /** Écran des mini-jeux : un jeu par catégorie, aux couleurs de l'accueil. */
 const SHOWCASE = [
-  { game: 'quelle-note', color: 'var(--hw-category-ear)', tilt: -8 },
-  { game: 'chante-note', color: 'var(--hw-category-voice)', tilt: 0 },
-  { game: 'lecture-note', color: 'var(--hw-category-theory)', tilt: 8 },
+  { game: 'quelle-note', color: 'var(--hw-category-ear)', tilt: -9 },
+  { game: 'chante-note', color: 'var(--hw-category-voice)', tilt: -3 },
+  { game: 'lecture-note', color: 'var(--hw-category-theory)', tilt: 3 },
+  { game: 'joue-rythme', color: 'var(--hw-category-rhythm)', tilt: 9 },
 ] as const
 const step = ref(1)
 const closing = ref(false)
@@ -310,18 +311,18 @@ onIonViewWillLeave(stopAll)
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   margin-bottom: 12px;
 }
 .tile {
-  width: 84px;
-  height: 84px;
+  width: 68px;
+  height: 68px;
   display: grid;
   place-items: center;
   box-shadow: 0 4px 12px rgba(45, 48, 71, 0.12);
 }
 .tile ion-icon {
-  font-size: 56px;
+  font-size: 46px;
   color: var(--hw-card-ink);
 }
 /* Deux phrases bien séparées. */

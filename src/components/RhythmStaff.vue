@@ -64,6 +64,9 @@ async function draw() {
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
     svg.removeAttribute('width')
     svg.removeAttribute('height')
+    // VexFlow fixe aussi la taille en style : la portée suit la largeur de son conteneur.
+    svg.style.width = ''
+    svg.style.height = ''
   }
 }
 

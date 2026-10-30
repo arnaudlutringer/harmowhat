@@ -125,6 +125,7 @@ function validate() {
   align-items: center;
 }
 .player :deep(.card) {
+  width: 280px;
   height: 136px;
 }
 .player :deep(.front) {

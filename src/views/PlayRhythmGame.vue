@@ -57,6 +57,8 @@ const quiz = useQuiz({
   createQuestion: () => createRhythmQuestion(settings.level),
   // Rien à écouter avant : le rythme est écrit, le joueur lance lui-même le décompte.
   play: () => Promise.resolve(0),
+  // Les points viennent de la précision des frappes, pas d'un chronomètre.
+  untimed: true,
   advanceDelay: null,
 })
 const q = computed(() => quiz.question.value)

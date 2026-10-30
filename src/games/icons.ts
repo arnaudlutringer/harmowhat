@@ -55,12 +55,12 @@ const SVGS: Record<GameId, string> = {
   'quel-rythme':
     head(100, 400, 54, 38) + head(280, 400, 54, 38) + `<path d="M150 384V150M330 384V150M150 150h180" ${S} stroke-width="40"/>` +
     `<path d="M376 92a48 48 0 1 1 72 42c-22 12-30 26-30 52" ${S}/><circle cx="418" cy="240" r="17"/>`,
-  // Une main qui frappe (paume ouverte) sur une ligne, avec des traits d'impact : joue le rythme.
+  // Un tambour et ses deux baguettes : joue le rythme.
   'joue-rythme':
-    `<path d="M60 440h392" ${S}/>` +
-    `<path d="M196 380V200a28 28 0 0 1 56 0v-40a28 28 0 0 1 56 0v40a28 28 0 0 1 56 0v120c0 40-30 60-70 60h-98z" ${S}/>` +
-    `<path d="M196 300l-34-34a26 26 0 0 0-38 36l72 78" ${S}/>` +
-    `<path d="M92 120l40 44M256 56v60M420 120l-40 44" ${S}/>`,
+    `<ellipse cx="256" cy="270" rx="176" ry="56" ${S}/>` +
+    `<path d="M80 270v120c0 31 79 56 176 56s176-25 176-56V270" ${S}/>` +
+    `<path d="M80 330l88 108M432 330l-88 108M256 326v120" ${S}/>` +
+    `<path d="M120 60l116 184M392 60L276 244" ${S}/><circle cx="114" cy="50" r="22"/><circle cx="398" cy="50" r="22"/>`,
   // Une armure : deux dièses sur la portée.
   tonalite:
     STAFF +
