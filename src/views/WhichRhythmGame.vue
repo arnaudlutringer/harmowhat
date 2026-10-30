@@ -81,6 +81,8 @@ const quiz = useQuiz({
   // On peut répondre dès le début de la mesure ; les points baissent à partir de sa fin.
   answersOpen: () => COUNT_IN * beatMs,
   countdownStart: () => (COUNT_IN + BEATS) * beatMs,
+  // Pendant une réécoute, le score est en pause jusqu'à 50 ms de la fin du son.
+  pauseOnReplay: true,
   // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
   advanceDelay: null,
 })
