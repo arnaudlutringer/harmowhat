@@ -33,7 +33,7 @@
           <ion-icon slot="start" :icon="trophyOutline" />
           Hall of fame
         </ion-button>
-        <ion-button class="hall" fill="outline" router-link="/trophees">
+        <ion-button class="hall" fill="outline" router-link="/trophees" data-trophy-target>
           <ion-icon slot="start" :icon="medalOutline" />
           Mes trophées
         </ion-button>

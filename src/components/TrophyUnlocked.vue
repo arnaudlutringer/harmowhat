@@ -1,7 +1,8 @@
 <template>
-  <!-- Trophée débloqué : une popin blanche au milieu de l'écran, qui s'envole au bout de 2 s vers « Mes trophées » (en haut à droite). -->
+  <!-- Trophée débloqué : une popin blanche au milieu de l'écran, qui s'envole au bout de 2 s vers « Mes trophées »
+       (le bouton marqué data-trophy-target de l'écran, sinon le coin haut droit). -->
   <div v-if="current" class="veil" :class="{ leaving }" aria-live="assertive">
-    <div :key="shown" class="popin" :class="{ leaving }">
+    <div :key="index" ref="popin" class="popin" :class="{ leaving }" :style="flight">
       <span class="label">Trophée débloqué&nbsp;!</span>
       <span class="icon" aria-hidden="true">{{ current.trophy.icon }}</span>
       <strong>{{ current.trophy.title }}</strong>
@@ -15,25 +16,47 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { TIER_LABELS, type Tier, type Trophy } from '@/games/trophies'
 
+/** Trophées à annoncer, un par un ; la liste peut s'allonger pendant l'annonce. */
 const props = defineProps<{ queue: { trophy: Trophy; tier?: Tier }[] }>()
 
 /** Durée d'affichage, puis de l'envol vers « Mes trophées » (ms). */
 const SHOW_MS = 2000
 const FLY_MS = 700
 
-const shown = ref(0)
+const index = ref(0)
 const leaving = ref(false)
-const current = computed(() => props.queue[shown.value] ?? null)
+const running = ref(false)
+const popin = ref<HTMLElement>()
+const flight = ref<Record<string, string>>({})
+const current = computed(() => (running.value ? (props.queue[index.value] ?? null) : null))
 let timers: ReturnType<typeof setTimeout>[] = []
 
+/** Décalage du centre de la popin jusqu'au bouton « Mes trophées » visible (sinon le coin haut droit). */
+function aimAtTarget() {
+  const from = popin.value?.getBoundingClientRect()
+  const target = [...document.querySelectorAll<HTMLElement>('[data-trophy-target]')]
+    .map((el) => el.getBoundingClientRect())
+    .find((r) => r.width > 0 && r.bottom > 0 && r.top < window.innerHeight)
+  if (!from) return
+  const to = target ? { x: target.left + target.width / 2, y: target.top + target.height / 2 } : { x: window.innerWidth - 28, y: 30 }
+  flight.value = { '--dx': `${to.x - (from.left + from.width / 2)}px`, '--dy': `${to.y - (from.top + from.height / 2)}px` }
+}
+
 function play() {
-  if (!current.value) return
+  if (index.value >= props.queue.length) {
+    running.value = false
+    return
+  }
+  running.value = true
   leaving.value = false
+  flight.value = {}
   timers = [
-    setTimeout(() => (leaving.value = true), SHOW_MS),
     setTimeout(() => {
-      leaving.value = false
-      shown.value++
+      aimAtTarget()
+      leaving.value = true
+    }, SHOW_MS),
+    setTimeout(() => {
+      index.value++
       play()
     }, SHOW_MS + FLY_MS),
   ]
@@ -41,10 +64,14 @@ function play() {
 
 watch(
   () => props.queue,
-  () => {
-    timers.forEach(clearTimeout)
-    shown.value = 0
-    play()
+  (queue, previous) => {
+    // Une nouvelle liste repart du début ; une liste allongée continue là où elle en était.
+    if (previous && queue[0] !== previous[0]) {
+      timers.forEach(clearTimeout)
+      index.value = 0
+      running.value = false
+    }
+    if (!running.value) play()
   },
   { immediate: true },
 )
@@ -78,7 +105,7 @@ onBeforeUnmount(() => timers.forEach(clearTimeout))
   text-align: center;
   animation: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
-/* Envol vers le bouton « Mes trophées », en haut à droite : la popin rapetisse en s'y rangeant. */
+/* Envol vers le bouton « Mes trophées » : la popin rapetisse en s'y rangeant. */
 .popin.leaving {
   animation: fly 0.7s ease-in forwards;
 }
@@ -98,7 +125,7 @@ onBeforeUnmount(() => timers.forEach(clearTimeout))
     opacity: 1;
   }
   100% {
-    transform: translate(calc(50vw - 28px), calc(-50vh + 30px)) scale(0.08);
+    transform: translate(var(--dx, calc(50vw - 28px)), var(--dy, calc(-50vh + 30px))) scale(0.08);
     opacity: 0.2;
   }
 }

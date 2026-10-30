@@ -178,9 +178,12 @@ function load(): State {
 
 /** Trophées gagnés (réactif, pour la page « Mes trophées »). */
 export const earnedTrophies = ref<Record<string, Earned>>(load().earned)
+/** Nombre de trophées gagnés pas encore annoncés (réactif : l'annonce les affiche dès que possible). */
+export const pendingTrophyCount = ref(load().pending.length)
 
 function save(state: State) {
   earnedTrophies.value = { ...state.earned }
+  pendingTrophyCount.value = state.pending.length
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {

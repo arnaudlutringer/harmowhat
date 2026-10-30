@@ -2,6 +2,8 @@
   <ion-app>
     <ion-router-outlet />
     <splash-screen :visible="splash" />
+    <!-- Trophées gagnés hors partie : annoncés tout de suite, sur l'écran en cours. -->
+    <trophy-announcer v-if="!splash" />
   </ion-app>
 </template>
 
@@ -9,6 +11,7 @@
 import { ref } from 'vue'
 import { IonApp, IonRouterOutlet, useBackButton, useIonRouter } from '@ionic/vue'
 import SplashScreen from '@/components/SplashScreen.vue'
+import TrophyAnnouncer from '@/components/TrophyAnnouncer.vue'
 import { useRouter } from 'vue-router'
 import { App } from '@capacitor/app'
 import { stopAll } from '@/audio/engine'

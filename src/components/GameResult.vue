@@ -1,7 +1,7 @@
 <template>
   <div class="result hw-square">
     <!-- Mes trophées, en haut à droite : les trophées gagnés s'y envolent. -->
-    <ion-button class="trophies" fill="clear" router-link="/trophees" aria-label="Mes trophées" title="Mes trophées">
+    <ion-button class="trophies" fill="clear" router-link="/trophees" data-trophy-target aria-label="Mes trophées" title="Mes trophées">
       <ion-icon slot="icon-only" :icon="medalOutline" />
     </ion-button>
     <trophy-unlocked :queue="unlocked" />
