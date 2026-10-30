@@ -195,8 +195,7 @@ function scheduleClick(at: number, velocity: number): Voice {
   const src = ctx.createBufferSource()
   src.buffer = clickBuffer(ctx)
   const g = ctx.createGain()
-  // 70 % du volume du premier son de décompte (1,6).
-  g.gain.value = velocity * 1.12
+  g.gain.value = velocity * 0.56
   src.connect(g).connect(out)
   src.start(at)
   const voice = { src, gain: g }
