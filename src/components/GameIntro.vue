@@ -16,14 +16,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { IonIcon } from '@ionic/vue'
 import { chevronDown, chevronUp } from 'ionicons/icons'
 import { hasLocalScores, type GameId } from '@/games/highScores'
+import { hasPlayed } from '@/games/trophies'
 import { INTROS } from '@/games/intros'
 
 const props = defineProps<{ game: GameId }>()
-const open = ref(!hasLocalScores(props.game))
+// Ouverte tant que le joueur n'a ni terminé de partie ni enregistré de score dans ce jeu, repliée ensuite.
+const firstTime = () => !hasPlayed(props.game) && !hasLocalScores(props.game)
+const open = ref(firstTime())
+// L'écran de réglages reste en mémoire : au retour (par exemple « Changer les réglages » après une partie), on refait le point.
+const route = useRoute()
+const ownPath = route.path
+watch(
+  () => route.path,
+  (path) => {
+    if (path === ownPath) open.value = firstTime()
+  },
+)
 </script>
 
 <style scoped>

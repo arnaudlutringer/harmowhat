@@ -1,6 +1,6 @@
 <template>
   <!-- Bouton de lecture qui se retourne à la réponse pour montrer les notes sur une portée. -->
-  <div class="card" :class="{ flipped: revealed, sounding: quiz.playing.value }">
+  <div class="card" :class="{ flipped: revealed, sounding: quiz.playing.value, correct: quiz.feedback.value?.correct }">
     <div class="card-inner">
       <button
         class="face front play"
@@ -73,6 +73,10 @@ const revealed = computed(() => props.quiz.feedback.value !== null)
 }
 .card.sounding .back {
   box-shadow: 0 0 0 4px var(--ion-color-secondary), 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+/* Bonne réponse : la portée est entourée de vert (aussi pendant la réécoute), pas de rouge. */
+.card.correct .back {
+  box-shadow: 0 0 0 4px var(--ion-color-success), 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 .hint {
   color: var(--ion-color-medium);

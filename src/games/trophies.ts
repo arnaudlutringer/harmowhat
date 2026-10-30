@@ -350,6 +350,11 @@ export function trophyEvent(e: TrophyEvent): void {
   save(state)
 }
 
+/** Le joueur a déjà terminé au moins un questionnaire de ce jeu (sa présentation s'affiche alors repliée). */
+export function hasPlayed(game: GameId): boolean {
+  return load().stats.played.includes(game)
+}
+
 /** Trophées gagnés depuis la dernière annonce : à annoncer maintenant (la liste est vidée). */
 export function takePendingTrophies(): { trophy: Trophy; tier?: Tier }[] {
   const state = load()
