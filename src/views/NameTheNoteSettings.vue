@@ -13,12 +13,12 @@
 
         <h2>Niveau</h2>
         <ion-radio-group v-model="level">
-          <ion-item v-for="(cfg, key) in LEVELS" :key="key" lines="full">
+          <ion-item v-for="(cfg, key) in shownLevels" :key="key" lines="full">
             <ion-radio :value="key" justify="space-between">
               <ion-label class="ion-text-wrap">
                 <strong>{{ cfg.label }}</strong>
                 <p>{{ cfg.description }}</p>
-                <p>{{ instrument.label }} : de {{ noteName(levelRange(key, instrument).low) }} à {{ noteName(levelRange(key, instrument).high) }}</p>
+                <p v-if="cfg.randomInstrument">Instrument au hasard, sur toute sa tessiture</p> {{ noteName(levelRange(key, instrument).low) }} à {{ noteName(levelRange(key, instrument).high) }}</p>
               </ion-label>
             </ion-radio>
           </ion-item>
@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onIonViewWillLeave, useIonRouter } from '@ionic/vue'
 import { stopAll } from '@/audio/engine'
 import {
@@ -44,6 +44,7 @@ import { afterSettings, withTrial } from '@/games/ready'
 import { levelRange, LEVELS, parseSettings, QUESTION_COUNTS, type Level } from '@/games/nameTheNote'
 import { currentInstrument } from '@/audio/instruments'
 import { noteName } from '@/music/notes'
+import { visibleLevels } from '@/games/trophies'
 
 const instrument = currentInstrument()
 
@@ -60,7 +61,9 @@ function loadSaved() {
 
 const saved = loadSaved()
 const questions = ref<number>(saved.questions)
-const level = ref<Level>(saved.level)
+// Le niveau Impossible n'apparaît qu'une fois débloqué.
+const shownLevels = computed(() => visibleLevels('quelle-note', LEVELS))
+const level = ref<Level>(saved.level in shownLevels.value ? saved.level : 'expert')
 const router = useIonRouter()
 
 // Le diapason s'arrête dès qu'on quitte l'écran.
@@ -73,7 +76,7 @@ function start(trial = false) {
   } catch {
     // Stockage indisponible : on joue quand même.
   }
-  // En expert, pas de diapason pendant les questions : il est proposé sur l'écran « Je suis prêt ».
+  // En expert, pas de diapason pendant les questions : il est proposé sur l'écran « Je suis prêt » (en impossible, pas du tout).
   router.push(withTrial(afterSettings('quelle-note', settings.level === 'expert', `questions=${settings.questions}&level=${settings.level}`), trial))
 }
 </script>

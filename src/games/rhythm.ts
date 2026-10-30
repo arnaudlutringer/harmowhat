@@ -7,7 +7,7 @@ import { randomInt, shuffle } from '@/music/notes'
  */
 
 export type CellId =
-  | 'noire' | 'croches' | 'soupir' | 'doubles' | 'croche-doubles' | 'doubles-croche' | 'demi-soupir-croche' | 'pointee' | 'triolet'
+  | 'noire' | 'croches' | 'soupir' | 'doubles' | 'croche-doubles' | 'doubles-croche' | 'demi-soupir-croche' | 'pointee' | 'triolet' | 'syncopette'
 
 export interface Cell {
   id: CellId
@@ -30,9 +30,10 @@ export const CELLS: Record<CellId, Cell> = {
   'demi-soupir-croche': { id: 'demi-soupir-croche', label: 'Demi-soupir et croche', parts: [-0.5, 0.5], vex: ['8r', '8'] },
   pointee: { id: 'pointee', label: 'Croche pointée et double', parts: [0.75, 0.25], vex: ['8d', '16'] },
   triolet: { id: 'triolet', label: 'Triolet de croches', parts: [1 / 3, 1 / 3, 1 / 3], vex: ['8', '8', '8'], tuplet: true },
+  syncopette: { id: 'syncopette', label: 'Syncopette', parts: [0.25, 0.5, 0.25], vex: ['16', '8', '16'] },
 }
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -40,6 +41,10 @@ export interface LevelConfig {
   cells: CellId[]
   /** Tempo, en noires par minute. */
   tempo: number
+  /** Impossible : un tempo au hasard à chaque question, entre ces deux valeurs. */
+  tempoRange?: [number, number]
+  /** Impossible : une petite mélodie au lieu d'une seule note répétée. */
+  melody?: boolean
   /** « Joue le rythme » : écart toléré entre une frappe et la note, en secondes. */
   tolerance: number
 }
@@ -65,6 +70,15 @@ export const LEVELS: Record<Level, LevelConfig> = {
     cells: ['noire', 'croches', 'soupir', 'doubles', 'croche-doubles', 'doubles-croche', 'demi-soupir-croche', 'pointee', 'triolet'],
     tempo: 96,
     tolerance: 0.07,
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'Un tempo différent à chaque question (de 60 à 140), une mélodie au lieu d’une seule note, et la syncopette en plus.',
+    cells: ['noire', 'croches', 'soupir', 'doubles', 'croche-doubles', 'doubles-croche', 'demi-soupir-croche', 'pointee', 'triolet', 'syncopette'],
+    tempo: 100,
+    tempoRange: [60, 140],
+    melody: true,
+    tolerance: 0.06,
   },
 }
 
@@ -92,6 +106,10 @@ export function parseSettings(raw: { questions?: unknown; level?: unknown }): Rh
 
 export interface RhythmQuestion {
   cells: CellId[]
+  /** Tempo de cette question, en noires par minute. */
+  tempo: number
+  /** Hauteur (MIDI) de chaque note, dans l'ordre des attaques. */
+  pitches: number[]
   /** « Quel rythme ? » : cellules proposées (celles du niveau, dans l'ordre de difficulté). */
   choices: CellId[]
 }
@@ -102,8 +120,21 @@ export function createRhythmQuestion(level: Level): RhythmQuestion {
   const sounding = pool.filter((c) => CELLS[c].parts[0] > 0)
   const cells: CellId[] = [sounding[randomInt(0, sounding.length - 1)]]
   while (cells.length < BEATS) cells.push(pool[randomInt(0, pool.length - 1)])
-  return { cells, choices: [...pool] }
+  const cfg = LEVELS[level]
+  const tempo = cfg.tempoRange ? randomInt(cfg.tempoRange[0], cfg.tempoRange[1]) : cfg.tempo
+  const count = onsets(cells).length
+  // Mélodie : des notes de la gamme de Do autour du Mi5, par petits pas ; sinon toujours le Mi5.
+  const pitches: number[] = []
+  let step = 2
+  for (let i = 0; i < count; i++) {
+    if (cfg.melody) step = Math.max(0, Math.min(MELODY_SCALE.length - 1, step + randomInt(-2, 2)))
+    pitches.push(MELODY_SCALE[step])
+  }
+  return { cells, tempo, pitches, choices: [...pool] }
 }
+
+/** Gamme des mélodies du niveau Impossible : Do5 à Do6. */
+const MELODY_SCALE = [72, 74, 76, 77, 79, 81, 83, 84]
 
 /** Instants où une note commence, en temps depuis le début de la mesure. */
 export function onsets(cells: readonly CellId[]): number[] {

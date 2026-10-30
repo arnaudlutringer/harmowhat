@@ -42,9 +42,13 @@ import { useQuiz } from '@/composables/useQuiz'
 import { playSequence } from '@/audio/engine'
 import { spelledPitchName } from '@/music/spelling'
 import { createQuestion, LEVELS, MODES, parseSettings, type ModeId, type Question } from '@/games/modality'
+import { currentInstrument, randomInstrument, type Instrument } from '@/audio/instruments'
 
 const settings = parseSettings(useRoute().query)
 const cfg = LEVELS[settings.level]
+let instrument: Instrument = currentInstrument()
+/** Gammes jouées en descendant (impossible). */
+const descending = new WeakMap<Question, boolean>()
 
 /** Durée d'une note de la gamme (s) ; la dernière, la note de départ à l'octave, est tenue. */
 const NOTE_SECONDS = 0.3
@@ -54,9 +58,17 @@ const NOTE_SECONDS = 0.3
 const quiz = useQuiz({
   total: settings.questions,
   advanceDelay: null,
-  createQuestion,
-  play: (question: Question): Promise<number> =>
-    playSequence(question.notes.map((n, i) => ({ midi: n.midi, at: i, len: i === 7 ? 3 : 1 })), NOTE_SECONDS).then((p) => p.duration),
+  createQuestion: (): Question => {
+    // Impossible : un instrument au hasard, et une fois sur deux la gamme jouée en descendant.
+    if (cfg.twisted) instrument = randomInstrument()
+    const question = createQuestion()
+    descending.set(question, !!cfg.twisted && Math.random() < 0.5)
+    return question
+  },
+  play: (question: Question): Promise<number> => {
+    const notes = descending.get(question) ? [...question.notes].reverse() : question.notes
+    return playSequence(notes.map((n, i) => ({ midi: n.midi, at: i, len: i === 7 ? 3 : 1 })), NOTE_SECONDS, undefined, instrument).then((p) => p.duration)
+  },
   countdownStart: (question) => (question.notes.length - 1) * NOTE_SECONDS * 1000,
 })
 const q = computed(() => quiz.question.value)

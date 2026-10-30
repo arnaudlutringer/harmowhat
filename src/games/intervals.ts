@@ -8,7 +8,7 @@ import { randomSpelling, spell, spellWithLetter, type SpelledNote } from '@/musi
  * En expert, on précise aussi le sens (ascendant ou descendant).
  */
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 export type Precision = 'simple' | 'precise'
 
 export interface Interval {
@@ -47,6 +47,8 @@ export interface LevelConfig {
   choices: Record<Precision, number>
   /** Intervalles ascendants et descendants, à préciser dans la réponse. */
   directions: boolean
+  /** Impossible : notes très brèves, instrument différent à chaque question. */
+  flash?: boolean
 }
 
 export const LEVELS: Record<Level, LevelConfig> = {
@@ -70,6 +72,14 @@ export const LEVELS: Record<Level, LevelConfig> = {
     semitones: INTERVALS.map((i) => i.semitones),
     choices: { simple: 6, precise: 8 },
     directions: true,
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'Tous les intervalles, avec le sens, joués très brièvement par un instrument différent à chaque question. 12 propositions.',
+    semitones: INTERVALS.map((i) => i.semitones),
+    choices: { simple: 12, precise: 12 },
+    directions: true,
+    flash: true,
   },
 }
 

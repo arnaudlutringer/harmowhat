@@ -139,9 +139,10 @@ export function onStopAll(fn: () => void): () => void {
 
 /** Joue une note (numéro MIDI) avec l'instrument choisi. Renvoie la durée jouée, en secondes. */
 export async function playPiano(midi: number, options: PlayOptions = {}): Promise<number> {
-  const sample = nearestSample(midi)
+  const inst = options.instrument ?? currentInstrument()
+  const sample = nearestSample(midi, inst)
   const gen = generation
-  const buffer = await loadSample(sample)
+  const buffer = await loadSample(sample, inst)
   if (gen !== generation) return 0
   const { ctx } = audio()
   schedule(buffer, sample, midi, ctx.currentTime + (options.when ?? 0), options)
@@ -151,11 +152,12 @@ export async function playPiano(midi: number, options: PlayOptions = {}): Promis
 /** Joue plusieurs touches en même temps (un accord). */
 export async function playChord(midis: number[], options: PlayOptions = {}): Promise<number> {
   const gen = generation
-  const buffers = await Promise.all(midis.map((m) => loadSample(nearestSample(m))))
+  const inst = options.instrument ?? currentInstrument()
+  const buffers = await Promise.all(midis.map((m) => loadSample(nearestSample(m, inst), inst)))
   if (gen !== generation) return 0
   const { ctx } = audio()
   const at = ctx.currentTime + 0.02 + (options.when ?? 0)
-  midis.forEach((m, i) => schedule(buffers[i], nearestSample(m), m, at, { velocity: 0.6, ...options }))
+  midis.forEach((m, i) => schedule(buffers[i], nearestSample(m, inst), m, at, { velocity: 0.6, ...options }))
   return options.duration ?? 2.5
 }
 

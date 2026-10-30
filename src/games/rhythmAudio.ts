@@ -16,14 +16,14 @@ const NOTE = 76
 export async function playRhythm(
   cells: readonly CellId[],
   tempo: number,
-  { notes = true, clicks = false }: { notes?: boolean; clicks?: boolean } = {},
+  { notes = true, clicks = false, pitches }: { notes?: boolean; clicks?: boolean; pitches?: readonly number[] } = {},
 ): Promise<Playback & { barStart: number; beat: number }> {
   const beat = 60 / tempo
   const seq: SequenceNote[] = []
   // Le décompte (et le métronome pendant la mesure) au clic de métronome, le rythme à l'instrument.
   for (let i = 0; i < COUNT_IN; i++) seq.push({ midi: CLICK, at: i, len: 0.15, velocity: i === 0 ? 0.6 : 0.45, click: true })
   if (clicks) for (let i = 0; i < cells.length; i++) seq.push({ midi: CLICK, at: COUNT_IN + i, len: 0.15, velocity: 0.25, click: true })
-  if (notes) for (const n of rhythmNotes(cells)) seq.push({ midi: NOTE, at: COUNT_IN + n.at, len: n.len, velocity: 0.75 })
+  if (notes) rhythmNotes(cells).forEach((n, i) => seq.push({ midi: pitches?.[i] ?? NOTE, at: COUNT_IN + n.at, len: n.len, velocity: 0.75 }))
   const playback = await playSequence(seq, beat, undefined, INSTRUMENTS.piano)
   return { ...playback, barStart: playback.startedAt + COUNT_IN * beat * 1000, beat }
 }

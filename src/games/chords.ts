@@ -7,7 +7,7 @@ export const CHORD_LOW = 57
 export const CHORD_HIGH = 81
 export const CHORD_SIZE = 3
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -16,13 +16,19 @@ export interface LevelConfig {
   triadsOnly: boolean
   /** Nombre de notes proposées (dont les 3 bonnes). */
   choices: number
+  /** Nombre de notes de l'accord (3 par défaut ; 4 en impossible). */
+  size?: number
 }
 
 export const LEVELS: Record<Level, LevelConfig> = {
   debutant: { label: 'Débutant', description: 'Accords parfaits, majeurs ou mineurs. 6 notes proposées.', triadsOnly: true, choices: 6 },
   normal: { label: 'Normal', description: 'Trois notes au hasard. 8 notes proposées.', triadsOnly: false, choices: 8 },
   expert: { label: 'Expert', description: 'Trois notes au hasard. 10 notes proposées.', triadsOnly: false, choices: 10 },
+  impossible: { label: 'Impossible', description: 'Quatre notes au hasard sur deux octaves. 12 notes proposées.', triadsOnly: false, choices: 12, size: 4 },
 }
+
+/** Nombre de notes des accords d'un niveau. */
+export const chordSize = (level: Level) => LEVELS[level].size ?? CHORD_SIZE
 
 export const QUESTION_COUNTS = [10, 20, 30, 50] as const
 
@@ -77,8 +83,8 @@ function triad({ low, high }: { low: number; high: number }): number[] {
 export function createChordQuestion(level: Level = 'normal', inst: Instrument = currentInstrument()): ChordQuestion {
   const cfg = LEVELS[level]
   const range = chordRange(inst)
-  const notes = (cfg.triadsOnly && range.high - range.low >= 7 ? triad(range) : distinctNotes(CHORD_SIZE, range)).sort(ascending)
-  const others = distinctNotes(cfg.choices - CHORD_SIZE, range, notes)
+  const notes = (cfg.triadsOnly && range.high - range.low >= 7 ? triad(range) : distinctNotes(chordSize(level), range)).sort(ascending)
+  const others = distinctNotes(cfg.choices - chordSize(level), range, notes)
   const choices = shuffle([...notes, ...others]).sort(ascending)
   return { notes, choices, spelled: Object.fromEntries(choices.map((m) => [m, spell(m, randomSpelling())])) }
 }

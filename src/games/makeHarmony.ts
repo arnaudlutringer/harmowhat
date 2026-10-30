@@ -11,7 +11,7 @@ import { CHOICES, CLEFS, noteAt, randomAlter, stepRange, type ClefId } from './r
 
 export { CHOICES, CLEFS }
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -23,6 +23,8 @@ export interface LevelConfig {
   /** Intervalles descendants aussi. */
   directions: boolean
   clefs: ClefId[]
+  /** Impossible : la portée s'efface au bout de ce délai (ms), et revient avec la réponse. */
+  flashMs?: number
 }
 
 const ALL = INTERVALS.filter((i) => i.number < 8).map((i) => i.semitones)
@@ -51,6 +53,15 @@ export const LEVELS: Record<Level, LevelConfig> = {
     alterations: true,
     directions: true,
     clefs: ['sol', 'fa', 'ut1', 'ut3', 'ut4'],
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'Tous les intervalles, dans les deux sens, toutes les clés, et la note s’efface au bout de 2 secondes.',
+    semitones: ALL,
+    alterations: true,
+    directions: true,
+    clefs: ['sol', 'fa', 'ut1', 'ut3', 'ut4'],
+    flashMs: 2000,
   },
 }
 

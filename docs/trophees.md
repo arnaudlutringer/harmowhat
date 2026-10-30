@@ -1,6 +1,6 @@
 # Trophées : proposition
 
-47 trophées, en 8 familles (pas de trophée de classement pour le lancement). Les trophées GOAT existent en trois niveaux (Débutant, Normal, Expert) : avec eux, on arrive à 67 médailles à collectionner.
+50 trophées, en 8 familles (pas de trophée de classement pour le lancement). Les trophées GOAT existent en quatre niveaux (Débutant, Normal, Expert, et Impossible une fois débloqué) : avec eux, on arrive à 86 médailles à collectionner.
 
 Un « questionnaire » est une partie complète (hors mode essai). Tout est calculé sur l'appareil.
 
@@ -23,6 +23,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Oreille de lynx | Un questionnaire sans faute en expert |
 | Sans filet | Un questionnaire sans faute sans toucher au diapason |
 | Marathonien | Un questionnaire de 50 questions sans faute |
+| L'impossible n'existe pas | Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question |
 | Grand chelem | Au moins un sans faute dans chacun des 12 jeux |
 
 ## 3. Rapidité (5)
@@ -35,7 +36,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Éclair | Une bonne réponse à 10 000 points |
 | Réflexe | 10 bonnes réponses de suite à 9 000 points ou plus |
 
-## 4. GOAT, 10 000 points à chaque question d'un questionnaire (10 × 3 niveaux)
+## 4. GOAT, 10 000 points à chaque question d'un questionnaire (12 jeux × 4 niveaux, 💎 en impossible)
 
 Les 10 000 points s'obtiennent en répondant pendant la marge de 0,3 s qui précède le décompte des points (GRACE_MS dans src/games/scoring.ts).
 

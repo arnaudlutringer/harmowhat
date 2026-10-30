@@ -9,7 +9,7 @@ import { INTERVALS, intervalName, type Interval } from './intervals'
  * la note chantée est jugée à l'octave près, chacun chantant dans sa voix.
  */
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -18,6 +18,10 @@ export interface LevelConfig {
   semitones: number[]
   /** Intervalles descendants aussi. */
   descending: boolean
+  /** Écart toléré, en cents (sinon TOLERANCE). */
+  tolerance?: number
+  /** Impossible : la note de départ ne s'entend qu'une fois, jouée par un instrument au hasard. */
+  noReplay?: boolean
 }
 
 export const LEVELS: Record<Level, LevelConfig> = {
@@ -38,6 +42,14 @@ export const LEVELS: Record<Level, LevelConfig> = {
     description: 'Tous les intervalles, en montant ou en descendant.',
     semitones: INTERVALS.map((i) => i.semitones),
     descending: true,
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'Tous les intervalles, à 20 cents près. La note de départ ne s’entend qu’une fois, jouée par un instrument au hasard.',
+    semitones: INTERVALS.map((i) => i.semitones),
+    descending: true,
+    tolerance: 20,
+    noReplay: true,
   },
 }
 
@@ -106,10 +118,10 @@ export interface Verdict {
   correct: boolean
 }
 
-export function judge(frequency: number, q: Question): Verdict {
+export function judge(frequency: number, q: Question, level: Level = 'normal'): Verdict {
   const midi = midiOf(frequency)
   const cents = centsFromPitchClass(midi, q.target.midi % 12)
-  const correct = Math.abs(cents) <= TOLERANCE
+  const correct = Math.abs(cents) <= (LEVELS[level].tolerance ?? TOLERANCE)
   // Sur la portée, la note chantée est placée au plus près de la note attendue, sur la même pulsation :
   // elle s'écrit avec une autre lettre quand c'est possible (Ré♭ plutôt que Do♯ à côté d'un Do), pour ne pas la chevaucher.
   const sungMidi = q.target.midi + Math.round(cents / 100)

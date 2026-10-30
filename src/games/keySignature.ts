@@ -81,13 +81,15 @@ export function scaleOf(k: Key): number[] {
   return steps.map((s) => tonic + s)
 }
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
   description: string
   clefs: ClefId[]
   modes: Mode[]
+  /** Impossible : la portée s'efface au bout de ce délai (ms), et revient avec la réponse. */
+  flashMs?: number
 }
 
 export const LEVELS: Record<Level, LevelConfig> = {
@@ -98,6 +100,13 @@ export const LEVELS: Record<Level, LevelConfig> = {
     description: 'Toutes les clés, tonalités majeures et mineures.',
     clefs: ['sol', 'fa', 'ut1', 'ut3', 'ut4'],
     modes: ['M', 'm'],
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'Toutes les clés, tonalités majeures et mineures, et l’armure s’efface au bout de 2 secondes.',
+    clefs: ['sol', 'fa', 'ut1', 'ut3', 'ut4'],
+    modes: ['M', 'm'],
+    flashMs: 2000,
   },
 }
 

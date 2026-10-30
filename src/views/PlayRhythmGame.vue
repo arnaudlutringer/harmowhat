@@ -50,7 +50,7 @@ import { BEATS, CELLS, createRhythmQuestion, judgeTaps, LEVELS, onsets, parseSet
 import { COUNT_IN, playRhythm } from '@/games/rhythmAudio'
 
 const settings = parseSettings(useRoute().query)
-const { tempo, tolerance } = LEVELS[settings.level]
+const { tolerance } = LEVELS[settings.level]
 
 const quiz = useQuiz({
   total: settings.questions,
@@ -69,7 +69,7 @@ const phase = ref<Phase>('ready')
 const count = ref(COUNT_IN)
 const verdict = ref<TapVerdict | null>(null)
 let barStart = 0
-let beat = 60 / tempo
+let beat = 1
 let taps: number[] = []
 let timers: ReturnType<typeof setTimeout>[] = []
 
@@ -96,7 +96,7 @@ const hint = computed(() => {
 async function start() {
   phase.value = 'counting'
   taps = []
-  const playback = await playRhythm(q.value.cells, tempo, { notes: false, clicks: true })
+  const playback = await playRhythm(q.value.cells, q.value.tempo, { notes: false, clicks: true })
   barStart = playback.barStart
   beat = playback.beat
   const now = performance.now()
@@ -130,7 +130,7 @@ function finish() {
     tapPoints(v, tolerance),
   )
   // On entend ensuite le rythme joué juste.
-  void playRhythm(q.value.cells, tempo, { notes: true, clicks: false }).catch(() => {})
+  void playRhythm(q.value.cells, q.value.tempo, { notes: true, clicks: false, pitches: q.value.pitches }).catch(() => {})
 }
 </script>
 

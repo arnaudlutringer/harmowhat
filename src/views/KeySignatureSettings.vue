@@ -13,7 +13,7 @@
 
         <h2>Niveau</h2>
         <ion-radio-group v-model="level">
-          <ion-item v-for="(cfg, key) in LEVELS" :key="key" lines="full">
+          <ion-item v-for="(cfg, key) in shownLevels" :key="key" lines="full">
             <ion-radio :value="key" justify="space-between">
               <ion-label class="ion-text-wrap">
                 <strong>{{ cfg.label }}</strong>
@@ -32,13 +32,14 @@
 
 <script setup lang="ts">
 import { withTrial } from '@/games/ready'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
 import GameIntro from '@/components/GameIntro.vue'
 import { LEVELS, parseSettings, QUESTION_COUNTS, type Level } from '@/games/keySignature'
+import { visibleLevels } from '@/games/trophies'
 
 const STORAGE_KEY = 'harmowhat.tonalite.settings'
 
@@ -53,7 +54,9 @@ function loadSaved() {
 
 const saved = loadSaved()
 const questions = ref<number>(saved.questions)
-const level = ref<Level>(saved.level)
+// Le niveau Impossible n'apparaît qu'une fois débloqué.
+const shownLevels = computed(() => visibleLevels('tonalite', LEVELS))
+const level = ref<Level>(saved.level in shownLevels.value ? saved.level : 'expert')
 const router = useIonRouter()
 
 function start(trial = false) {

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { CHORD_HIGH, CHORD_LOW, clefFor, createChordQuestion, isCorrect, LEVELS, parseSettings, type Level } from './chords'
+import { CHORD_HIGH, CHORD_LOW, chordSize, clefFor, createChordQuestion, isCorrect, LEVELS, parseSettings, type Level } from './chords'
 
 describe('Les accords', () => {
-  it.each(Object.keys(LEVELS) as Level[])('niveau %s : 3 notes distinctes entre La2 et La4, toutes proposées', (level) => {
+  it.each(Object.keys(LEVELS) as Level[])('niveau %s : 3 notes distinctes (4 en impossible) entre La2 et La4, toutes proposées', (level) => {
     for (let i = 0; i < 300; i++) {
       const q = createChordQuestion(level)
-      expect(new Set(q.notes).size).toBe(3)
+      expect(new Set(q.notes).size).toBe(chordSize(level))
       expect(new Set(q.choices).size).toBe(LEVELS[level].choices)
       for (const n of q.choices) {
         expect(n).toBeGreaterThanOrEqual(CHORD_LOW)

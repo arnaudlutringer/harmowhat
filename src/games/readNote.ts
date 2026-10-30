@@ -27,7 +27,7 @@ export const CLEFS: Record<ClefId, ClefInfo> = {
   ut4: { label: "Clé d'ut 4e ligne", vex: 'tenor', bottomLine: degree(1, 3) },
 }
 
-export type Level = 'debutant' | 'intermediaire' | 'expert'
+export type Level = 'debutant' | 'intermediaire' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -35,6 +35,8 @@ export interface LevelConfig {
   clefs: ClefId[]
   /** Lignes supplémentaires au plus, au-dessus ou au-dessous de la portée. */
   ledgerLines: number
+  /** Impossible : la portée s'efface au bout de ce délai (ms), et revient avec la réponse. */
+  flashMs?: number
 }
 
 export const LEVELS: Record<Level, LevelConfig> = {
@@ -55,6 +57,13 @@ export const LEVELS: Record<Level, LevelConfig> = {
     description: "Toutes les clés : sol, fa, ut 1re ligne, ut 3e ligne et ut 4e ligne, au hasard.",
     clefs: ['sol', 'fa', 'ut1', 'ut3', 'ut4'],
     ledgerLines: 2,
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'Toutes les clés, jusqu’à 4 lignes supplémentaires, et la note s’efface au bout d’une seconde et demie.',
+    clefs: ['sol', 'fa', 'ut1', 'ut3', 'ut4'],
+    ledgerLines: 4,
+    flashMs: 1500,
   },
 }
 

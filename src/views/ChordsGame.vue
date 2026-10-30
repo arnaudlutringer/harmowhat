@@ -1,7 +1,7 @@
 <template>
   <game-shell
     title="Les accords"
-    prompt="Quelles sont ces 3 notes ?"
+    :prompt="`Quelles sont ces ${size} notes ?`"
     :quiz="quiz"
     :board="{ game: 'accords', level: settings.level, questions: settings.questions }"
     settings-href="/games/accords"
@@ -33,10 +33,10 @@
       expand="block"
       size="large"
       class="validate"
-      :disabled="selected.length !== CHORD_SIZE || !quiz.canAnswer.value"
+      :disabled="selected.length !== size || !quiz.canAnswer.value"
       @click="validate"
     >
-      Valider ({{ selected.length }}/{{ CHORD_SIZE }})
+      Valider ({{ selected.length }}/{{ size }})
     </ion-button>
   </game-shell>
 </template>
@@ -52,9 +52,11 @@ import FlipPlayer from '@/components/FlipPlayer.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { playChord, playPiano } from '@/audio/engine'
 import { spelledName } from '@/music/spelling'
-import { CHORD_SIZE, createChordQuestion, isCorrect, parseSettings } from '@/games/chords'
+import { chordSize, createChordQuestion, isCorrect, parseSettings } from '@/games/chords'
 
 const settings = parseSettings(useRoute().query)
+// Nombre de notes à trouver : 3, ou 4 en impossible.
+const size = chordSize(settings.level)
 
 // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
 /** Durée de l'accord joué. */
@@ -82,7 +84,7 @@ watch(q, () => (selected.value = []))
 function toggle(midi: number) {
   const i = selected.value.indexOf(midi)
   if (i >= 0) selected.value.splice(i, 1)
-  else if (selected.value.length < CHORD_SIZE) {
+  else if (selected.value.length < size) {
     selected.value.push(midi)
     void playPiano(midi, { duration: 1.5 })
   }

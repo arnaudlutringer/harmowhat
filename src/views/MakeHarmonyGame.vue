@@ -13,7 +13,7 @@
     <template #player>
       <button
         class="sheet"
-        :class="{ sounding: quiz.playing.value, revealed }"
+        :class="{ sounding: quiz.playing.value, revealed, vanished: flash.hidden.value }"
         :disabled="!revealed"
         :aria-label="revealed ? `Réécouter ${pitchLabel(q.base)} puis ${pitchLabel(q.target)}` : undefined"
         @click="quiz.listen()"
@@ -48,9 +48,10 @@ import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
 import ChordStaff from '@/components/ChordStaff.vue'
+import { useFlash } from '@/composables/useFlash'
 import { useQuiz } from '@/composables/useQuiz'
 import { playSequence } from '@/audio/engine'
-import { CHOICES, CLEFS, createQuestion, parseSettings, pitchLabel, type Question } from '@/games/makeHarmony'
+import { CHOICES, CLEFS, createQuestion, LEVELS, parseSettings, pitchLabel, type Question } from '@/games/makeHarmony'
 
 const settings = parseSettings(useRoute().query)
 
@@ -66,6 +67,8 @@ const quiz = useQuiz({
       ? playSequence([{ midi: question.base.midi, at: 0, len: 1 }, { midi: question.target.midi, at: 1, len: 1.5 }], 0.5).then((p) => p.duration)
       : Promise.resolve(0),
 })
+// Impossible : la portée s'efface au bout de quelques secondes.
+const flash = useFlash(quiz, LEVELS[settings.level].flashMs)
 const q = computed(() => quiz.question.value)
 const revealed = computed(() => quiz.feedback.value !== null)
 
@@ -91,6 +94,10 @@ function colorFor(pc: number) {
 
 <style scoped>
 /* Portée en grand : la note de départ, puis la réponse. */
+/* Impossible : la portée effacée laisse son cadre vide. */
+.sheet.vanished > * {
+  visibility: hidden;
+}
 .sheet {
   width: 100%;
   max-width: 340px;

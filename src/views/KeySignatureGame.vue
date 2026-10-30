@@ -12,7 +12,7 @@
     <template #player>
       <button
         class="sheet"
-        :class="{ sounding: quiz.playing.value, revealed }"
+        :class="{ sounding: quiz.playing.value, revealed, vanished: flash.hidden.value }"
         :disabled="!revealed"
         :aria-label="revealed ? `Réécouter la gamme de ${fullName(q.key)}` : undefined"
         @click="quiz.listen()"
@@ -42,9 +42,10 @@ import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
 import { trophyEvent } from '@/games/trophies'
 import KeySignatureStaff from '@/components/KeySignatureStaff.vue'
+import { useFlash } from '@/composables/useFlash'
 import { useQuiz } from '@/composables/useQuiz'
 import { playSequence } from '@/audio/engine'
-import { CLEFS, createQuestion, parseSettings, scaleOf, type Key, type Question } from '@/games/keySignature'
+import { CLEFS, createQuestion, LEVELS, parseSettings, scaleOf, type Key, type Question } from '@/games/keySignature'
 
 const settings = parseSettings(useRoute().query)
 
@@ -61,6 +62,8 @@ const quiz = useQuiz({
       ? playSequence(scaleOf(question.key).map((midi, i) => ({ midi, at: i, len: i === 7 ? 3 : 1 })), SCALE_NOTE_SECONDS).then((p) => p.duration)
       : Promise.resolve(0),
 })
+// Impossible : la portée s'efface au bout de quelques secondes.
+const flash = useFlash(quiz, LEVELS[settings.level].flashMs)
 const q = computed(() => quiz.question.value)
 const revealed = computed(() => quiz.feedback.value !== null)
 
@@ -94,6 +97,10 @@ function colorFor(id: string) {
 
 <style scoped>
 /* Portée en grand : c'est l'armure qu'on lit. */
+/* Impossible : la portée effacée laisse son cadre vide. */
+.sheet.vanished > * {
+  visibility: hidden;
+}
 .sheet {
   width: 100%;
   max-width: 340px;

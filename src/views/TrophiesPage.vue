@@ -9,7 +9,7 @@
         <!-- Par famille : les trophées gagnés en couleur (avec leur date), les autres grisés avec leur condition. -->
         <section v-for="(label, family) in FAMILIES" :key="family">
           <h2>{{ label }}</h2>
-          <p v-if="family === 'goat'" class="hint">Médaille 🥉 en débutant, 🥈 en normal, 🥇 en expert.</p>
+          <p v-if="family === 'goat'" class="hint">Médaille 🥉 en débutant, 🥈 en normal, 🥇 en expert, 💎 en impossible.</p>
           <div class="grid">
             <div v-for="t in byFamily(family)" :key="t.id" class="trophy" :class="{ earned: earnedTrophies[t.id] }">
               <span class="icon" aria-hidden="true">{{ t.icon }}</span>

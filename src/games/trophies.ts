@@ -35,6 +35,8 @@ export interface Trophy {
 /** GOAT : chaque réponse d'un questionnaire à 10 000 points, c'est-à-dire donnée pendant la marge avant le décompte. */
 export const GOAT_POINTS = 10000
 const ECLAIR_POINTS = 10000
+/** Niveau Impossible : à débloquer par un sans faute en expert, plus de 9 000 points à chaque question. */
+export const IMPOSSIBLE_POINTS = 9000
 
 const GOAT_TITLES: Record<GameId, string> = {
   'grave-ou-aigu': 'Sismographe',
@@ -89,6 +91,7 @@ export const TROPHIES: Trophy[] = [
   { id: 'oreille-de-lynx', family: 'sans-faute', icon: '🐆', title: 'Oreille de lynx', condition: 'Termine un questionnaire sans faute en expert' },
   { id: 'sans-filet', family: 'sans-faute', icon: '🎪', title: 'Sans filet', condition: 'Termine un questionnaire sans faute sans toucher au diapason (quand il est proposé)' },
   { id: 'marathonien', family: 'sans-faute', icon: '🏃', title: 'Marathonien', condition: 'Termine un questionnaire de 50 questions sans faute' },
+  { id: 'impossible', family: 'sans-faute', icon: '💎', title: "L'impossible n'existe pas", condition: 'Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question' },
   { id: 'grand-chelem', family: 'sans-faute', icon: '👑', title: 'Grand chelem', condition: 'Fais au moins un sans faute dans chacun des 12 jeux' },
 
   { id: 'rapide', family: 'rapidite', icon: '🐇', title: 'Rapide', condition: "Donne toutes les réponses d'un questionnaire à 7 000 points ou plus" },
@@ -134,8 +137,8 @@ export const TROPHIES: Trophy[] = [
 
 export const TROPHY_BY_ID = Object.fromEntries(TROPHIES.map((t) => [t.id, t])) as Record<string, Trophy>
 
-export type Tier = 'debutant' | 'normal' | 'expert'
-const TIER_ORDER: Tier[] = ['debutant', 'normal', 'expert']
+export type Tier = 'debutant' | 'normal' | 'expert' | 'impossible'
+const TIER_ORDER: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
 
 export interface Earned {
   date: string
@@ -159,6 +162,8 @@ interface Stats {
   chords: number
   notesRead: number
   endingsHeard: string[]
+  /** Jeux dont le niveau Impossible est débloqué. */
+  impossible: GameId[]
 }
 
 interface State {
@@ -172,7 +177,7 @@ const STORAGE_KEY = 'harmowhat.trophies'
 
 const emptyStats = (): Stats => ({
   games: 0, correct: 0, lastDay: '', streak: 0, played: [], instruments: [], perfect: [], harmoniesSung: 0,
-  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [],
+  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [],
 })
 
 function load(): State {
@@ -188,10 +193,13 @@ function load(): State {
 export const earnedTrophies = ref<Record<string, Earned>>(load().earned)
 /** Nombre de trophées gagnés pas encore annoncés (réactif : l'annonce les affiche dès que possible). */
 export const pendingTrophyCount = ref(load().pending.length)
+/** Jeux dont le niveau Impossible est débloqué (réactif, pour les réglages). */
+export const impossibleUnlocked = ref<GameId[]>(load().stats.impossible)
 
 function save(state: State) {
   earnedTrophies.value = { ...state.earned }
   pendingTrophyCount.value = state.pending.length
+  impossibleUnlocked.value = [...state.stats.impossible]
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
@@ -292,6 +300,13 @@ export function evaluateGame(ctx: GameContext): void {
   ]
   for (const [id, ok] of rules) if (ok) award(state, id)
   if (atLeast(GOAT_POINTS) && TIER_ORDER.includes(level)) award(state, `goat-${board.game}`, level)
+  // Exploit en expert (questionnaire complet, sans faute, plus de 9 000 points à chaque question) : le niveau Impossible se débloque.
+  const exploit = level === 'expert' && results.length >= board.questions && results.every((r) => r.correct && r.points > IMPOSSIBLE_POINTS)
+  if (exploit && !s.impossible.includes(board.game)) {
+    s.impossible = [...s.impossible, board.game]
+    state.pending.push({ id: `impossible-${board.game}` })
+    award(state, 'impossible')
+  }
   // Puis ceux qui dépendent des sans faute de cette partie (Grand chelem).
   checkCounters(state)
   save(state)
@@ -369,11 +384,28 @@ export function takePendingTrophies(): { trophy: Trophy; tier?: Tier }[] {
   const pending = state.pending
   state.pending = []
   save(state)
-  return pending.filter((p) => TROPHY_BY_ID[p.id]).map((p) => ({ trophy: TROPHY_BY_ID[p.id], tier: p.tier }))
+  return pending.flatMap((p) => {
+    const trophy = TROPHY_BY_ID[p.id] ?? unlockNotice(p.id)
+    return trophy ? [{ trophy, tier: p.tier }] : []
+  })
 }
 
 export const TIER_LABELS: Record<Tier, { label: string; medal: string }> = {
   debutant: { label: 'Débutant', medal: '🥉' },
   normal: { label: 'Normal', medal: '🥈' },
   expert: { label: 'Expert', medal: '🥇' },
+  impossible: { label: 'Impossible', medal: '💎' },
+}
+
+/** Annonce d'un niveau Impossible débloqué, dans la popin des trophées (ce n'est pas un trophée de la liste). */
+function unlockNotice(id: string): Trophy | null {
+  const game = id.replace(/^impossible-/, '') as GameId
+  if (!id.startsWith('impossible-') || !GAME_NAMES[game]) return null
+  return { id, family: 'sans-faute', icon: '🔓', title: 'Niveau Impossible débloqué', condition: `« ${GAME_NAMES[game]} » : un nouveau niveau t'attend dans les réglages du jeu` }
+}
+
+/** Niveaux d'un jeu à proposer : « Impossible » seulement une fois débloqué. */
+export function visibleLevels<K extends string, T>(game: GameId, levels: Record<K, T>): Record<K, T> {
+  if (impossibleUnlocked.value.includes(game)) return levels
+  return Object.fromEntries(Object.entries(levels).filter(([id]) => id !== 'impossible')) as Record<K, T>
 }
