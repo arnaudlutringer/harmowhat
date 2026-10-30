@@ -5,7 +5,7 @@
       <ion-icon slot="icon-only" :icon="medalOutline" />
     </ion-button>
     <trophy-unlocked :queue="unlocked" />
-    <div class="emoji" aria-hidden="true">{{ emoji }}</div>
+    <img class="emoji" :src="tierImage" alt="" />
     <h1>{{ summary.points }} <small>pts</small></h1>
     <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
 
@@ -196,7 +196,8 @@ watch(
   { immediate: true },
 )
 const tier = computed(() => tierForScore(summary.value.correct, props.total))
-const emoji = computed(() => ({ great: '🏆', good: '🎶', poor: '🎧' })[tier.value])
+// Image de fin de partie selon le résultat : oreille en or, en argent ou en fer (public/results/).
+const tierImage = computed(() => `${import.meta.env.BASE_URL}results/${tier.value}.png`)
 
 // Musique de fin, selon l'instrument (voir music/endings.ts), d'autant plus mal jouée (musicien éméché)
 // que le joueur a fait d'erreurs (voir music/drunk.ts). Tirée une fois pour cet écran.
@@ -247,7 +248,10 @@ onBeforeUnmount(stopAll)
   font-size: 22px;
 }
 .emoji {
-  font-size: 64px;
+  display: block;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto;
 }
 h1 {
   font-size: 48px;
