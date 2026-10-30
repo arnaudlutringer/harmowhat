@@ -408,7 +408,7 @@ onIonViewWillLeave(stopAll)
   flex: 1;
 }
 .row.disaster {
-  background: #ffe8e8;
+  background: var(--hw-danger-soft);
 }
 .piece small {
   display: block;

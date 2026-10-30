@@ -83,7 +83,7 @@ h2 {
   filter: grayscale(1);
 }
 .trophy.earned {
-  background: #fff;
+  background: var(--hw-surface);
   opacity: 1;
   box-shadow: 0 2px 0 rgba(108, 92, 231, 0.35), 0 4px 10px rgba(45, 48, 71, 0.08);
 }

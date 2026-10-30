@@ -2,17 +2,33 @@
   <ion-page>
     <ion-content class="ion-padding">
       <page-nav title="Paramètres" back-href="/home" />
-      <!-- Deux onglets : l'instrument (et sa musique de fin), Mon compte (nom et pays du joueur). -->
+      <!-- Trois onglets : l'instrument (et sa musique de fin), Mon compte (nom et pays du joueur), l'affichage (thème). -->
       <ion-segment :value="tab" class="tabs" @ion-change="switchTab($event.detail.value as Tab)">
         <ion-segment-button value="instrument">
           <ion-label>{{ instrument.emoji }} Instrument</ion-label>
         </ion-segment-button>
         <ion-segment-button value="joueur">
-          <ion-label>{{ flag(profile.country) }} Mon compte</ion-label>
+          <ion-label>{{ flag(profile.country) }} Compte</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="affichage">
+          <ion-label>🌓 Affichage</ion-label>
         </ion-segment-button>
       </ion-segment>
 
       <player-settings v-if="tab === 'joueur'" class="settings" />
+      <!-- Thème clair, sombre ou comme le téléphone. -->
+      <div v-else-if="tab === 'affichage'" class="settings">
+        <ion-radio-group :value="themeMode" @ion-change="setThemeMode($event.detail.value)">
+          <ion-item v-for="m in THEME_MODES" :key="m.id" lines="full">
+            <ion-radio :value="m.id" justify="space-between">
+              <ion-label class="ion-text-wrap">
+                <strong>{{ m.label }}</strong>
+                <p>{{ m.description }}</p>
+              </ion-label>
+            </ion-radio>
+          </ion-item>
+        </ion-radio-group>
+      </div>
       <div v-else class="settings hw-square">
         <!-- Changement en deux écrans, comme dans le tutoriel : l'instrument, puis le morceau. -->
         <template v-if="picking === 'instrument'">
@@ -80,7 +96,8 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  IonButton, IonContent, IonIcon, IonLabel, IonPage, IonSegment, IonSegmentButton, onIonViewWillEnter, onIonViewWillLeave,
+  IonButton, IonContent, IonIcon, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, onIonViewWillEnter,
+  onIonViewWillLeave,
 } from '@ionic/vue'
 import { chevronBack, play, stop } from 'ionicons/icons'
 import PageNav from '@/components/PageNav.vue'
@@ -93,9 +110,10 @@ import { playArpeggio, preloadPiano, stopAll } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
 import { trophyEvent } from '@/games/trophies'
+import { setThemeMode, THEME_MODES, themeMode } from '@/theme/theme'
 
 // Onglet ouvert : celui demandé par le lien (?onglet=joueur, depuis l'accueil ou la fin de partie), sinon l'instrument.
-type Tab = 'instrument' | 'joueur'
+type Tab = 'instrument' | 'joueur' | 'affichage'
 const route = useRoute()
 const tabFromRoute = (): Tab => (route.query.onglet === 'joueur' ? 'joueur' : 'instrument')
 const tab = ref<Tab>(tabFromRoute())
@@ -177,6 +195,13 @@ onIonViewWillLeave(stopAll)
 }
 .tabs ion-label {
   text-transform: none;
+  font-size: 13px;
+}
+/* Trois onglets sur un téléphone : moins de marge autour des libellés. */
+.tabs ion-segment-button {
+  --padding-start: 4px;
+  --padding-end: 4px;
+  min-width: 0;
 }
 /* Choix actuel, en tête de l'onglet, avec le bouton d'écoute du morceau à droite. */
 .current {
