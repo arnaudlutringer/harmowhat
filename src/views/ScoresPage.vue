@@ -51,7 +51,7 @@
         <p v-else class="empty">Pas encore de score ici. À toi de jouer !</p>
 
         <ion-button expand="block" size="large" @click="replay">
-          <span class="game-emoji" aria-hidden="true">{{ info.emoji }}</span>
+          <ion-icon slot="start" class="game-icon" :icon="GAME_ICONS[game]" aria-hidden="true" />
           Jouer
         </ion-button>
         <ion-button expand="block" fill="outline" @click="home">Accueil</ion-button>
@@ -64,8 +64,10 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  IonButton, IonContent, IonLabel, IonPage, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, onIonViewWillEnter, useIonRouter,
+  IonButton, IonContent, IonIcon, IonLabel, IonPage, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, onIonViewWillEnter,
+  useIonRouter,
 } from '@ionic/vue'
+import { GAME_ICONS } from '@/games/icons'
 import PageNav from '@/components/PageNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
 import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref } from '@/games/highScores'
@@ -284,9 +286,9 @@ h2 {
   text-align: center;
   color: var(--ion-color-medium);
 }
-.game-emoji {
-  margin-right: 10px;
-  font-size: 22px;
+/* Icône du jeu (la même que sur l'accueil) sur le bouton Jouer. */
+.game-icon {
+  font-size: 26px;
 }
 ion-button + ion-button {
   margin-top: 8px;

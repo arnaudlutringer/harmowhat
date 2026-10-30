@@ -22,6 +22,19 @@
       <span class="change">Changer</span>
     </button>
 
+    <!-- Sauvegarde automatique des scores (activée par défaut). -->
+    <ion-toggle
+      class="auto-save"
+      :checked="profile.autoSave"
+      justify="space-between"
+      @ion-change="saveProfile({ autoSave: $event.detail.checked })"
+    >
+      <span class="auto-save-label">
+        Enregistrer mes scores automatiquement
+        <small>En fin de partie, un score qui entre dans les meilleurs scores est enregistré avec ce nom et ce pays.</small>
+      </span>
+    </ion-toggle>
+
     <!-- Identifiant technique : reconnaît les scores du joueur même s'il change de nom ou de pays. -->
     <div v-if="!hideId" class="player-id">
       <span>Identifiant joueur</span>
@@ -67,7 +80,7 @@
 import { computed, ref } from 'vue'
 import {
   IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInput, IonItem, IonLabel, IonList, IonModal, IonSearchbar, IonTitle,
-  IonToolbar,
+  IonToggle, IonToolbar,
 } from '@ionic/vue'
 import { checkmark } from 'ionicons/icons'
 import { countryByCode, searchCountries, type CountryCode } from '@/player/countries'
@@ -148,6 +161,24 @@ h2 {
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
+}
+.auto-save {
+  width: 100%;
+  margin-top: 24px;
+}
+.auto-save::part(label) {
+  white-space: normal;
+}
+.auto-save-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 600;
+}
+.auto-save-label small {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--ion-color-medium);
 }
 .player-id {
   display: flex;

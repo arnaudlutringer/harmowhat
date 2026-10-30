@@ -10,7 +10,18 @@
     <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
 
     <!-- Le score entre dans au moins un classement (monde, pays, téléphone) : on propose de l'enregistrer dans les trois. -->
-    <form v-if="record" class="record" @submit.prevent="saveRecord">
+    <!-- Sauvegarde automatique (Mon compte) : le score est déjà enregistré ; on montre sous quel nom, et le classement. -->
+    <div v-if="autoSaved" class="record">
+      <strong>🏅 Tu entres dans les meilleurs scores !</strong>
+      <p class="tops">
+        <span v-if="tops.monde">🌍 Monde</span>
+        <span v-if="tops.pays">{{ country?.flag }} {{ country?.name }}</span>
+        <span v-if="tops.appareil">📱 Téléphone</span>
+      </p>
+      <p class="country">Enregistré au nom de <strong>{{ autoSaved.name }}</strong><template v-if="worldEnabled"> · {{ country?.flag }} {{ country?.name }}</template></p>
+      <ion-button expand="block" @click="openScores(autoSaved.rank, autoSaved.name)">Voir les meilleurs scores</ion-button>
+    </div>
+    <form v-else-if="record" class="record" @submit.prevent="saveRecord">
       <strong>🏅 Tu entres dans les meilleurs scores !</strong>
       <p class="tops">
         <span v-if="tops.monde">🌍 Monde</span>
@@ -65,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
 import { medalOutline, musicalNote, musicalNotes, stop } from 'ionicons/icons'
 import { playRecording, playSequence, stopAll, tierForScore } from '@/audio/engine'
@@ -139,6 +150,20 @@ onMounted(() => {
     .catch(() => {})
 })
 
+/** Enregistre le score sur le téléphone (son top 10) et l'envoie au classement mondial ; renvoie son rang sur le téléphone. */
+function storeScore(name: string): { rank: number; sent: Promise<unknown> } {
+  const { points, correct } = summary.value
+  const entry = { name, points, correct, date: new Date().toISOString(), playerId: profile.value.id }
+  return { rank: saveScore(props.board, entry), sent: submitScore(props.board, entry) }
+}
+
+/** Ouvre le plus beau des classements où le score entre. */
+function openScores(rank: number, name: string) {
+  stopAll()
+  const vue = tops.monde ? 'monde' : tops.pays ? 'pays' : 'appareil'
+  router.push(`${scoresHref(props.board, rank, { name, points: summary.value.points })}&vue=${worldEnabled ? vue : 'appareil'}`)
+}
+
 async function saveRecord() {
   const name = cleanName(playerName.value)
   if (!name) {
@@ -147,19 +172,29 @@ async function saveRecord() {
   }
   if (saving.value) return
   saving.value = true
-  const { points, correct } = summary.value
-  const entry = { name, points, correct, date: new Date().toISOString(), playerId: profile.value.id }
-  // Téléphone (son top 10), puis base mondiale (monde et pays) : on attend un peu l'envoi pour que le score
-  // y figure déjà ; sans connexion, il partira plus tard.
-  const rank = saveScore(props.board, entry)
-  await Promise.race([submitScore(props.board, entry), new Promise((r) => setTimeout(r, 3000))])
+  // Base mondiale (monde et pays) : on attend un peu l'envoi pour que le score y figure déjà ; sans connexion, il partira plus tard.
+  const { rank, sent } = storeScore(name)
+  await Promise.race([sent, new Promise((r) => setTimeout(r, 3000))])
   saved.value = true
   saving.value = false
-  stopAll()
-  // On ouvre le plus beau des classements où le score entre.
-  const vue = tops.monde ? 'monde' : tops.pays ? 'pays' : 'appareil'
-  router.push(`${scoresHref(props.board, rank, { name, points })}&vue=${worldEnabled ? vue : 'appareil'}`)
+  openScores(rank, name)
 }
+
+// Sauvegarde automatique (option de Mon compte, avec un nom) : dès que le score entre dans un classement,
+// il est enregistré tout seul, une seule fois.
+const autoSaved = ref<{ name: string; rank: number } | null>(null)
+watch(
+  record,
+  (entersBoard) => {
+    const name = cleanName(profile.value.name)
+    if (!entersBoard || !profile.value.autoSave || !name || autoSaved.value) return
+    const { rank, sent } = storeScore(name)
+    sent.catch(() => {})
+    saved.value = true
+    autoSaved.value = { name, rank }
+  },
+  { immediate: true },
+)
 const tier = computed(() => tierForScore(summary.value.correct, props.total))
 const emoji = computed(() => ({ great: '🏆', good: '🎶', poor: '🎧' })[tier.value])
 

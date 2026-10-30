@@ -26,7 +26,6 @@
 
             <!-- 2. Les jeux -->
             <template v-else-if="step === 2">
-              <div class="big" aria-hidden="true">🎹🎼🎵👀</div>
               <div class="lines">
                 <p class="lead">Plein de mini-jeux sont là pour tester ton oreille, mais pas que&nbsp;!</p>
                 <p class="lead">Harmonie, Accords, Tonalités... Pour tout niveau, teste ton talent musical.</p>
