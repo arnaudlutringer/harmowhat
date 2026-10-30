@@ -11,7 +11,7 @@
 
     <!-- Le score entre dans au moins un classement (monde, pays, téléphone) : on propose de l'enregistrer dans les trois. -->
     <!-- Sauvegarde automatique (Mon compte) : le score est déjà enregistré ; on montre sous quel nom, et le classement. -->
-    <div v-if="autoSaved" class="record">
+    <div v-if="autoSaved" class="record auto">
       <strong>🏅 Tu entres dans les meilleurs scores !</strong>
       <p class="tops">
         <span v-if="tops.monde">🌍 Monde</span>
@@ -292,6 +292,17 @@ p {
   background: var(--hw-button);
   box-shadow: 0 2px 0 rgba(108, 92, 231, 0.35), 0 4px 10px rgba(45, 48, 71, 0.08);
   text-align: left;
+}
+/* Score enregistré automatiquement : tout le bloc est centré. */
+.record.auto {
+  align-items: center;
+  text-align: center;
+}
+.record.auto .tops {
+  justify-content: center;
+}
+.record.auto ion-button {
+  width: 100%;
 }
 .record strong {
   color: var(--ion-color-primary);
