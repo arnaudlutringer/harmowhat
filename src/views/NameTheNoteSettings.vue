@@ -18,7 +18,8 @@
               <ion-label class="ion-text-wrap">
                 <strong>{{ cfg.label }}</strong>
                 <p>{{ cfg.description }}</p>
-                <p v-if="cfg.randomInstrument">Instrument au hasard, sur toute sa tessiture</p> {{ noteName(levelRange(key, instrument).low) }} à {{ noteName(levelRange(key, instrument).high) }}</p>
+                <p v-if="cfg.randomInstrument">Instrument au hasard, sur toute sa tessiture</p>
+                <p v-else>{{ instrument.label }} : de {{ noteName(levelRange(key, instrument).low) }} à {{ noteName(levelRange(key, instrument).high) }}</p>
               </ion-label>
             </ion-radio>
           </ion-item>
