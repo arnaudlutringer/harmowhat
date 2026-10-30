@@ -131,10 +131,12 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     tick()
   }
 
-  function answer(correct: boolean, message: string) {
+  /** Réponse du joueur ; `scored` remplace les points du chronomètre (jeux notés à la précision, comme « Joue le rythme »). */
+  function answer(correct: boolean, message: string, scored?: number) {
     if (!canAnswer.value) return
     stopTicking()
     points.value = clock.stop()
+    if (scored !== undefined) points.value = scored
     results.value = [...results.value, { correct, points: correct ? points.value : 0 }]
     feedback.value = { correct, message }
     if (trial) trophyEvent({ type: 'trial' })

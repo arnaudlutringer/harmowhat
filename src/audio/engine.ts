@@ -171,6 +171,11 @@ export interface SequenceNote {
 export interface Playback {
   /** Durée totale, en secondes. */
   duration: number
+  /**
+   * Instant (performance.now(), en ms) où le début de la séquence sort du haut-parleur, latence de sortie
+   * comprise : pour comparer des frappes au rythme entendu.
+   */
+  startedAt: number
   /** Coupe la lecture (fondu très court). */
   stop: () => void
 }
@@ -187,9 +192,11 @@ export async function playSequence(
 ): Promise<Playback> {
   const gen = generation
   const loaded = await Promise.all(notes.map(({ midi }) => loadSample(nearestSample(midi, instrument), instrument)))
-  if (gen !== generation) return { duration: 0, stop() {} }
+  if (gen !== generation) return { duration: 0, startedAt: performance.now(), stop() {} }
   const { ctx } = audio()
   const t0 = ctx.currentTime + 0.05
+  const latency = (ctx.outputLatency || 0) + (ctx.baseLatency || 0)
+  const startedAt = performance.now() + (t0 - ctx.currentTime + latency) * 1000
   const { legato } = instrument
   const voices = notes.map((n, i) => {
     // Lié (chœur) : chaque note démarre après son attaque et déborde sur la suivante, qui entre en fondu.
@@ -205,6 +212,7 @@ export async function playSequence(
   })
   return {
     duration: Math.max(0, ...notes.map(({ at, len }) => at + len)) * unit + 0.2,
+    startedAt,
     stop() {
       fadeOutVoices(voices)
       voices.forEach((v) => active.delete(v))

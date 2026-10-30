@@ -47,6 +47,8 @@ const GOAT_TITLES: Record<GameId, string> = {
   'lecture-note': 'Déchiffreur',
   'fais-harmonie': "Architecte de l'harmonie",
   tonalite: 'Maître des clés',
+  'quel-rythme': 'Métronome humain',
+  'joue-rythme': 'Batteur de génie',
 }
 
 const GAME_NAMES: Record<GameId, string> = {
@@ -60,6 +62,8 @@ const GAME_NAMES: Record<GameId, string> = {
   'lecture-note': 'Lecture de note',
   'fais-harmonie': "Fais l'harmonie",
   tonalite: 'La tonalité',
+  'quel-rythme': 'Quel rythme ?',
+  'joue-rythme': 'Joue le rythme',
 }
 
 const ALL_GAMES = Object.keys(GOAT_TITLES) as GameId[]
@@ -67,21 +71,22 @@ const CATEGORIES: GameId[][] = [
   ['grave-ou-aigu', 'quelle-note', 'accords', 'harmonies', 'modalite'],
   ['chante-note', 'chante-harmonie'],
   ['lecture-note', 'fais-harmonie', 'tonalite'],
+  ['quel-rythme', 'joue-rythme'],
 ]
 
 export const TROPHIES: Trophy[] = [
   { id: 'premiers-pas', family: 'decouverte', icon: '👣', title: 'Premiers pas', condition: 'Termine ton premier questionnaire' },
   { id: 'bien-prepare', family: 'decouverte', icon: '🎓', title: 'Bien préparé', condition: 'Termine le tutoriel' },
   { id: 'curieux', family: 'decouverte', icon: '🔍', title: 'Curieux', condition: 'Essaie une question dans le mode essai' },
-  { id: 'touche-a-tout', family: 'decouverte', icon: '🧭', title: 'Touche-à-tout', condition: 'Termine un questionnaire dans chacune des 3 catégories' },
-  { id: 'explorateur', family: 'decouverte', icon: '🗺️', title: 'Explorateur', condition: 'Termine un questionnaire dans les 10 jeux' },
+  { id: 'touche-a-tout', family: 'decouverte', icon: '🧭', title: 'Touche-à-tout', condition: 'Termine un questionnaire dans chacune des 4 catégories' },
+  { id: 'explorateur', family: 'decouverte', icon: '🗺️', title: 'Explorateur', condition: 'Termine un questionnaire dans les 12 jeux' },
   { id: 'homme-orchestre', family: 'decouverte', icon: '🎺', title: 'Homme-orchestre', condition: 'Joue un questionnaire avec 5 instruments différents' },
 
   { id: 'sans-faute', family: 'sans-faute', icon: '✅', title: 'Sans faute', condition: 'Termine un questionnaire sans aucune erreur' },
   { id: 'oreille-de-lynx', family: 'sans-faute', icon: '🐆', title: 'Oreille de lynx', condition: 'Termine un questionnaire sans faute en expert' },
   { id: 'sans-filet', family: 'sans-faute', icon: '🎪', title: 'Sans filet', condition: 'Termine un questionnaire sans faute sans toucher au diapason (quand il est proposé)' },
   { id: 'marathonien', family: 'sans-faute', icon: '🏃', title: 'Marathonien', condition: 'Termine un questionnaire de 50 questions sans faute' },
-  { id: 'grand-chelem', family: 'sans-faute', icon: '👑', title: 'Grand chelem', condition: 'Fais au moins un sans faute dans chacun des 10 jeux' },
+  { id: 'grand-chelem', family: 'sans-faute', icon: '👑', title: 'Grand chelem', condition: 'Fais au moins un sans faute dans chacun des 12 jeux' },
 
   { id: 'rapide', family: 'rapidite', icon: '🐇', title: 'Rapide', condition: "Donne toutes les réponses d'un questionnaire à 7 000 points ou plus" },
   { id: 'tres-rapide', family: 'rapidite', icon: '🚀', title: 'Très rapide', condition: "Donne toutes les réponses d'un questionnaire à 8 000 points ou plus" },

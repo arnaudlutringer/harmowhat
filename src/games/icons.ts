@@ -51,6 +51,16 @@ const SVGS: Record<GameId, string> = {
     STAFF + head(110, 346, 46, 32) +
     `<path d="M196 330l84-74M240 252h44v44" ${S}/>` +
     `<ellipse cx="392" cy="226" rx="54" ry="38" transform="rotate(-20 392 226)" ${S} stroke-dasharray="30 22"/>`,
+  // Deux croches liées, et un petit point d'interrogation en exposant : quel rythme ?
+  'quel-rythme':
+    head(100, 400, 54, 38) + head(280, 400, 54, 38) + `<path d="M150 384V150M330 384V150M150 150h180" ${S} stroke-width="40"/>` +
+    `<path d="M376 92a48 48 0 1 1 72 42c-22 12-30 26-30 52" ${S}/><circle cx="418" cy="240" r="17"/>`,
+  // Une main qui frappe (paume ouverte) sur une ligne, avec des traits d'impact : joue le rythme.
+  'joue-rythme':
+    `<path d="M60 440h392" ${S}/>` +
+    `<path d="M196 380V200a28 28 0 0 1 56 0v-40a28 28 0 0 1 56 0v40a28 28 0 0 1 56 0v120c0 40-30 60-70 60h-98z" ${S}/>` +
+    `<path d="M196 300l-34-34a26 26 0 0 0-38 36l72 78" ${S}/>` +
+    `<path d="M92 120l40 44M256 56v60M420 120l-40 44" ${S}/>`,
   // Une armure : deux dièses sur la portée.
   tonalite:
     STAFF +

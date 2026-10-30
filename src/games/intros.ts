@@ -45,4 +45,12 @@ export const INTROS: Record<GameId, string[]> = {
     'Une portée montre une armure, c’est-à-dire des dièses, des bémols ou rien : trouve la tonalité, majeure ou mineure selon la question.',
     'Pas de son ici : tout se lit sur l’armure.',
   ],
+  'quel-rythme': [
+    'Après un décompte de 3 clics, un rythme de 3 temps est joué : choisis la figure de chaque temps (noire, croches, soupir…), dans l’ordre, puis valide.',
+    'Après ta réponse, la portée montre le vrai rythme : les temps justes en vert, les erreurs en rouge.',
+  ],
+  'joue-rythme': [
+    'Un rythme de 3 temps est écrit sur la portée : appuie sur Démarrer, puis, après le décompte de 3 clics, tape chaque note sur le grand bouton.',
+    'Chaque frappe est jugée sur sa précision : les points dépendent de ton écart moyen. Tu entends ensuite le rythme joué juste.',
+  ],
 }
