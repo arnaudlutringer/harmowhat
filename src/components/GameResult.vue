@@ -236,7 +236,7 @@ onBeforeUnmount(stopAll)
   position: relative;
   text-align: center;
   max-width: 360px;
-  margin: 6vh auto 24px;
+  margin: 0 auto 24px;
 }
 /* « Mes trophées » en haut à droite de l'écran (la popin des trophées gagnés s'envole vers lui). */
 .trophies {
