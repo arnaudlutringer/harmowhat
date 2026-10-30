@@ -1,5 +1,5 @@
 import { ref, watch } from 'vue'
-import { boardOfKey, localScoreList, type Board, type GameId, type ScoreEntry } from './highScores'
+import { boardOfKey, isHiddenLevel, localScoreList, type Board, type GameId, type ScoreEntry } from './highScores'
 import { profile } from '@/player/profile'
 import { uuid } from '@/player/uuid'
 
@@ -112,9 +112,11 @@ export async function fetchBoard(board: Board, country?: string, limit = 10): Pr
 
 /** Le meilleur score d'un jeu, tous niveaux et nombres de questions confondus (dans le monde ou un pays). */
 export async function fetchRecord(game: GameId, country?: string): Promise<WorldRecord | undefined> {
-  const where = `game=eq.${game}` + (country ? `&country=eq.${country}` : '')
+  // Le niveau Impossible pas encore débloqué ne doit pas apparaître, même par le record d'un autre joueur.
+  const hide = isHiddenLevel(game, 'impossible')
+  const where = `game=eq.${game}` + (country ? `&country=eq.${country}` : '') + (hide ? '&level=not.like.impossible*' : '')
   const rows = await select<WorldRecord>(`select=${COLUMNS},level,questions&${where}&order=points.desc,played_at.asc&limit=1`)
-  return withPending(rows, (p) => p.game === game && (!country || p.country === country), pendingRow, 1)[0]
+  return withPending(rows, (p) => p.game === game && (!country || p.country === country) && !isHiddenLevel(game, p.level), pendingRow, 1)[0]
 }
 
 /*
