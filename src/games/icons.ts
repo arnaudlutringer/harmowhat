@@ -72,4 +72,10 @@ const SVGS: Record<GameId, string> = {
 const dataUrl = (content: string) =>
   `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' class='ionicon' viewBox='0 0 512 512'>${content.replaceAll('"', "'")}</svg>`
 
-export const GAME_ICONS = Object.fromEntries(Object.entries(SVGS).map(([id, svg]) => [id, dataUrl(svg)])) as Record<GameId, string>
+/** L'icône en SVG autonome, d'une couleur (sans les styles d'Ionicons), pour la dessiner dans une image (partage). */
+export function gameIconSvg(game: GameId, color: string): string {
+  const style = `<style>*{fill:${color};stroke:${color}}.ionicon-fill-none{fill:none}.ionicon-stroke-width{stroke-width:32px}</style>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">${style}${SVGS[game]}</svg>`
+}
+
+export const GAME_ICONS =Object.fromEntries(Object.entries(SVGS).map(([id, svg]) => [id, dataUrl(svg)])) as Record<GameId, string>
