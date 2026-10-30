@@ -24,6 +24,8 @@
           </ion-segment-button>
         </ion-segment>
 
+        <!-- Petite séparation entre le choix du classement (niveau, questions) et celui de sa portée (monde, pays, appareil). -->
+        <hr class="separator" />
         <scope-tabs />
 
         <p v-if="loading" class="empty">Chargement du classement…</p>
@@ -285,6 +287,11 @@ h2 {
   margin: 28px 0;
   text-align: center;
   color: var(--ion-color-medium);
+}
+.separator {
+  margin: 14px 0;
+  border: none;
+  border-top: 1px solid rgba(var(--ion-text-color-rgb), 0.15);
 }
 /* Icône du jeu (la même que sur l'accueil) sur le bouton Jouer. */
 .game-icon {
