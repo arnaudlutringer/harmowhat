@@ -86,16 +86,36 @@ ion-content.ion-padding {
   font-weight: 600;
 }
 
-/* Choix segmentés des réglages (nombre de questions…) : le choix retenu est entouré de violet, sans soulignement. */
+/* Choix segmentés des réglages (nombre de questions…) : des pastilles compactes autour du nombre ;
+   le choix retenu est sur fond violet, texte blanc. */
+.hw-square ion-segment {
+  display: flex;
+  justify-content: space-around;
+}
 .hw-square ion-segment-button {
   --indicator-height: 0;
+  --padding-start: 6px;
+  --padding-end: 6px;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --color-checked: #fff;
+  --background-checked: var(--ion-color-primary);
+  flex: 0 0 auto;
+  min-width: 56px;
+  min-height: 0;
+  height: 38px;
   border: 2px solid transparent;
 }
 .hw-square ion-segment-button::part(indicator) {
   display: none;
 }
+.hw-square ion-segment-button ion-label {
+  margin: 0;
+}
 .hw-square ion-segment-button.segment-button-checked {
   border-color: var(--ion-color-primary);
+  background: var(--ion-color-primary);
+  color: #fff;
 }
 
 /* Bouton secondaire des réglages (« Essayer une question ») : sous « C'est parti ! », sans fond, bordure violette. */
