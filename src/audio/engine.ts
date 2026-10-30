@@ -166,35 +166,37 @@ export interface SequenceNote {
   len: number
   /** Volume propre à cette note (sinon celui de la séquence). */
   velocity?: number
-  /** Coup de tambour (décompte des jeux de rythme) au lieu d'une note de l'instrument ; `midi` est ignoré. */
-  drum?: boolean
+  /** Clic de métronome (décompte des jeux de rythme) au lieu d'une note de l'instrument ; `midi` est ignoré. */
+  click?: boolean
 }
 
-let drum: AudioBuffer | undefined
+let clickSound: AudioBuffer | undefined
 
-/** Coup de tambour synthétisé une fois : une peau grave qui descend (sinus de 190 à 70 Hz) et un claquement de bruit. */
-function drumBuffer(ctx: AudioContext): AudioBuffer {
-  if (drum) return drum
+/**
+ * Clic de métronome synthétisé une fois, façon bloc de bois : un « toc » aigu très court
+ * (deux sinus à 1 600 et 2 500 Hz qui s'éteignent en quelques millisecondes) et un claquement de bruit.
+ */
+function clickBuffer(ctx: AudioContext): AudioBuffer {
+  if (clickSound) return clickSound
   const rate = ctx.sampleRate
-  const buffer = ctx.createBuffer(1, Math.round(rate * 0.35), rate)
+  const buffer = ctx.createBuffer(1, Math.round(rate * 0.06), rate)
   const data = buffer.getChannelData(0)
-  let phase = 0
   for (let i = 0; i < data.length; i++) {
     const t = i / rate
-    phase += (2 * Math.PI * (70 + 120 * Math.exp(-t * 25))) / rate
-    const body = Math.sin(phase) * Math.exp(-t * 9)
-    const snap = (Math.random() * 2 - 1) * Math.exp(-t * 45) * 0.5
-    data[i] = (body + snap) * 0.9
+    const tone = (Math.sin(2 * Math.PI * 1600 * t) + 0.5 * Math.sin(2 * Math.PI * 2500 * t)) * Math.exp(-t * 90)
+    const snap = (Math.random() * 2 - 1) * Math.exp(-t * 400) * 0.6
+    data[i] = (tone + snap) * 0.6
   }
-  return (drum = buffer)
+  return (clickSound = buffer)
 }
 
-function scheduleDrum(at: number, velocity: number): Voice {
+function scheduleClick(at: number, velocity: number): Voice {
   const { ctx, out } = audio()
   const src = ctx.createBufferSource()
-  src.buffer = drumBuffer(ctx)
+  src.buffer = clickBuffer(ctx)
   const g = ctx.createGain()
-  g.gain.value = velocity * 1.6
+  // 70 % du volume du premier son de décompte (1,6).
+  g.gain.value = velocity * 1.12
   src.connect(g).connect(out)
   src.start(at)
   const voice = { src, gain: g }
@@ -226,7 +228,7 @@ export async function playSequence(
   instrument: Instrument = currentInstrument(),
 ): Promise<Playback> {
   const gen = generation
-  const loaded = await Promise.all(notes.map(({ midi, drum }) => (drum ? null : loadSample(nearestSample(midi, instrument), instrument))))
+  const loaded = await Promise.all(notes.map(({ midi, click }) => (click ? null : loadSample(nearestSample(midi, instrument), instrument))))
   if (gen !== generation) return { duration: 0, startedAt: performance.now(), stop() {} }
   const { ctx } = audio()
   const t0 = ctx.currentTime + 0.05
@@ -235,7 +237,7 @@ export async function playSequence(
   const { legato } = instrument
   const voices = notes.map((n, i) => {
     const buffer = loaded[i]
-    if (!buffer) return scheduleDrum(t0 + n.at * unit, n.velocity ?? velocity)
+    if (!buffer) return scheduleClick(t0 + n.at * unit, n.velocity ?? velocity)
     // Lié (chœur) : chaque note démarre après son attaque et déborde sur la suivante, qui entre en fondu.
     const duration = Math.max(0.3, n.len * unit + (legato?.overlap ?? 0.15))
     return schedule(buffer, nearestSample(n.midi, instrument), n.midi, t0 + n.at * unit, {
