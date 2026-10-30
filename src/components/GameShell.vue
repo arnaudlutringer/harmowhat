@@ -209,7 +209,9 @@ function backToSettings() {
 }
 
 useBackButton(20, (processNextHandler) => {
-  if (route.path !== ownPath || props.quiz.finished.value) return processNextHandler()
+  if (route.path !== ownPath) return processNextHandler()
+  // Écran de résultat : retour direct aux réglages du jeu (sans passer par l'accueil).
+  if (props.quiz.finished.value) return backToSettings()
   if (!confirming) void confirmQuit()
 })
 </script>
