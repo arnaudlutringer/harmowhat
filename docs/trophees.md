@@ -8,12 +8,12 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 
 | Trophée | Condition |
 |---|---|
-| Premiers pas | Terminer son premier questionnaire |
+| Premiers pas | Termine ton premier questionnaire |
 | Bien préparé | Terminer le tutoriel |
-| Curieux | Essayer une question dans le mode essai |
-| Touche-à-tout | Terminer un questionnaire dans chacune des 3 catégories (L'oreille, La voix, Le solfège) |
-| Explorateur | Terminer un questionnaire dans les 10 jeux |
-| Homme-orchestre | Jouer un questionnaire avec 5 instruments différents |
+| Curieux | Essaie une question dans le mode essai |
+| Touche-à-tout | Termine un questionnaire dans chacune des 3 catégories (L'oreille, La voix, Le solfège) |
+| Explorateur | Termine un questionnaire dans les 10 jeux |
+| Homme-orchestre | Joue un questionnaire avec 5 instruments différents |
 
 ## 2. Sans faute (5)
 
