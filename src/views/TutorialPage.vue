@@ -26,6 +26,12 @@
 
             <!-- 2. Les jeux -->
             <template v-else-if="step === 2">
+              <!-- Un jeu par catégorie (l'oreille, la voix, le solfège), en tuiles inclinées comme des cartes posées. -->
+              <div class="showcase" aria-hidden="true">
+                <span v-for="t in SHOWCASE" :key="t.game" class="tile" :style="{ background: t.color, transform: `rotate(${t.tilt}deg)` }">
+                  <ion-icon :icon="GAME_ICONS[t.game]" />
+                </span>
+              </div>
               <div class="lines">
                 <p class="lead">Plein de mini-jeux sont là pour tester ton oreille, mais pas que&nbsp;!</p>
                 <p class="lead">Harmonie, Accords, Tonalités... Pour tout niveau, teste ton talent musical.</p>
@@ -142,6 +148,7 @@ import { chevronBack, play, stop } from 'ionicons/icons'
 import { playArpeggio, playTuningFork, stopAll } from '@/audio/engine'
 import ChoiceRow from '@/components/ChoiceRow.vue'
 import PlayerSettings from '@/components/PlayerSettings.vue'
+import { GAME_ICONS } from '@/games/icons'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { usePlaying } from '@/composables/usePlaying'
 import { chooseEnding, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
@@ -149,6 +156,13 @@ import { markTutorialDone } from '@/tutorial'
 import { trophyEvent } from '@/games/trophies'
 
 const STEPS = 8
+
+/** Écran des mini-jeux : un jeu par catégorie, aux couleurs de l'accueil. */
+const SHOWCASE = [
+  { game: 'quelle-note', color: 'var(--hw-category-ear)', tilt: -8 },
+  { game: 'chante-note', color: 'var(--hw-category-voice)', tilt: 0 },
+  { game: 'lecture-note', color: 'var(--hw-category-theory)', tilt: 8 },
+] as const
 const step = ref(1)
 const closing = ref(false)
 const router = useIonRouter()
@@ -290,6 +304,25 @@ onIonViewWillLeave(stopAll)
   margin: 0;
   font-size: 20px;
   line-height: 1.4;
+}
+/* Trois tuiles de jeux, inclinées comme des cartes posées. */
+.showcase {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.tile {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(45, 48, 71, 0.12);
+}
+.tile ion-icon {
+  font-size: 56px;
+  color: var(--hw-card-ink);
 }
 /* Deux phrases bien séparées. */
 .lines {
