@@ -3,6 +3,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { gameIconSvg } from '@/games/icons'
 import type { GameId } from '@/games/highScores'
+import { gameCategory } from '@/games/trophies'
 
 /**
  * Images de partage, dessinées sur un canevas au format portrait 4:5 (WhatsApp, Instagram) :
@@ -18,6 +19,10 @@ const MEDIUM = '#8a8aa0'
 const CREAM = '#fff7ec'
 const SANS = '"Fredoka Variable", system-ui, sans-serif'
 const SCRIPT = '"Dancing Script", cursive'
+/** Teintes des catégories de l'accueil (thème clair), dans l'ordre de gameCategory. */
+const CATEGORY_COLORS = ['#f6dccc', '#e7ddf3', '#d9ebe4', '#f3e7c4']
+/** Tuile d'un trophée qui n'est pas lié à un jeu. */
+const TROPHY_TILE = '#f6e7b8'
 
 export interface ScoreShare {
   kind: 'score'
@@ -118,11 +123,12 @@ async function drawScore(ctx: CanvasRenderingContext2D, s: ScoreShare) {
   if (ear) ctx.drawImage(ear, (W - 420) / 2, 210, 420, 420)
   ctx.fillStyle = '#ffffff'
   ctx.font = `500 50px ${SANS}`
-  ctx.fillText(`${s.game} · ${s.level}`, W / 2, 720)
+  ctx.fillText(`${s.game} · Niveau ${s.level}`, W / 2, 710)
   ctx.font = `700 210px ${SANS}`
-  ctx.fillText(fmt(s.points), W / 2, 920)
+  ctx.fillText(fmt(s.points), W / 2, 900)
   ctx.font = `500 48px ${SANS}`
-  ctx.fillText(`points · ${s.correct} / ${s.total} bonne${s.correct > 1 ? 's' : ''} réponse${s.correct > 1 ? 's' : ''}`, W / 2, 1000)
+  ctx.fillText('points', W / 2, 975)
+  ctx.fillText(`${s.correct} / ${s.total} bonne${s.correct > 1 ? 's' : ''} réponse${s.correct > 1 ? 's' : ''}`, W / 2, 1040)
   footer(ctx, 'rgba(255, 255, 255, 0.85)')
 }
 
@@ -135,24 +141,19 @@ async function drawTrophy(ctx: CanvasRenderingContext2D, s: TrophyShare) {
   ctx.letterSpacing = '4px'
   ctx.fillText('TROPHÉE DÉBLOQUÉ', W / 2, 290)
   ctx.letterSpacing = '0px'
-  // Médaille dorée, avec l'icône du jeu (GOAT) ou l'emoji du trophée.
+  // Tuile carrée comme sur l'accueil : la teinte de la catégorie du jeu et son icône (GOAT), sinon l'emoji du trophée.
+  const size = 380
   const cx = W / 2
-  const cy = 530
-  const gold = ctx.createRadialGradient(cx - 70, cy - 90, 30, cx, cy, 230)
-  gold.addColorStop(0, '#fff1b0')
-  gold.addColorStop(0.55, '#f2c94c')
-  gold.addColorStop(1, '#d9a426')
-  ctx.shadowColor = 'rgba(160, 110, 0, 0.35)'
-  ctx.shadowBlur = 40
-  ctx.shadowOffsetY = 16
-  ctx.fillStyle = gold
-  ctx.beginPath()
-  ctx.arc(cx, cy, 220, 0, Math.PI * 2)
-  ctx.fill()
+  const cy = 360 + size / 2
+  ctx.shadowColor = 'rgba(45, 48, 71, 0.18)'
+  ctx.shadowBlur = 36
+  ctx.shadowOffsetY = 14
+  ctx.fillStyle = s.game ? CATEGORY_COLORS[gameCategory(s.game)] : TROPHY_TILE
+  ctx.fillRect(cx - size / 2, cy - size / 2, size, size)
   ctx.shadowColor = 'transparent'
   if (s.game) {
     const icon = await svgImage(gameIconSvg(s.game, INK)).catch(() => null)
-    if (icon) ctx.drawImage(icon, cx - 140, cy - 140, 280, 280)
+    if (icon) ctx.drawImage(icon, cx - 130, cy - 130, 260, 260)
   } else {
     ctx.font = `200px ${SANS}`
     ctx.textBaseline = 'middle'
@@ -161,8 +162,8 @@ async function drawTrophy(ctx: CanvasRenderingContext2D, s: TrophyShare) {
   }
   ctx.fillStyle = INK
   ctx.font = `700 92px ${SANS}`
-  ctx.fillText(s.title, W / 2, 870)
-  let y = 950
+  ctx.fillText(s.title, W / 2, 860)
+  let y = 940
   if (s.tier) {
     ctx.font = `500 48px ${SANS}`
     ctx.fillText(s.tier, W / 2, y)
@@ -215,8 +216,27 @@ async function drawRank(ctx: CanvasRenderingContext2D, s: RankShare) {
     ctx.globalAlpha = 1
   }
   ctx.fillStyle = INK
-  ctx.font = `700 84px ${SANS}`
-  ctx.fillText(`${ordinal(s.rank)} ${s.where}`, W / 2, 980)
+  // Le rang, avec son « er » ou « e » en exposant.
+  const big = `700 84px ${SANS}`
+  const sup = `700 48px ${SANS}`
+  const suffix = s.rank === 1 ? 'er' : 'e'
+  const rest = ` ${s.where}`
+  ctx.font = big
+  const numW = ctx.measureText(String(s.rank)).width
+  const restW = ctx.measureText(rest).width
+  ctx.font = sup
+  const supW = ctx.measureText(suffix).width
+  let rx = (W - (numW + supW + restW)) / 2
+  ctx.textAlign = 'left'
+  ctx.font = big
+  ctx.fillText(String(s.rank), rx, 980)
+  rx += numW
+  ctx.font = sup
+  ctx.fillText(suffix, rx, 980 - 34)
+  rx += supW
+  ctx.font = big
+  ctx.fillText(rest, rx, 980)
+  ctx.textAlign = 'center'
   ctx.font = `500 50px ${SANS}`
   ctx.fillText(`${s.name} · ${fmt(s.points)} pts`, W / 2, 1060)
   footer(ctx, MEDIUM)

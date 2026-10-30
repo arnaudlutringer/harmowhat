@@ -74,6 +74,9 @@ const CATEGORIES: GameId[][] = [
   ['quel-rythme', 'joue-rythme'],
 ]
 
+/** Catégorie d'un jeu, dans l'ordre de l'accueil : 0 l'oreille, 1 la voix, 2 le solfège, 3 le rythme. */
+export const gameCategory = (game: GameId) => CATEGORIES.findIndex((games) => games.includes(game))
+
 export const TROPHIES: Trophy[] = [
   { id: 'premiers-pas', family: 'decouverte', icon: '👣', title: 'Premiers pas', condition: 'Termine ton premier questionnaire' },
   { id: 'bien-prepare', family: 'decouverte', icon: '🎓', title: 'Bien préparé', condition: 'Termine le tutoriel' },

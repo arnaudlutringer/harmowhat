@@ -52,7 +52,7 @@ const byFamily = (family: TrophyFamily) => TROPHIES.filter((t) => t.family === f
 /** Image de partage d'un trophée gagné (avec sa médaille pour un GOAT). */
 function share(t: Trophy) {
   const tier = earnedTrophies.value[t.id]?.tier
-  const label = tier ? `${TIER_LABELS[tier].medal} GOAT · ${TIER_LABELS[tier].label}` : undefined
+  const label = tier ? `${TIER_LABELS[tier].medal} GOAT · Niveau ${TIER_LABELS[tier].label}` : undefined
   shareImage({ kind: 'trophy', title: t.title, condition: t.condition, icon: t.icon, game: t.game, tier: label }).catch(() => {})
 }
 const formatDate =(iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
