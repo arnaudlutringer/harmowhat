@@ -166,6 +166,41 @@ export interface SequenceNote {
   len: number
   /** Volume propre à cette note (sinon celui de la séquence). */
   velocity?: number
+  /** Coup de tambour (décompte des jeux de rythme) au lieu d'une note de l'instrument ; `midi` est ignoré. */
+  drum?: boolean
+}
+
+let drum: AudioBuffer | undefined
+
+/** Coup de tambour synthétisé une fois : une peau grave qui descend (sinus de 190 à 70 Hz) et un claquement de bruit. */
+function drumBuffer(ctx: AudioContext): AudioBuffer {
+  if (drum) return drum
+  const rate = ctx.sampleRate
+  const buffer = ctx.createBuffer(1, Math.round(rate * 0.35), rate)
+  const data = buffer.getChannelData(0)
+  let phase = 0
+  for (let i = 0; i < data.length; i++) {
+    const t = i / rate
+    phase += (2 * Math.PI * (70 + 120 * Math.exp(-t * 25))) / rate
+    const body = Math.sin(phase) * Math.exp(-t * 9)
+    const snap = (Math.random() * 2 - 1) * Math.exp(-t * 45) * 0.5
+    data[i] = (body + snap) * 0.9
+  }
+  return (drum = buffer)
+}
+
+function scheduleDrum(at: number, velocity: number): Voice {
+  const { ctx, out } = audio()
+  const src = ctx.createBufferSource()
+  src.buffer = drumBuffer(ctx)
+  const g = ctx.createGain()
+  g.gain.value = velocity * 1.6
+  src.connect(g).connect(out)
+  src.start(at)
+  const voice = { src, gain: g }
+  active.add(voice)
+  src.onended = () => active.delete(voice)
+  return voice
 }
 
 export interface Playback {
@@ -191,7 +226,7 @@ export async function playSequence(
   instrument: Instrument = currentInstrument(),
 ): Promise<Playback> {
   const gen = generation
-  const loaded = await Promise.all(notes.map(({ midi }) => loadSample(nearestSample(midi, instrument), instrument)))
+  const loaded = await Promise.all(notes.map(({ midi, drum }) => (drum ? null : loadSample(nearestSample(midi, instrument), instrument))))
   if (gen !== generation) return { duration: 0, startedAt: performance.now(), stop() {} }
   const { ctx } = audio()
   const t0 = ctx.currentTime + 0.05
@@ -199,9 +234,11 @@ export async function playSequence(
   const startedAt = performance.now() + (t0 - ctx.currentTime + latency) * 1000
   const { legato } = instrument
   const voices = notes.map((n, i) => {
+    const buffer = loaded[i]
+    if (!buffer) return scheduleDrum(t0 + n.at * unit, n.velocity ?? velocity)
     // Lié (chœur) : chaque note démarre après son attaque et déborde sur la suivante, qui entre en fondu.
     const duration = Math.max(0.3, n.len * unit + (legato?.overlap ?? 0.15))
-    return schedule(loaded[i], nearestSample(n.midi, instrument), n.midi, t0 + n.at * unit, {
+    return schedule(buffer, nearestSample(n.midi, instrument), n.midi, t0 + n.at * unit, {
       duration,
       fadeIn: legato ? 0.06 : 0,
       fadeOut: Math.min(legato ? legato.overlap : 0.4, duration / 2),
