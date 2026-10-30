@@ -1,7 +1,10 @@
 import { computed, getCurrentInstance, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { COUNTDOWN_DELAY_MS, MIN_POINTS, QuestionClock, REPLAY_PENALTY, summarize, TUNING_FORK_PENALTY, type QuestionResult } from '@/games/scoring'
+import { COUNTDOWN_DELAY_MS, GRACE_MS, MIN_POINTS, QuestionClock, REPLAY_PENALTY, summarize, TUNING_FORK_PENALTY, type QuestionResult } from '@/games/scoring'
 import { usePlaying } from './usePlaying'
+import { useRoute } from 'vue-router'
 import { stopAll } from '@/audio/engine'
+import { isTrial } from '@/games/ready'
+import { trophyEvent } from '@/games/trophies'
 
 export interface Feedback {
   correct: boolean
@@ -22,6 +25,10 @@ export interface QuizOptions<Q> {
    * Avec ce réglage, les réponses ne s'ouvrent qu'à ce moment-là (ex. la dernière note d'une gamme).
    */
   countdownStart?: (question: Q) => number
+  /** Avec `countdownStart` : ouvre les réponses plus tôt, ce délai (ms) après le début du premier son. */
+  answersOpen?: (question: Q) => number
+  /** Pas de chronomètre : les points viennent de la réponse elle-même (voir nswer), 0 en attendant. */
+  untimed?: boolean
 }
 
 /**
@@ -31,7 +38,13 @@ export interface QuizOptions<Q> {
 /** Délai du passage automatique à la question suivante, après une réponse (ms). */
 export const ADVANCE_DELAY = 1500
 
-export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart }: QuizOptions<Q>) {
+export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart, answersOpen, untimed = false }: QuizOptions<Q>) {
+  // Mode essai (`essai=1` dans l'adresse du jeu) : une seule question, sans passage automatique ni score.
+  const trial = getCurrentInstance() ? isTrial(useRoute()?.query ?? {}) : false
+  if (trial) {
+    total = 1
+    advanceDelay = null
+  }
   const index = ref(0)
   const question = shallowRef<Q>(createQuestion())
   const hasListened = ref(false)
@@ -39,6 +52,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   const finished = ref(false)
   const results = ref<QuestionResult[]>([])
   const points = ref(0)
+  /** Le diapason a servi pendant la partie (trophée « Sans filet »). */
+  const forkUsed = ref(false)
   /** Compte à rebours avant la première question (3, 2, 1), null le reste du temps. */
   const countdown = ref<number | null>(null)
   const sound = usePlaying()
@@ -46,6 +61,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   let plays = 0
   let timer: ReturnType<typeof setTimeout> | undefined
   let clockTimer: ReturnType<typeof setTimeout> | undefined
+  let openTimer: ReturnType<typeof setTimeout> | undefined
   let countdownTimer: ReturnType<typeof setTimeout> | undefined
   let frame: number | undefined
   /** Partie en pause (popin « Quitter la partie ? ») ; startPending : le décompte devait démarrer pendant la pause. */
@@ -63,7 +79,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   // Rafraîchit l'affichage des points tant que le chronomètre tourne.
   function tick() {
-    points.value = clock.points
+    points.value = untimed ? 0 : clock.points
     frame = clock.running && typeof requestAnimationFrame === 'function' ? requestAnimationFrame(tick) : undefined
   }
 
@@ -74,7 +90,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   /**
    * Joue la question. La première écoute est gratuite et le décompte des points démarre
-   * 50 ms après le début du son (ou au délai propre au jeu) ; chaque réécoute coûte 200 points.
+   * 50 ms après le début du son (ou au délai propre au jeu), plus une marge de 0,3 s pendant laquelle
+   * on peut déjà répondre ; chaque réécoute coûte 200 points.
    */
   function listen(): Promise<void> {
     const q = question.value
@@ -87,15 +104,23 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
         if (question.value !== q || !questionOpen()) return
         // Délai propre au jeu : les réponses s'ouvrent avec le décompte ; sinon, dès le début du son.
         if (!countdownStart || !first) hasListened.value = true
-        if (!first) return
+        if (!first || untimed) return void (hasListened.value = true)
         const c = clock
+        // Les réponses s'ouvrent avant le décompte (au moins GRACE_MS avant) : répondre pendant cette marge
+        // rapporte les 10 000 points.
+        if (countdownStart) {
+          openTimer = setTimeout(() => {
+            if (c === clock && questionOpen()) hasListened.value = true
+          }, answersOpen ? answersOpen(q) : countdownStart(q))
+        }
+        const clockAt = (countdownStart ? countdownStart(q) : COUNTDOWN_DELAY_MS) + (answersOpen ? 0 : GRACE_MS)
         clockTimer = setTimeout(() => {
           if (c !== clock) return
           hasListened.value = true
           if (paused) return void (startPending = true)
           c.start()
           tick()
-        }, countdownStart ? countdownStart(q) : COUNTDOWN_DELAY_MS)
+        }, clockAt)
       })
       .catch(() => {})
   }
@@ -103,16 +128,20 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   /** Coup de diapason pendant une question : 100 points de moins. */
   function penalizeTuningFork() {
     if (!questionOpen()) return
+    forkUsed.value = true
     clock.penalize(TUNING_FORK_PENALTY)
     tick()
   }
 
-  function answer(correct: boolean, message: string) {
+  /** Réponse du joueur ; `scored` remplace les points du chronomètre (jeux notés à la précision, comme « Joue le rythme »). */
+  function answer(correct: boolean, message: string, scored?: number) {
     if (!canAnswer.value) return
     stopTicking()
     points.value = clock.stop()
+    if (scored !== undefined) points.value = scored
     results.value = [...results.value, { correct, points: correct ? points.value : 0 }]
     feedback.value = { correct, message }
+    if (trial) trophyEvent({ type: 'trial' })
     if (advanceDelay !== null) timer = setTimeout(next, advanceDelay)
   }
 
@@ -141,7 +170,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     clearTimeout(countdownTimer)
     clock.pause()
     stopTicking()
-    points.value = clock.points
+    points.value = untimed ? 0 : clock.points
   }
 
   /** Reprend la partie là où elle en était. */
@@ -160,11 +189,12 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   function startQuestion(first = false) {
     stopTicking()
     clearTimeout(clockTimer)
+    clearTimeout(openTimer)
     stopAll()
     clock = new QuestionClock()
     startPending = false
     plays = 0
-    points.value = clock.points
+    points.value = untimed ? 0 : clock.points
     question.value = createQuestion()
     hasListened.value = false
     feedback.value = null
@@ -177,6 +207,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     if (index.value + 1 >= total) {
       finished.value = true
       clearTimeout(clockTimer)
+      clearTimeout(openTimer)
       stopAll()
       return
     }
@@ -189,6 +220,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     clearTimeout(timer)
     index.value = 0
     results.value = []
+    forkUsed.value = false
     finished.value = false
     startQuestion(true)
   }
@@ -196,12 +228,13 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   if (getCurrentInstance()) {
     // La première question est jouée dès la fin du compte à rebours.
     onMounted(() => {
-      points.value = clock.points
+      points.value = untimed ? 0 : clock.points
       startCountdown()
     })
     onBeforeUnmount(() => {
       clearTimeout(timer)
       clearTimeout(clockTimer)
+      clearTimeout(openTimer)
       clearTimeout(countdownTimer)
       stopTicking()
       stopAll()
@@ -209,6 +242,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   }
 
   return {
+    trial,
+    forkUsed,
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
     playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, restart, pause, resume,
   }

@@ -1,8 +1,9 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="Les harmonies" back-href="/home" />
+      <page-nav title="Les harmonies" back-href="/home" game="harmonies" />
       <div class="settings hw-square">
+        <game-intro game="harmonies" />
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">
@@ -34,18 +35,21 @@
           </ion-item>
         </ion-radio-group>
 
-        <ion-button expand="block" size="large" class="start" @click="start">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" size="large" class="start" @click="start()">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" class="trial" @click="start(true)">Essayer une question</ion-button>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
+import { withTrial } from '@/games/ready'
 import { ref } from 'vue'
 import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
+import GameIntro from '@/components/GameIntro.vue'
 import { LEVELS, parseSettings, PRECISIONS, QUESTION_COUNTS, type Level, type Precision } from '@/games/intervals'
 
 const STORAGE_KEY = 'harmowhat.harmonies.settings'
@@ -65,7 +69,7 @@ const level = ref<Level>(saved.level)
 const precision = ref<Precision>(saved.precision)
 const router = useIonRouter()
 
-function start() {
+function start(trial = false) {
   const settings = { questions: questions.value, level: level.value, precision: precision.value }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
@@ -73,7 +77,7 @@ function start() {
     // Stockage indisponible : on joue quand même.
   }
   // Pas besoin de diapason pour reconnaître un intervalle : on lance directement le jeu.
-  router.push(`/games/harmonies/jouer?questions=${settings.questions}&level=${settings.level}&precision=${settings.precision}`)
+  router.push(withTrial(`/games/harmonies/jouer?questions=${settings.questions}&level=${settings.level}&precision=${settings.precision}`, trial))
 }
 </script>
 

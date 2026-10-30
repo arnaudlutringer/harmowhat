@@ -26,65 +26,73 @@
 
             <!-- 2. Les jeux -->
             <template v-else-if="step === 2">
-              <div class="big" aria-hidden="true">🎹🎼🎵👀</div>
-              <p class="lead">
-                Plein de mini-jeux sont là pour tester ton oreille musicale. Écoute d'accord, écoute d'harmonie, lecture de note,
-                et même un choix grave/aigu pour te mettre en jambe.
-              </p>
+              <!-- Un jeu par catégorie (l'oreille, la voix, le solfège, le rythme), en tuiles inclinées comme des cartes posées. -->
+              <div class="showcase" aria-hidden="true">
+                <span v-for="t in SHOWCASE" :key="t.game" class="tile" :style="{ background: t.color, transform: `rotate(${t.tilt}deg)` }">
+                  <ion-icon :icon="GAME_ICONS[t.game]" />
+                </span>
+              </div>
+              <div class="lines">
+                <p class="lead">Plein de mini-jeux sont là pour tester ton oreille, mais pas que&nbsp;!</p>
+                <p class="lead">Harmonie, Accords, Tonalités... Pour tout niveau, teste ton talent musical.</p>
+              </div>
               <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
             </template>
 
             <!-- 3. Le diapason -->
             <template v-else-if="step === 3">
-              <button class="play fork" :class="{ 'is-playing': sound.current.value === 'fork' }" aria-label="Écouter le diapason, La3 440 Hz" @click="listenFork">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8 2v8a4 4 0 0 0 8 0V2" />
-                  <path d="M12 14v8" />
-                </svg>
-              </button>
+              <div class="fork-wrap">
+                <button class="play fork" :class="{ 'is-playing': sound.current.value === 'fork' }" aria-label="Écouter le diapason, La3 440 Hz" @click="listenFork">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 2v8a4 4 0 0 0 8 0V2" />
+                    <path d="M12 14v8" />
+                  </svg>
+                </button>
+                <!-- Un doigt, en haut à droite, pointe le diapason vers le bas et la gauche, jusqu'au premier appui. -->
+                <span v-if="!forkTried" class="pointer" aria-hidden="true">👇</span>
+              </div>
               <p class="lead">
                 Bien sûr, le diapason est là pour t'aider !<br />
                 <strong class="hint">(clique dessus)</strong><br />
                 À moins que tu sois vraiment sûr de toi…
               </p>
-              <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
+              <!-- « Suivant » ne s'ouvre qu'après avoir essayé le diapason. -->
+              <ion-button expand="block" size="large" :disabled="!forkTried" @click="next">Suivant</ion-button>
             </template>
 
             <!-- 4. L'instrument -->
             <template v-else-if="step === 4">
               <p class="lead">Quel est ton instrument de prédilection ?</p>
+              <p class="how">Touche un instrument pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
               <div class="list">
-                <div v-for="inst in INSTRUMENTS" :key="inst.id" class="row">
-                  <ion-button class="main" @click="pickInstrument(inst.id)">{{ inst.emoji }} {{ inst.label }}</ion-button>
-                  <button
-                    class="listen"
-                    :class="{ 'is-playing': sound.current.value === inst.id }"
-                    :aria-label="`Écouter ${inst.label.toLowerCase()}`"
-                    @click="listenInstrument(inst.id)"
-                  >
-                    <ion-icon :icon="sound.current.value === inst.id ? stop : play" />
-                  </button>
-                </div>
+                <choice-row
+                  v-for="inst in INSTRUMENTS"
+                  :key="inst.id"
+                  :listen-label="`Écouter ${inst.label.toLowerCase()}`"
+                  :playing="sound.current.value === inst.id"
+                  @pick="pickInstrument(inst.id)"
+                  @listen="listenInstrument(inst.id)"
+                >
+                  {{ inst.emoji }} {{ inst.label }}
+                </choice-row>
               </div>
             </template>
 
             <!-- 5. Le morceau -->
             <template v-else-if="step === 5">
               <p class="lead">Quel est ton morceau favori parmi ceux-là ?</p>
+              <p class="how">Touche un morceau pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
               <div class="list">
-                <div v-for="e in endingsFor(selectedInstrument)" :key="e.id" class="row">
-                  <ion-button class="main" @click="pickEnding(e.id)">
-                    <span class="piece">{{ e.title }} <small>{{ e.composer }}</small></span>
-                  </ion-button>
-                  <button
-                    class="listen"
-                    :class="{ 'is-playing': sound.current.value === e.id }"
-                    :aria-label="`Écouter ${e.title}`"
-                    @click="listenEnding(e, e.id)"
-                  >
-                    <ion-icon :icon="sound.current.value === e.id ? stop : play" />
-                  </button>
-                </div>
+                <choice-row
+                  v-for="e in endingsFor(selectedInstrument)"
+                  :key="e.id"
+                  :listen-label="`Écouter ${e.title}`"
+                  :playing="sound.current.value === e.id"
+                  @pick="pickEnding(e.id)"
+                  @listen="listenEnding(e, e.id)"
+                >
+                  <span class="piece">{{ e.title }} <small>{{ e.composer }}</small></span>
+                </choice-row>
               </div>
             </template>
 
@@ -100,14 +108,27 @@
               <p class="lead">Sinon ce sera la catastrophe…</p>
               <div class="row single disaster">
                 <span class="piece">{{ ending.title }} <small>5 bonnes réponses sur 10</small></span>
-                <button class="listen" :class="{ 'is-playing': sound.current.value === 'drunk' }" aria-label="Écouter le morceau mal joué" @click="listenDrunk">
-                  <ion-icon :icon="sound.current.value === 'drunk' ? stop : play" />
-                </button>
+                <div class="fork-wrap">
+                  <button class="listen" :class="{ 'is-playing': sound.current.value === 'drunk' }" aria-label="Écouter le morceau mal joué" @click="listenDrunk">
+                    <ion-icon :icon="sound.current.value === 'drunk' ? stop : play" />
+                  </button>
+                  <!-- Le même doigt que pour le diapason, jusqu'à la première écoute. -->
+                  <span v-if="!drunkTried" class="pointer small" aria-hidden="true">👇</span>
+                </div>
               </div>
+              <!-- « Suivant » ne s'ouvre qu'après avoir écouté le morceau raté. -->
+              <ion-button expand="block" size="large" :disabled="!drunkTried" @click="next">Suivant</ion-button>
+            </template>
+
+            <!-- 7. Le compte du joueur : nom et pays, pour les classements. -->
+            <template v-else-if="step === 7">
+              <p class="lead">Comment t'appelles-tu, et d'où joues-tu ?</p>
+              <player-settings class="account" hide-id />
+              <p class="later">Tu pourras modifier ces informations plus tard, dans Paramètres › Mon compte.</p>
               <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
             </template>
 
-            <!-- 7. C'est parti -->
+            <!-- 8. C'est parti -->
             <template v-else>
               <div class="big" aria-hidden="true">🏆</div>
               <p class="lead">Maintenant tu es prêt !</p>
@@ -124,13 +145,25 @@
 import { computed, ref } from 'vue'
 import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
 import { chevronBack, play, stop } from 'ionicons/icons'
-import { playSequence, playTuningFork, stopAll } from '@/audio/engine'
+import { playArpeggio, playTuningFork, stopAll } from '@/audio/engine'
+import ChoiceRow from '@/components/ChoiceRow.vue'
+import PlayerSettings from '@/components/PlayerSettings.vue'
+import { GAME_ICONS } from '@/games/icons'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
 import { usePlaying } from '@/composables/usePlaying'
 import { chooseEnding, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
 import { markTutorialDone } from '@/tutorial'
+import { trophyEvent } from '@/games/trophies'
 
-const STEPS = 7
+const STEPS = 8
+
+/** Écran des mini-jeux : un jeu par catégorie, aux couleurs de l'accueil. */
+const SHOWCASE = [
+  { game: 'quelle-note', color: 'var(--hw-category-ear)', tilt: -9 },
+  { game: 'chante-note', color: 'var(--hw-category-voice)', tilt: -3 },
+  { game: 'lecture-note', color: 'var(--hw-category-theory)', tilt: 3 },
+  { game: 'joue-rythme', color: 'var(--hw-category-rhythm)', tilt: 9 },
+] as const
 const step = ref(1)
 const closing = ref(false)
 const router = useIonRouter()
@@ -154,24 +187,29 @@ function toggle(key: string, start: () => Promise<number>) {
   if (!wasPlaying) sound.track(start(), key).catch(() => {})
 }
 
+/** Le diapason a été essayé : le doigt qui le montre disparaît. */
+const forkTried = ref(false)
+
 function listenFork() {
+  forkTried.value = true
   toggle('fork', playTuningFork)
 }
 
 /** Un petit arpège au milieu de la tessiture, pour entendre l'instrument. */
 function listenInstrument(id: InstrumentId) {
-  const inst = INSTRUMENTS[id]
-  const root = Math.round((inst.low + inst.high) / 2) - 6
-  const arpeggio = [0, 4, 7, 12, 7, 4, 0].map((d, i) => ({ midi: root + d, at: i, len: i === 6 ? 3 : 1.2 }))
-  toggle(id, () => playSequence(arpeggio, 0.22, undefined, inst).then((p) => p.duration))
+  toggle(id, () => playArpeggio(INSTRUMENTS[id]))
 }
 
 function listenEnding(e: Ending, key: string) {
   toggle(key, () => playEnding(e, selectedInstrument.value))
 }
 
+/** Le morceau raté a été écouté : le doigt qui le montre disparaît et « Suivant » s'ouvre. */
+const drunkTried = ref(false)
+
 // Le même morceau joué comme après une partie à 5 bonnes réponses sur 10 (voir music/drunk.ts).
 function listenDrunk() {
+  drunkTried.value = true
   toggle('drunk', () => playEnding(ending.value, selectedInstrument.value, 0.5))
 }
 
@@ -190,6 +228,7 @@ function pickEnding(id: EndingId) {
 function finish() {
   stopAll()
   markTutorialDone()
+  trophyEvent({ type: 'tutorial' })
   closing.value = true
   setTimeout(() => router.navigate('/home', 'root', 'replace'), 600)
 }
@@ -267,6 +306,31 @@ onIonViewWillLeave(stopAll)
   font-size: 20px;
   line-height: 1.4;
 }
+/* Trois tuiles de jeux, inclinées comme des cartes posées. */
+.showcase {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.tile {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(45, 48, 71, 0.12);
+}
+.tile ion-icon {
+  font-size: 46px;
+  color: var(--hw-card-ink);
+}
+/* Deux phrases bien séparées. */
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
 .lead strong {
   font-family: 'Dancing Script', cursive;
   font-size: 28px;
@@ -278,6 +342,35 @@ onIonViewWillLeave(stopAll)
   font-size: 16px;
   font-weight: 700;
   color: inherit;
+}
+.fork-wrap {
+  position: relative;
+}
+/* Doigt vers le bas tourné de 45° : il pointe vers le bas et la gauche, et s'avance vers le bouton. */
+.pointer {
+  position: absolute;
+  top: -22px;
+  right: -36px;
+  z-index: 1;
+  font-size: 64px;
+  line-height: 1;
+  pointer-events: none;
+  animation: point 1s ease-in-out infinite;
+}
+/* Sur un petit bouton d'écoute : un doigt plus petit, au même endroit relatif. */
+.pointer.small {
+  top: -28px;
+  right: -26px;
+  font-size: 34px;
+}
+@keyframes point {
+  0%,
+  100% {
+    transform: rotate(45deg) translate(0, 0);
+  }
+  50% {
+    transform: rotate(45deg) translate(0, 8px);
+  }
 }
 .fork {
   width: 120px;
@@ -305,12 +398,6 @@ onIonViewWillLeave(stopAll)
   align-items: center;
   gap: 8px;
 }
-.row .main {
-  flex: 1;
-  margin: 0;
-  text-transform: none;
-  --padding-start: 12px;
-}
 .row.single {
   width: 100%;
   padding: 10px 12px;
@@ -322,25 +409,45 @@ onIonViewWillLeave(stopAll)
   flex: 1;
 }
 .row.disaster {
-  background: #ffe8e8;
+  background: var(--hw-danger-soft);
 }
 .piece small {
   display: block;
   opacity: 0.7;
   font-size: 12px;
 }
+/* Bouton d'écoute discret (au trait) : le bloc de l'instrument ou du morceau reste l'élément principal. */
 .listen {
   flex: none;
-  width: 44px;
-  height: 44px;
-  border: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--ion-color-primary);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 20px;
-  color: #fff;
-  background: var(--ion-color-primary);
+  font-size: 18px;
+  color: var(--ion-color-primary);
+  background: transparent;
   cursor: pointer;
+}
+.listen.is-playing {
+  border-color: var(--ion-color-secondary);
+}
+/* Écran du compte : le formulaire sur toute la largeur, la mention « modifiable plus tard » en petit. */
+.account {
+  width: 100%;
+  text-align: left;
+}
+.later {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ion-color-medium);
+}
+/* Consigne sous la question des écrans de choix. */
+.how {
+  margin: -8px 0 4px;
+  font-size: 14px;
+  color: var(--ion-color-medium);
 }
 /* Passage d'une étape à l'autre : fondu avec un léger glissement. */
 .step-enter-active,

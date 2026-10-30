@@ -1,14 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { afterSettings, readyGame } from './ready'
+import { afterSettings, isTrial, readyGame, withTrial } from './ready'
 
 describe('Écran « Je suis prêt »', () => {
   it("passe par l'écran diapason seulement pour les jeux sans diapason", () => {
     expect(afterSettings('quelle-note', true, 'level=expert')).toBe('/games/quelle-note/pret?level=expert')
     expect(afterSettings('quelle-note', false, 'level=normal')).toBe('/games/quelle-note/jouer?level=normal')
+    expect(afterSettings('chante-note', true, 'level=expert')).toBe('/games/chante-note/pret?level=expert')
+  })
+
+  it('ajoute le mode essai à l’adresse du jeu', () => {
+    expect(withTrial('/games/accords/jouer?level=normal', true)).toBe('/games/accords/jouer?level=normal&essai=1')
+    expect(withTrial('/games/accords/jouer?level=normal', false)).toBe('/games/accords/jouer?level=normal')
+    expect(isTrial({ essai: '1' })).toBe(true)
+    expect(isTrial({})).toBe(false)
   })
 
   it('ignore un jeu inconnu', () => {
     expect(readyGame('quelle-note').title).toBe('Quelle est la note ?')
+    expect(readyGame('chante-note').title).toBe('Chante la note')
     expect(readyGame('harmonies').slug).toBe('quelle-note')
     expect(readyGame('toto').slug).toBe('quelle-note')
   })

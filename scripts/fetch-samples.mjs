@@ -21,10 +21,11 @@ export const RANGES = {
   guitar: [40, 83],
   flute: [60, 96],
   'electric-guitar': [40, 86],
+  choir: [48, 81],
 }
 
 /** Nom de l'instrument dans Musyng Kite, quand il diffère de notre identifiant. */
-const SOUNDFONT_NAMES = { guitar: 'acoustic_guitar_nylon' }
+const SOUNDFONT_NAMES = { guitar: 'acoustic_guitar_nylon', choir: 'choir_aahs' }
 
 /** Notes enregistrées dans tonejs-instruments (comme dans src/audio/instruments.ts). */
 const TONEJS_SAMPLES = { 'electric-guitar': [40, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84] }

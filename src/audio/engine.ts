@@ -26,6 +26,14 @@ function audio(): { ctx: AudioContext; out: GainNode } {
   return { ctx, out: master! }
 }
 
+/**
+ * Contexte audio de l'appli, déjà débloqué par les touchers précédents : le micro s'y branche
+ * (iOS laisse en pause un contexte créé hors d'un geste du joueur).
+ */
+export function audioContext(): AudioContext {
+  return audio().ctx
+}
+
 function nearestSample(midi: number, inst: Instrument = currentInstrument()): number {
   return nearestInstrumentSample(inst, fitToRange(inst, midi))
 }
@@ -61,11 +69,13 @@ interface PlayOptions {
   velocity?: number
   /** Instrument qui joue (par défaut celui choisi par le joueur). */
   instrument?: Instrument
+  /** Départ dans l'échantillon, en secondes (pour sauter une attaque lente). */
+  offset?: number
 }
 
 function schedule(buffer: AudioBuffer, sample: number, midi: number, at: number, o: PlayOptions): Voice {
   const { ctx, out } = audio()
-  const { duration = 2.5, fadeIn = 0, fadeOut = 0.4, velocity = 0.8, instrument: inst = currentInstrument() } = o
+  const { duration = 2.5, fadeIn = 0, fadeOut = 0.4, velocity = 0.8, instrument: inst = currentInstrument(), offset = 0 } = o
   const src = ctx.createBufferSource()
   src.buffer = buffer
   src.playbackRate.value = Math.pow(2, (fitToRange(inst, midi) - sample) / 12)
@@ -80,7 +90,7 @@ function schedule(buffer: AudioBuffer, sample: number, midi: number, at: number,
   g.gain.setValueAtTime(peak, at + Math.max(fadeIn, duration - fadeOut))
   g.gain.linearRampToValueAtTime(0, at + duration)
   src.connect(g).connect(out)
-  src.start(at)
+  src.start(at, offset)
   src.stop(at + duration + 0.05)
   const voice = { src, gain: g }
   active.add(voice)
@@ -161,6 +171,11 @@ export interface SequenceNote {
 export interface Playback {
   /** Durée totale, en secondes. */
   duration: number
+  /**
+   * Instant (performance.now(), en ms) où le début de la séquence sort du haut-parleur, latence de sortie
+   * comprise : pour comparer des frappes au rythme entendu.
+   */
+  startedAt: number
   /** Coupe la lecture (fondu très court). */
   stop: () => void
 }
@@ -177,20 +192,27 @@ export async function playSequence(
 ): Promise<Playback> {
   const gen = generation
   const loaded = await Promise.all(notes.map(({ midi }) => loadSample(nearestSample(midi, instrument), instrument)))
-  if (gen !== generation) return { duration: 0, stop() {} }
+  if (gen !== generation) return { duration: 0, startedAt: performance.now(), stop() {} }
   const { ctx } = audio()
   const t0 = ctx.currentTime + 0.05
+  const latency = (ctx.outputLatency || 0) + (ctx.baseLatency || 0)
+  const startedAt = performance.now() + (t0 - ctx.currentTime + latency) * 1000
+  const { legato } = instrument
   const voices = notes.map((n, i) => {
-    const duration = Math.max(0.3, n.len * unit + 0.15)
+    // Lié (chœur) : chaque note démarre après son attaque et déborde sur la suivante, qui entre en fondu.
+    const duration = Math.max(0.3, n.len * unit + (legato?.overlap ?? 0.15))
     return schedule(loaded[i], nearestSample(n.midi, instrument), n.midi, t0 + n.at * unit, {
       duration,
-      fadeOut: Math.min(0.4, duration / 2),
+      fadeIn: legato ? 0.06 : 0,
+      fadeOut: Math.min(legato ? legato.overlap : 0.4, duration / 2),
       velocity: n.velocity ?? velocity,
       instrument,
+      offset: legato?.offset,
     })
   })
   return {
     duration: Math.max(0, ...notes.map(({ at, len }) => at + len)) * unit + 0.2,
+    startedAt,
     stop() {
       fadeOutVoices(voices)
       voices.forEach((v) => active.delete(v))
@@ -199,7 +221,7 @@ export async function playSequence(
 }
 
 /**
- * Joue un enregistrement (fichier de public/, ex. `music/slow-piano-blues.mp3`) pendant `seconds` au plus,
+ * Joue un enregistrement (fichier de public/, ex. `music/morceau.mp3`) pendant `seconds` au plus,
  * avec un fondu de sortie. Coupé comme les autres sons par stopAll. Renvoie la durée jouée, en secondes.
  */
 export async function playRecording(path: string, seconds: number, velocity = 0.8): Promise<number> {
@@ -232,6 +254,13 @@ export async function playRecording(path: string, seconds: number, velocity = 0.
   active.add(voice)
   src.onended = () => active.delete(voice)
   return duration
+}
+
+/** Un petit arpège au milieu de la tessiture d'un instrument, pour l'entendre. */
+export function playArpeggio(inst: Instrument): Promise<number> {
+  const root = Math.round((inst.low + inst.high) / 2) - 6
+  const arpeggio = [0, 4, 7, 12, 7, 4, 0].map((d, i) => ({ midi: root + d, at: i, len: i === 6 ? 3 : 1.2 }))
+  return playSequence(arpeggio, 0.22, undefined, inst).then((p) => p.duration)
 }
 
 /** Diapason : La3 (440 Hz) joué par l'instrument choisi, 2 s, avec fondu d'ouverture et de fermeture. */

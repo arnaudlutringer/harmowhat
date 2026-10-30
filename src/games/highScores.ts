@@ -7,6 +7,9 @@ import { LEVELS as CHORD_LEVELS, QUESTION_COUNTS as CHORD_COUNTS } from './chord
 import { LEVELS as HARMONY_LEVELS, QUESTION_COUNTS as HARMONY_COUNTS } from './makeHarmony'
 import { LEVELS as KEY_LEVELS, QUESTION_COUNTS as KEY_COUNTS } from './keySignature'
 import { LEVELS as MODALITY_LEVELS, QUESTION_COUNTS as MODALITY_COUNTS } from './modality'
+import { LEVELS as SING_LEVELS, QUESTION_COUNTS as SING_COUNTS } from './singTheNote'
+import { LEVELS as SING_HARMONY_LEVELS, QUESTION_COUNTS as SING_HARMONY_COUNTS } from './singHarmony'
+import { LEVELS as RHYTHM_LEVELS, QUESTION_COUNTS as RHYTHM_COUNTS } from './rhythm'
 import { profile, saveProfile } from '@/player/profile'
 import { SCORING_VERSION } from './scoring'
 
@@ -16,7 +19,7 @@ import { SCORING_VERSION } from './scoring'
  * Les scores sont aussi envoyés au classement mondial (voir worldScores.ts).
  */
 
-export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note' | 'fais-harmonie' | 'tonalite' | 'modalite'
+export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note' | 'fais-harmonie' | 'tonalite' | 'modalite' | 'chante-note' | 'chante-harmonie' | 'quel-rythme' | 'joue-rythme'
 
 /** Un classement : le jeu, le niveau (identifiant) et le nombre de questions. */
 export interface Board {
@@ -98,6 +101,30 @@ export const GAMES: Record<GameId, GameInfo> = {
     emoji: '🎭',
     levels: Object.entries(MODALITY_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: MODALITY_COUNTS,
+  },
+  'chante-note': {
+    title: 'Chante la note',
+    emoji: '🎤',
+    levels: Object.entries(SING_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: SING_COUNTS,
+  },
+  'chante-harmonie': {
+    title: "Chante l'harmonie",
+    emoji: '🎶',
+    levels: Object.entries(SING_HARMONY_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: SING_HARMONY_COUNTS,
+  },
+  'quel-rythme': {
+    title: 'Quel rythme ?',
+    emoji: '🥁',
+    levels: Object.entries(RHYTHM_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: RHYTHM_COUNTS,
+  },
+  'joue-rythme': {
+    title: 'Joue le rythme',
+    emoji: '👏',
+    levels: Object.entries(RHYTHM_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: RHYTHM_COUNTS,
   },
 }
 
@@ -216,6 +243,11 @@ export function getScores(board: Board): ScoreEntry[] {
 /** Tous les scores enregistrés sur l'appareil, avec la clé de leur classement. */
 export function localScoreList(): { key: string; entry: ScoreEntry }[] {
   return Object.entries(loadAll()).flatMap(([key, list]) => (Array.isArray(list) ? list.map((entry) => ({ key, entry })) : []))
+}
+
+/** Au moins un score enregistré sur l'appareil pour ce jeu (tous niveaux confondus) ? */
+export function hasLocalScores(game: GameId): boolean {
+  return localScoreList().some(({ key }) => boardOfKey(key).game === game)
 }
 
 /** Enregistre un score sur l'appareil et renvoie son rang (0 = premier, -1 s'il n'entre pas). */

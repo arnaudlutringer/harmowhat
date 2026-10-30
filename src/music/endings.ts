@@ -32,7 +32,7 @@ import { ROMANCE, ROMANCE_BEAT } from './romance'
 import { TICO_TICO, TICO_TICO_EIGHTH } from './ticoTico'
 import { VALSE_MUSETTE, VALSE_MUSETTE_EIGHTH } from './valseMusette'
 import { HEDWIG, HEDWIG_EIGHTH } from './hedwig'
-import { ENTERTAINER, ENTERTAINER_SIXTEENTH } from './entertainer'
+import { PIANO_JAZZ, PIANO_JAZZ_EIGHTH } from './pianoJazz'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -62,7 +62,7 @@ export interface Ending {
 }
 
 export type EndingId =
-  | 'blues' | 'elise'| 'moonlight' | 'turkish-march'
+  | 'elise'| 'moonlight' | 'turkish-march' | 'piano-jazz'
   | 'bach-prelude' | 'swan' | 'dvorak' | 'hedwig'
   | 'te-deum' | 'taps' | 'entertainer'
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
@@ -73,7 +73,6 @@ export type EndingId =
   | 'spring' | 'bella-ciao' | 'romance' | 'tico-tico'
 
 const PIECES: Record<EndingId, Ending> = {
-  blues: { id: 'blues', title: 'Slow Piano Blues', composer: 'Juliush', notes: [], unit: 1, recording: 'music/slow-piano-blues.mp3' },
   elise: { id: 'elise', title: 'La Lettre à Élise', composer: 'Beethoven', notes: FUR_ELISE, unit: FUR_ELISE_SIXTEENTH },
   moonlight: { id: 'moonlight', title: 'Sonate au clair de lune (3ᵉ mvt)', composer: 'Beethoven', notes: MOONLIGHT, unit: MOONLIGHT_SIXTEENTH },
   'turkish-march': {
@@ -83,6 +82,7 @@ const PIECES: Record<EndingId, Ending> = {
     notes: TURKISH_MARCH,
     unit: TURKISH_MARCH_SIXTEENTH,
   },
+  'piano-jazz': { id: 'piano-jazz', title: 'Piano Jazz in E♭', composer: 'Holly Vose', notes: PIANO_JAZZ, unit: PIANO_JAZZ_EIGHTH },
   'bach-prelude': {
     id: 'bach-prelude',
     title: 'Prélude de la Suite n° 1',
@@ -136,7 +136,7 @@ for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSecon
 
 /** Morceaux proposés pour chaque instrument ; le premier est celui par défaut. */
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
-  piano: ['blues', 'elise', 'moonlight', 'turkish-march'],
+  piano: ['elise', 'moonlight', 'turkish-march', 'piano-jazz'],
   violin: ['spring', 'mendelssohn', 'danse-macabre'],
   cello: ['bach-prelude', 'swan', 'dvorak', 'hedwig'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],
@@ -145,6 +145,8 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   guitar: ['romance', 'gran-vals', 'greensleeves', 'asturias'],
   flute: ['morning', 'faune', 'badinerie'],
   'electric-guitar': ['rising-sun', 'paganini-24', 'mountain-king'],
+  // Au chœur, des morceaux dans sa tessiture : le Te Deum de Charpentier, Bella ciao, le Cygne en legato.
+  choir: ['te-deum', 'bella-ciao', 'swan'],
 }
 
 /**
@@ -162,21 +164,11 @@ export function endingsFor(instrument: InstrumentId): Ending[] {
 
 const STORAGE_KEY = 'harmowhat.endings'
 
-const BLUES_KEY = 'harmowhat.endings.blues'
-
 function loadChoices(): Partial<Record<InstrumentId, EndingId>> {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-    const choices = raw && typeof raw === 'object' ? raw : {}
-    // Le Slow Piano Blues remplace une fois la Lettre à Élise, jusque-là jouée par défaut au piano (et mémorisée comme choisie).
-    if (!localStorage.getItem(BLUES_KEY)) {
-      localStorage.setItem(BLUES_KEY, '1')
-      if (choices.piano === 'elise' || choices.piano === 'kenz') {
-        choices.piano = 'blues'
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(choices))
-      }
-    }
-    return choices
+    // Un morceau retiré depuis (ex. le Slow Piano Blues) n'est plus proposé : endingFor revient au premier.
+    return raw && typeof raw === 'object' ? raw : {}
   } catch {
     return {}
   }

@@ -1,8 +1,9 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav :title="title" back-href="/home" />
+      <page-nav :title="title" back-href="/home" :game="game" />
       <div class="settings hw-square">
+        <game-intro :game="game" />
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in questionCounts" :key="n" :value="n">
@@ -22,18 +23,22 @@
           </ion-item>
         </ion-radio-group>
 
-        <ion-button expand="block" size="large" class="start" @click="start">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" size="large" class="start" @click="start()">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" class="trial" @click="start(true)">Essayer une question</ion-button>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
+import { withTrial } from '@/games/ready'
 import { ref } from 'vue'
 import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
+import GameIntro from '@/components/GameIntro.vue'
+import type { GameId } from '@/games/highScores'
 
 /**
  * Écran de réglages d'un jeu : nombre de questions et niveau, mémorisés sur l'appareil,
@@ -41,6 +46,8 @@ import PageNav from '@/components/PageNav.vue'
  */
 const props = defineProps<{
   title: string
+  /** Jeu, pour sa présentation. */
+  game: GameId
   levels: Record<string, { label: string; description: string }>
   questionCounts: readonly number[]
   /** Clé de stockage des derniers réglages choisis. */
@@ -49,6 +56,8 @@ const props = defineProps<{
   playPath: string
   /** Lit des réglages enregistrés (avec repli sur les valeurs par défaut). */
   parse: (raw: { questions?: unknown; level?: unknown }) => { questions: number; level: string }
+  /** Écran qui suit les réglages, s'il dépend du niveau (ex. l'écran diapason en expert) ; sinon `playPath`. */
+  nextPath?: (settings: { questions: number; level: string }) => string
 }>()
 
 // On repropose les derniers réglages choisis.
@@ -65,14 +74,14 @@ const questions = ref<number>(saved.questions)
 const level = ref<string>(saved.level)
 const router = useIonRouter()
 
-function start() {
+function start(trial = false) {
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(props.storageKey, JSON.stringify(settings))
   } catch {
     // Stockage indisponible : on joue quand même.
   }
-  router.push(`${props.playPath}?questions=${settings.questions}&level=${settings.level}`)
+  router.push(withTrial(props.nextPath?.(settings) ?? `${props.playPath}?questions=${settings.questions}&level=${settings.level}`, trial))
 }
 </script>
 

@@ -10,6 +10,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/parametres', component: () => import('@/views/SettingsPage.vue') },
   { path: '/infos', component: () => import('@/views/InfoPage.vue') },
   { path: '/hall-of-fame', component: () => import('@/views/HallOfFamePage.vue') },
+  { path: '/trophees', component: () => import('@/views/TrophiesPage.vue') },
   // L'écran Joueur est un onglet des paramètres.
   { path: '/joueur', redirect: '/parametres?onglet=joueur' },
   { path: '/scores/:game', component: () => import('@/views/ScoresPage.vue') },
@@ -20,7 +21,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/accords/jouer', component: () => import('@/views/ChordsGame.vue') },
   { path: '/games/quelle-note/jouer', component: () => import('@/views/NameTheNoteGame.vue') },
   { path: '/games/harmonies', component: () => import('@/views/IntervalsSettings.vue') },
-  { path: '/games/:game(quelle-note)/pret', component: () => import('@/views/ReadyPage.vue') },
+  { path: '/games/:game(quelle-note|chante-note)/pret', component: () => import('@/views/ReadyPage.vue') },
   { path: '/games/harmonies/jouer', component: () => import('@/views/IntervalsGame.vue') },
   { path: '/games/lecture-note', component: () => import('@/views/ReadNoteSettings.vue') },
   { path: '/games/lecture-note/jouer', component: () => import('@/views/ReadNoteGame.vue') },
@@ -30,6 +31,14 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/tonalite/jouer', component: () => import('@/views/KeySignatureGame.vue') },
   { path: '/games/modalite', component: () => import('@/views/ModalitySettings.vue') },
   { path: '/games/modalite/jouer', component: () => import('@/views/ModalityGame.vue') },
+  { path: '/games/chante-note', component: () => import('@/views/SingTheNoteSettings.vue') },
+  { path: '/games/chante-note/jouer', component: () => import('@/views/SingTheNoteGame.vue') },
+  { path: '/games/chante-harmonie', component: () => import('@/views/SingHarmonySettings.vue') },
+  { path: '/games/chante-harmonie/jouer', component: () => import('@/views/SingHarmonyGame.vue') },
+  { path: '/games/quel-rythme', component: () => import('@/views/WhichRhythmSettings.vue') },
+  { path: '/games/quel-rythme/jouer', component: () => import('@/views/WhichRhythmGame.vue') },
+  { path: '/games/joue-rythme', component: () => import('@/views/PlayRhythmSettings.vue') },
+  { path: '/games/joue-rythme/jouer', component: () => import('@/views/PlayRhythmGame.vue') },
 ]
 
 const router = createRouter({

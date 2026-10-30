@@ -10,7 +10,7 @@ create table if not exists public.scores (
   -- Identifiant tiré par l'appareil : un score renvoyé deux fois (connexion coupée) n'est enregistré qu'une fois.
   client_id uuid not null unique,
   game text not null constraint scores_game_check
-    check (game in ('grave-ou-aigu', 'quelle-note', 'accords', 'harmonies', 'lecture-note', 'fais-harmonie', 'tonalite', 'modalite')),
+    check (game in ('grave-ou-aigu', 'quelle-note', 'accords', 'harmonies', 'lecture-note', 'fais-harmonie', 'tonalite', 'modalite', 'chante-note', 'chante-harmonie', 'quel-rythme', 'joue-rythme')),
   level text not null check (char_length(level) between 1 and 30),
   questions smallint not null check (questions between 1 and 100),
   name text not null check (char_length(name) between 1 and 10 and name = btrim(name)),

@@ -2,6 +2,8 @@
   <ion-app>
     <ion-router-outlet />
     <splash-screen :visible="splash" />
+    <!-- Trophées gagnés hors partie : annoncés tout de suite, sur l'écran en cours. -->
+    <trophy-announcer v-if="!splash" />
   </ion-app>
 </template>
 
@@ -9,6 +11,7 @@
 import { ref } from 'vue'
 import { IonApp, IonRouterOutlet, useBackButton, useIonRouter } from '@ionic/vue'
 import SplashScreen from '@/components/SplashScreen.vue'
+import TrophyAnnouncer from '@/components/TrophyAnnouncer.vue'
 import { useRouter } from 'vue-router'
 import { App } from '@capacitor/app'
 import { stopAll } from '@/audio/engine'
@@ -41,7 +44,9 @@ useBackButton(10, (processNextHandler) => {
 // Plus rien derrière (par exemple le Hall of fame ouvert après « Accueil », qui repart de zéro) :
 // on revient à l'accueil ; sur l'accueil, on met l'appli en arrière-plan au lieu de la fermer.
 useBackButton(-1, () => {
-  if (router.currentRoute.value.path !== '/home') ionRouter.navigate('/home', 'back', 'replace')
-  else void App.minimizeApp().catch(() => {})
+  if (router.currentRoute.value.path === '/home') void App.minimizeApp().catch(() => {})
+  // Un écran précédent dans l'historique : on y revient directement.
+  else if (ionRouter.canGoBack()) ionRouter.back()
+  else ionRouter.navigate('/home', 'back', 'replace')
 })
 </script>

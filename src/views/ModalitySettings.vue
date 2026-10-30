@@ -1,8 +1,9 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="La modalité" back-href="/home" />
+      <page-nav title="La modalité" back-href="/home" game="modalite" />
       <div class="settings hw-square">
+        <game-intro game="modalite" />
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">
@@ -22,18 +23,21 @@
           </ion-item>
         </ion-radio-group>
 
-        <ion-button expand="block" size="large" class="start" @click="start">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" size="large" class="start" @click="start()">C'est parti&nbsp;!</ion-button>
+        <ion-button expand="block" class="trial" @click="start(true)">Essayer une question</ion-button>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
+import { withTrial } from '@/games/ready'
 import { ref } from 'vue'
 import {
   IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
 } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
+import GameIntro from '@/components/GameIntro.vue'
 import { LEVELS, parseSettings, QUESTION_COUNTS, type Level } from '@/games/modality'
 
 const STORAGE_KEY = 'harmowhat.modalite.settings'
@@ -52,14 +56,14 @@ const questions = ref<number>(saved.questions)
 const level = ref<Level>(saved.level)
 const router = useIonRouter()
 
-function start() {
+function start(trial = false) {
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
   } catch {
     // Stockage indisponible : on joue quand même.
   }
-  router.push(`/games/modalite/jouer?questions=${settings.questions}&level=${settings.level}`)
+  router.push(withTrial(`/games/modalite/jouer?questions=${settings.questions}&level=${settings.level}`, trial))
 }
 </script>
 

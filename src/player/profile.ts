@@ -14,6 +14,8 @@ export interface Profile {
   id: string
   name: string
   country: CountryCode
+  /** En fin de partie, un score qui entre dans un classement est enregistré tout seul, avec ce nom et ce pays. */
+  autoSave: boolean
 }
 
 const STORAGE_KEY = 'harmowhat.profile'
@@ -30,11 +32,12 @@ function load(): Profile {
         id: isUuid(raw.id) ? raw.id : uuid(),
         name: typeof raw.name === 'string' ? raw.name : '',
         country: isCountryCode(raw.country) ? raw.country : defaultCountry(),
+        autoSave: raw.autoSave !== false,
       }
     }
-    return { id: uuid(), name: localStorage.getItem(LEGACY_NAME_KEY) ?? '', country: defaultCountry() }
+    return { id: uuid(), name: localStorage.getItem(LEGACY_NAME_KEY) ?? '', country: defaultCountry(), autoSave: true }
   } catch {
-    return { id: uuid(), name: '', country: defaultCountry() }
+    return { id: uuid(), name: '', country: defaultCountry(), autoSave: true }
   }
 }
 

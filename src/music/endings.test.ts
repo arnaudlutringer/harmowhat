@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { endingFor, endingsFor, ENDINGS, firstSeconds, INSTRUMENT_ENDINGS } from './endings'
+import { endingFor, endingsFor, ENDINGS, firstSeconds, INSTRUMENT_ENDINGS, type EndingId } from './endings'
 import { INSTRUMENTS, type InstrumentId } from '@/audio/instruments'
 import { pitchClassName } from './notes'
 
 describe('Musique de fin', () => {
-  it('joue le Printemps au violon, les Patineurs à l’accordéon, Bella ciao à la clarinette, Slow Piano Blues au piano', () => {
+  it('joue le Printemps au violon, les Patineurs à l’accordéon, Bella ciao à la clarinette, la Lettre à Élise au piano', () => {
     expect(endingFor('violin').title).toBe('Le Printemps')
     expect(endingFor('accordion').title).toBe('Les Patineurs')
     expect(endingFor('clarinet').title).toBe('Rhapsody in Blue')
     expect(endingFor('guitar').title).toBe('Romance (Jeux interdits)')
-    expect(endingFor('piano').title).toBe('Slow Piano Blues')
+    expect(endingFor('piano').title).toBe('La Lettre à Élise')
     expect(endingFor('cello').title).toBe('Prélude de la Suite n° 1')
   })
 
@@ -58,6 +58,10 @@ describe('Musique de fin', () => {
     expect(first('valse-musette', 10)).toEqual(['Do', 'Mi', 'Sol', 'Do', 'Si', 'Do', 'Mi', 'Sol', 'Si', 'La'])
     const musette = ENDINGS['valse-musette'].notes.filter((n) => (n.velocity ?? 1) >= 0.4)
     expect(pitchClassName(musette[musette.length - 1].midi)).toBe('La')
+    // Piano Jazz in E♭ : levée do mi♭ fa, sol tenu, puis fa mi♭ do, fa sol do ; la phrase se pose sur le mi♭ grave.
+    expect(first('piano-jazz', 4)).toEqual(['Do', 'Ré♯', 'Fa', 'Sol'])
+    const jazz = ENDINGS['piano-jazz'].notes
+    expect(jazz[jazz.length - 1].midi).toBe(39)
     expect(first('morning', 6)).toEqual(['Si', 'Sol♯', 'Fa♯', 'Mi', 'Fa♯', 'Sol♯'])
     expect(first('faune', 7)).toEqual(['Do♯', 'Do', 'Si', 'La♯', 'La', 'Sol♯', 'Sol'])
     expect(first('badinerie', 6)).toEqual(['Si', 'Ré', 'Si', 'Fa♯', 'Si', 'Fa♯'])
@@ -100,11 +104,12 @@ describe('Musique de fin', () => {
   })
 
   it('propose plusieurs morceaux au piano et joue celui choisi, s’il est proposé pour l’instrument', () => {
-    expect(endingsFor('piano').map((e) => e.title)).toEqual(['Slow Piano Blues', 'La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque'])
+    expect(endingsFor('piano').map((e) => e.title)).toEqual(['La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque', 'Piano Jazz in E♭'])
     expect(endingFor('piano', { piano: 'moonlight' }).id).toBe('moonlight')
     expect(endingFor('violin', { violin: 'moonlight' }).id).toBe('spring')
-    expect(endingFor('piano', {}).id).toBe('blues')
-    expect(endingFor('piano', {}).recording).toBe('music/slow-piano-blues.mp3')
+    expect(endingFor('piano', {}).id).toBe('elise')
+    // Un morceau retiré (le Slow Piano Blues) encore mémorisé comme choisi : on revient au premier.
+    expect(endingFor('piano', { piano: 'blues' as EndingId }).id).toBe('elise')
     for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) expect(INSTRUMENT_ENDINGS[id].length).toBeGreaterThan(0)
   })
 

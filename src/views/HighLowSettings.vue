@@ -1,5 +1,6 @@
 <template>
   <game-settings
+    game="grave-ou-aigu"
     title="Grave ou aigu ?"
     :levels="LEVELS"
     :question-counts="QUESTION_COUNTS"

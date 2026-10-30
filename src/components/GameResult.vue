@@ -1,11 +1,35 @@
 <template>
   <div class="result hw-square">
-    <div class="emoji" aria-hidden="true">{{ emoji }}</div>
+    <!-- Mes trophées, en haut à droite : les trophées gagnés s'y envolent. -->
+    <ion-button class="trophies" fill="clear" router-link="/trophees" data-trophy-target aria-label="Mes trophées" title="Mes trophées">
+      <ion-icon slot="icon-only" :icon="medalOutline" />
+    </ion-button>
+    <trophy-unlocked :queue="unlocked" />
+    <img class="emoji" :src="tierImage" alt="" />
     <h1>{{ summary.points }} <small>pts</small></h1>
     <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
+    <ion-button class="share" fill="clear" size="small" :disabled="sharing" @click="share('score')">
+      <ion-icon slot="start" :icon="shareSocialOutline" />
+      Partager mon score
+    </ion-button>
 
     <!-- Le score entre dans au moins un classement (monde, pays, téléphone) : on propose de l'enregistrer dans les trois. -->
-    <form v-if="record" class="record" @submit.prevent="saveRecord">
+    <!-- Sauvegarde automatique (Mon compte) : le score est déjà enregistré ; on montre sous quel nom, et le classement. -->
+    <div v-if="autoSaved" class="record auto">
+      <strong>🏅 Tu entres dans les meilleurs scores !</strong>
+      <p class="tops">
+        <span v-if="tops.monde">🌍 Monde</span>
+        <span v-if="tops.pays">{{ country?.flag }} {{ country?.name }}</span>
+        <span v-if="tops.appareil">📱 Téléphone</span>
+      </p>
+      <p class="country">Enregistré au nom de <strong>{{ autoSaved.name }}</strong><template v-if="worldEnabled"> · {{ country?.flag }} {{ country?.name }}</template></p>
+      <ion-button expand="block" @click="openScores(autoSaved.rank, autoSaved.name)">Voir les meilleurs scores</ion-button>
+      <ion-button expand="block" fill="outline" :disabled="sharing" @click="share('rank')">
+        <ion-icon slot="start" :icon="shareSocialOutline" />
+        Partager mon classement
+      </ion-button>
+    </div>
+    <form v-else-if="record" class="record" @submit.prevent="saveRecord">
       <strong>🏅 Tu entres dans les meilleurs scores !</strong>
       <p class="tops">
         <span v-if="tops.monde">🌍 Monde</span>
@@ -60,9 +84,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
-import { musicalNote, musicalNotes, stop } from 'ionicons/icons'
+import { medalOutline, musicalNote, musicalNotes, shareSocialOutline, stop } from 'ionicons/icons'
 import { playRecording, playSequence, stopAll, tierForScore } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { summarize, type QuestionResult } from '@/games/scoring'
@@ -70,22 +94,49 @@ import { drunk } from '@/music/drunk'
 import { ENDING_SECONDS, endingFor } from '@/music/endings'
 import { selectedInstrument } from '@/audio/instruments'
 import {
-  cleanName, getScores, lastPlayerName, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
+  cleanName, GAMES, getScores, lastPlayerName, levelLabel, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
 } from '@/games/highScores'
 import { cachedBoard, fetchBoard, submitScore, worldEnabled } from '@/games/worldScores'
 import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
+import { evaluateGame, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
+import TrophyUnlocked from './TrophyUnlocked.vue'
+import { shareImage } from '@/share/shareImage'
 
-const props = defineProps<{ results: QuestionResult[]; total: number; board: Board; settingsHref?: string }>()
+const props = defineProps<{
+  results: QuestionResult[]
+  total: number
+  board: Board
+  settingsHref?: string
+  /** Le diapason était proposé pendant les questions, et a servi (trophée « Sans filet »). */
+  forkAvailable?: boolean
+  forkUsed?: boolean
+}>()
 const emit = defineEmits<{ restart: [] }>()
 
 const summary = computed(() => summarize(props.results))
+
+// Trophées : la partie est comptée une fois, à l'arrivée sur cet écran ; les nouveaux trophées s'annoncent un par un.
+const unlocked = ref<{ trophy: Trophy; tier?: Tier }[]>([])
+function countTrophies() {
+  evaluateGame({
+    board: props.board,
+    results: props.results,
+    instrument: selectedInstrument.value,
+    forkAvailable: !!props.forkAvailable,
+    forkUsed: !!props.forkUsed,
+  })
+  unlocked.value = takePendingTrophies()
+}
+onMounted(countTrophies)
 
 // Meilleurs scores : si la partie entre dans le top 10 du monde, du pays du joueur ou du téléphone, le joueur
 // peut l'enregistrer (nom pré-rempli avec celui de Mon compte). Le score est alors enregistré partout :
 // sur le téléphone, et dans la base mondiale, qui alimente les classements du monde et des pays.
 const router = useIonRouter()
 const tops = reactive({ monde: false, pays: false, appareil: qualifies(getScores(props.board), summary.value.points) })
+/** Rang du score dans le classement du monde et du pays. */
+const ranks = reactive({ monde: 0, pays: 0 })
 const saved = ref(false)
 const record = computed(() => !saved.value && (tops.monde || tops.pays || tops.appareil))
 const playerName = ref(lastPlayerName())
@@ -100,15 +151,33 @@ onMounted(() => {
   // D'abord le cache chargé au lancement (réponse immédiate, même hors connexion), puis la base à jour.
   const world = cachedBoard(props.board)
   const local = cachedBoard(props.board, code)
-  if (world) tops.monde = qualifies(world, points)
-  if (local) tops.pays = qualifies(local, points)
+  const update = (scope: 'monde' | 'pays', rows: { points: number }[]) => {
+    tops[scope] = qualifies(rows as never, points)
+    ranks[scope] = rows.filter((r) => r.points > points).length + 1
+  }
+  if (world) update('monde', world)
+  if (local) update('pays', local)
   fetchBoard(props.board)
-    .then((rows) => (tops.monde = qualifies(rows, points)))
+    .then((rows) => update('monde', rows))
     .catch(() => {})
   fetchBoard(props.board, code)
-    .then((rows) => (tops.pays = qualifies(rows, points)))
+    .then((rows) => update('pays', rows))
     .catch(() => {})
 })
+
+/** Enregistre le score sur le téléphone (son top 10) et l'envoie au classement mondial ; renvoie son rang sur le téléphone. */
+function storeScore(name: string): { rank: number; sent: Promise<unknown> } {
+  const { points, correct } = summary.value
+  const entry = { name, points, correct, date: new Date().toISOString(), playerId: profile.value.id }
+  return { rank: saveScore(props.board, entry), sent: submitScore(props.board, entry) }
+}
+
+/** Ouvre le plus beau des classements où le score entre. */
+function openScores(rank: number, name: string) {
+  stopAll()
+  const vue = tops.monde ? 'monde' : tops.pays ? 'pays' : 'appareil'
+  router.push(`${scoresHref(props.board, rank, { name, points: summary.value.points })}&vue=${worldEnabled ? vue : 'appareil'}`)
+}
 
 async function saveRecord() {
   const name = cleanName(playerName.value)
@@ -118,27 +187,38 @@ async function saveRecord() {
   }
   if (saving.value) return
   saving.value = true
-  const { points, correct } = summary.value
-  const entry = { name, points, correct, date: new Date().toISOString(), playerId: profile.value.id }
-  // Téléphone (son top 10), puis base mondiale (monde et pays) : on attend un peu l'envoi pour que le score
-  // y figure déjà ; sans connexion, il partira plus tard.
-  const rank = saveScore(props.board, entry)
-  await Promise.race([submitScore(props.board, entry), new Promise((r) => setTimeout(r, 3000))])
+  // Base mondiale (monde et pays) : on attend un peu l'envoi pour que le score y figure déjà ; sans connexion, il partira plus tard.
+  const { rank, sent } = storeScore(name)
+  await Promise.race([sent, new Promise((r) => setTimeout(r, 3000))])
   saved.value = true
   saving.value = false
-  stopAll()
-  // On ouvre le plus beau des classements où le score entre.
-  const vue = tops.monde ? 'monde' : tops.pays ? 'pays' : 'appareil'
-  router.push(`${scoresHref(props.board, rank, { name, points })}&vue=${worldEnabled ? vue : 'appareil'}`)
+  openScores(rank, name)
 }
+
+// Sauvegarde automatique (option de Mon compte, avec un nom) : dès que le score entre dans un classement,
+// il est enregistré tout seul, une seule fois.
+const autoSaved = ref<{ name: string; rank: number } | null>(null)
+watch(
+  record,
+  (entersBoard) => {
+    const name = cleanName(profile.value.name)
+    if (!entersBoard || !profile.value.autoSave || !name || autoSaved.value) return
+    const { rank, sent } = storeScore(name)
+    sent.catch(() => {})
+    saved.value = true
+    autoSaved.value = { name, rank }
+  },
+  { immediate: true },
+)
 const tier = computed(() => tierForScore(summary.value.correct, props.total))
-const emoji = computed(() => ({ great: '🏆', good: '🎶', poor: '🎧' })[tier.value])
+// Image de fin de partie selon le résultat : oreille en or, en argent ou en fer (public/results/).
+const tierImage = computed(() => `${import.meta.env.BASE_URL}results/${tier.value}.png`)
 
 // Musique de fin, selon l'instrument (voir music/endings.ts), d'autant plus mal jouée (musicien éméché)
 // que le joueur a fait d'erreurs (voir music/drunk.ts). Tirée une fois pour cet écran.
 const wrongRatio = props.total ? (props.total - summary.value.correct) / props.total : 0
 const wrongPercent = Math.round(wrongRatio * 100)
-// Un enregistrement (Slow Piano Blues au piano) est joué tel quel, sans fausses notes.
+// Un enregistrement est joué tel quel, sans fausses notes.
 const ending = endingFor(selectedInstrument.value)
 const music = drunk(ending.notes, wrongRatio)
 
@@ -157,6 +237,32 @@ function toggleElise() {
   else playElise()
 }
 
+// Partage : l'image du score, ou de la place dans le plus beau des classements où il entre.
+const sharing = ref(false)
+async function share(kind: 'score' | 'rank') {
+  if (sharing.value) return
+  sharing.value = true
+  const game = GAMES[props.board.game].title
+  const { points, correct } = summary.value
+  try {
+    if (kind === 'score') {
+      await shareImage({ kind, game, level: levelLabel(props.board), points, correct, total: props.total, tierImage: tierImage.value })
+    } else {
+      const [rank, where] =
+        tops.monde && ranks.monde
+          ? [ranks.monde, 'au monde']
+          : tops.pays && ranks.pays
+            ? [ranks.pays, `en ${country.value?.name ?? ''}`]
+            : [autoSaved.value?.rank ?? 1, 'sur mon téléphone']
+      await shareImage({ kind, game, gameId: props.board.game, rank, where, name: autoSaved.value?.name ?? '', points })
+    }
+  } catch {
+    // Partage annulé ou impossible : rien à signaler.
+  } finally {
+    sharing.value = false
+  }
+}
+
 function restart() {
   stopAll()
   emit('restart')
@@ -168,12 +274,25 @@ onBeforeUnmount(stopAll)
 
 <style scoped>
 .result {
+  position: relative;
   text-align: center;
   max-width: 360px;
-  margin: 6vh auto 24px;
+  margin: 0 auto 24px;
+}
+/* « Mes trophées » en haut à droite de l'écran (la popin des trophées gagnés s'envole vers lui). */
+.trophies {
+  position: fixed;
+  top: calc(8px + var(--ion-safe-area-top, 0px));
+  right: 8px;
+  z-index: 5;
+  --color: var(--ion-color-primary);
+  font-size: 22px;
 }
 .emoji {
-  font-size: 64px;
+  display: block;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto;
 }
 h1 {
   font-size: 48px;
@@ -185,7 +304,10 @@ h1 small {
 }
 .answers {
   font-size: 18px;
-  margin: 4px 0 16px;
+  margin: 4px 0 4px;
+}
+.share {
+  margin: 0 0 12px;
 }
 .notes {
   list-style: none;
@@ -218,6 +340,17 @@ p {
   background: var(--hw-button);
   box-shadow: 0 2px 0 rgba(108, 92, 231, 0.35), 0 4px 10px rgba(45, 48, 71, 0.08);
   text-align: left;
+}
+/* Score enregistré automatiquement : tout le bloc est centré. */
+.record.auto {
+  align-items: center;
+  text-align: center;
+}
+.record.auto .tops {
+  justify-content: center;
+}
+.record.auto ion-button {
+  width: 100%;
 }
 .record strong {
   color: var(--ion-color-primary);

@@ -56,15 +56,43 @@
   --hw-button-active: #efecff;
   --hw-button-text: #4b3fc4;
 
-  /* Une couleur par jeu, sur l'accueil. */
-  --hw-game-1: #ff7675;
-  --hw-game-2: #0984e3;
-  --hw-game-3: #00a884;
-  --hw-game-4: #e17055;
-  --hw-game-5: #e84393;
-  --hw-game-6: #6c5ce7;
-  --hw-game-7: #0097a7;
-  --hw-game-8: #d35400;
+  /* Accueil : une teinte douce par catégorie de jeux, un peu plus foncée que le fond, texte et icônes foncés. */
+  --hw-category-ear: #f6dccc;
+  --hw-category-voice: #e7ddf3;
+  --hw-category-theory: #d9ebe4;
+  --hw-category-rhythm: #f3e7c4;
+  --hw-card-ink: #3a3350;
+
+  /* Surfaces blanches (popin des trophées, trophées gagnés) et fond d'alerte doux. */
+  --hw-surface: #ffffff;
+  --hw-danger-soft: #ffe8e8;
+}
+
+/* Thème sombre (Paramètres › Affichage) : par-dessus la palette sombre d'Ionic, les couleurs de l'appli en version nuit. */
+:root.ion-palette-dark {
+  --ion-color-primary: #8b7ff0;
+  --ion-color-primary-rgb: 139, 127, 240;
+  --ion-color-primary-shade: #7a70d3;
+  --ion-color-primary-tint: #978cf2;
+
+  --ion-background-color: #1d1b2c;
+  --ion-background-color-rgb: 29, 27, 44;
+  --ion-text-color: #ecebf5;
+  --ion-text-color-rgb: 236, 235, 245;
+  --ion-item-background: transparent;
+
+  --hw-button: #2b2840;
+  --hw-button-active: #3a3560;
+  --hw-button-text: #cbc4ff;
+
+  --hw-category-ear: #4a3832;
+  --hw-category-voice: #3b3452;
+  --hw-category-theory: #2c4039;
+  --hw-category-rhythm: #463f28;
+  --hw-card-ink: #f0eef8;
+
+  --hw-surface: #2b2840;
+  --hw-danger-soft: #4a2a2e;
 }
 
 /* Les boutons et champs HTML (hors composants Ionic) prennent aussi la police de l'appli. */
@@ -88,6 +116,48 @@ ion-content.ion-padding {
   --color: var(--hw-button-text);
   --box-shadow: 0 2px 0 rgba(108, 92, 231, 0.35), 0 4px 10px rgba(45, 48, 71, 0.08);
   font-weight: 600;
+}
+
+/* Choix segmentés des réglages (nombre de questions…) : des pastilles compactes autour du nombre ;
+   le choix retenu est sur fond violet, texte blanc. */
+.hw-square ion-segment {
+  display: flex;
+  justify-content: space-around;
+}
+.hw-square ion-segment-button {
+  --indicator-height: 0;
+  --padding-start: 6px;
+  --padding-end: 6px;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --color-checked: #fff;
+  --background-checked: var(--ion-color-primary);
+  flex: 0 0 auto;
+  min-width: 56px;
+  min-height: 0;
+  height: 38px;
+  border: 2px solid transparent;
+}
+.hw-square ion-segment-button::part(indicator) {
+  display: none;
+}
+.hw-square ion-segment-button ion-label {
+  margin: 0;
+}
+.hw-square ion-segment-button.segment-button-checked {
+  border-color: var(--ion-color-primary);
+  background: var(--ion-color-primary);
+  color: #fff;
+}
+
+/* Bouton secondaire des réglages (« Essayer une question ») : sous « C'est parti ! », sans fond, bordure violette. */
+.hw-square ion-button.trial {
+  margin-top: 12px;
+  --background: transparent;
+  --border-color: var(--hw-button-text);
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: none;
 }
 
 /* Bouton de lecture : rond, violet. */

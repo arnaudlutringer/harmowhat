@@ -4,7 +4,7 @@
     <div v-if="visible" class="splash" role="status" aria-label="Chargement de L'oreille">
       <img class="logo" src="/logo.svg" alt="" />
       <h1>L'oreille</h1>
-      <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
+      <p class="intro">Tu penses avoir l'oreille absolue&nbsp;?<br />Prouve-le&nbsp;!</p>
       <ion-spinner name="dots" color="primary" aria-hidden="true" />
     </div>
   </transition>
