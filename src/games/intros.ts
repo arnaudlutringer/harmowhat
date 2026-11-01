@@ -1,8 +1,8 @@
 import type { GameId } from './highScores'
 
 /**
- * Présentation de chaque jeu, en tête de son écran de réglages : comment il fonctionne.
- * Le barème des points, commun à tous les jeux, est ajouté par GameIntro.
+ * Présentation de chaque jeu, dans l'onglet Règles de son écran de réglages : comment il fonctionne.
+ * Le barème des points, commun à tous les jeux, est ajouté par l'onglet Règles des réglages (GameSettings).
  */
 export const INTROS: Record<GameId, string[]> = {
   'grave-ou-aigu': [

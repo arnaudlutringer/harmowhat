@@ -1,106 +1,45 @@
 <template>
-  <ion-page>
-    <ion-content class="ion-padding">
-      <page-nav title="Quelle est la note ?" back-href="/home" game="quelle-note" />
-      <div class="settings hw-square">
-        <game-intro game="quelle-note" />
-        <h2>Nombre de questions</h2>
-        <ion-segment v-model="questions">
-          <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">
-            <ion-label>{{ n }}</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-
-        <h2>Niveau</h2>
-        <ion-radio-group v-model="level">
-          <ion-item v-for="(cfg, key) in shownLevels" :key="key" lines="full">
-            <ion-radio :value="key" justify="space-between">
-              <ion-label class="ion-text-wrap">
-                <strong>{{ cfg.label }}</strong>
-                <p>{{ cfg.description }}</p>
-                <p v-if="cfg.randomInstrument">Instrument au hasard, sur toute sa tessiture</p>
-                <p v-else>{{ instrument.label }} : de {{ noteName(levelRange(key, instrument).low) }} à {{ noteName(levelRange(key, instrument).high) }}</p>
-              </ion-label>
-            </ion-radio>
-          </ion-item>
-        </ion-radio-group>
-
-        <ion-button expand="block" size="large" class="start" @click="start()">C'est parti&nbsp;!</ion-button>
-        <ion-button expand="block" class="trial" @click="start(true)">Essayer une question</ion-button>
-      </div>
-    </ion-content>
-  </ion-page>
+  <game-settings
+    game="quelle-note"
+    title="Quelle est la note ?"
+    :levels="LEVELS"
+    :question-counts="QUESTION_COUNTS"
+    storage-key="harmowhat.quelle-note.settings"
+    play-path="/games/quelle-note/jouer"
+    :parse="parseSettings"
+    :next-path="nextPath"
+  >
+    <!-- Tessiture jouée à ce niveau, selon l'instrument choisi. -->
+    <template #level-extra="{ level }">
+      <small class="range">
+        {{ LEVELS[level as Level].randomInstrument ? 'Instrument au hasard' : `${instrument.label} : ${noteName(levelRange(level as Level, instrument).low)} à ${noteName(levelRange(level as Level, instrument).high)}` }}
+      </small>
+    </template>
+  </game-settings>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { onIonViewWillLeave, useIonRouter } from '@ionic/vue'
+import { onIonViewWillLeave } from '@ionic/vue'
+import GameSettings from '@/components/GameSettings.vue'
 import { stopAll } from '@/audio/engine'
-import {
-  IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton,
-} from '@ionic/vue'
-import PageNav from '@/components/PageNav.vue'
-import GameIntro from '@/components/GameIntro.vue'
-import { afterSettings, withTrial } from '@/games/ready'
+import { afterSettings } from '@/games/ready'
 import { levelRange, LEVELS, parseSettings, QUESTION_COUNTS, type Level } from '@/games/nameTheNote'
 import { currentInstrument } from '@/audio/instruments'
 import { noteName } from '@/music/notes'
-import { visibleLevels } from '@/games/trophies'
 
 const instrument = currentInstrument()
-
-const STORAGE_KEY = 'harmowhat.quelle-note.settings'
-
-// On repropose les derniers réglages choisis.
-function loadSaved() {
-  try {
-    return parseSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}'))
-  } catch {
-    return parseSettings({})
-  }
-}
-
-const saved = loadSaved()
-const questions = ref<number>(saved.questions)
-// Le niveau Impossible n'apparaît qu'une fois débloqué.
-const shownLevels = computed(() => visibleLevels('quelle-note', LEVELS))
-const level = ref<Level>(saved.level in shownLevels.value ? saved.level : 'expert')
-const router = useIonRouter()
 
 // Le diapason s'arrête dès qu'on quitte l'écran.
 onIonViewWillLeave(stopAll)
 
-function start(trial = false) {
-  const settings = { questions: questions.value, level: level.value }
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-  } catch {
-    // Stockage indisponible : on joue quand même.
-  }
-  // En expert, pas de diapason pendant les questions : il est proposé sur l'écran « Je suis prêt » (en impossible, pas du tout).
-  router.push(withTrial(afterSettings('quelle-note', settings.level === 'expert', `questions=${settings.questions}&level=${settings.level}`), trial))
-}
+// En expert, pas de diapason pendant les questions : il est proposé sur l'écran « Je suis prêt » (en impossible, pas du tout).
+const nextPath = ({ questions, level }: { questions: number; level: string }) =>
+  afterSettings('quelle-note', level === 'expert', `questions=${questions}&level=${level}`)
 </script>
 
 <style scoped>
-.settings {
-  max-width: 480px;
-  margin: 0 auto;
-}
-h2 {
-  font-size: 18px;
-  margin: 24px 0 12px;
-}
-ion-radio {
-  width: 100%;
-}
-ion-radio::part(label) {
-  white-space: normal;
-}
-ion-label p {
-  color: var(--ion-color-medium);
-}
-.start {
-  margin-top: 32px;
+.range {
+  font-size: 11px;
+  color: var(--ion-color-primary);
 }
 </style>
