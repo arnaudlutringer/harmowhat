@@ -148,6 +148,14 @@ export const isHiddenLevel = (game: GameId, level: string) => level.startsWith('
 /** Niveaux à montrer dans les classements : « Impossible » seulement une fois débloqué. */
 export const shownLevels = (game: GameId) => GAMES[game].levels.filter((l) => !isHiddenLevel(game, l.id))
 
+/** Meilleur score enregistré sur le téléphone pour ce jeu, tous niveaux et nombres de questions confondus. */
+export function bestScore(game: GameId): number {
+  const info = GAMES[game]
+  let best = 0
+  for (const l of info.levels) for (const questions of info.questionCounts) best = Math.max(best, getScores({ game, level: l.id, questions })[0]?.points ?? 0)
+  return best
+}
+
 export function isGameId(raw: unknown): raw is GameId {
   return typeof raw === 'string' && raw in GAMES
 }

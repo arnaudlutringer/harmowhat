@@ -62,3 +62,21 @@ export const INTROS: Record<GameId, string[]> = {
     'En débutant, choisis parmi 4 tempos ronds ; ensuite, règle le métronome (de 40 à 200) : il faut tomber à 10 près en normal, à 4 près en expert.',
   ],
 }
+
+/** Description courte de chaque jeu, en une phrase (titre des cartes de l'accueil, bandeau des réglages). */
+export const SUMMARIES: Record<GameId, string> = {
+  'grave-ou-aigu': 'La note jouée est-elle plus grave ou plus aiguë que le La3 du diapason ?',
+  'quelle-note': 'Retrouve la note jouée parmi plusieurs propositions.',
+  accords: 'Trois notes jouées ensemble, entre La2 et La4 : retrouve-les toutes les trois.',
+  harmonies: "Deux notes l'une après l'autre : trouve l'intervalle (tierce, quinte, sixte…).",
+  modalite: "Devine la modalité à l'oreille.",
+  'chante-note': 'Chante dans le micro la note demandée, au plus juste.',
+  'chante-harmonie': 'Une note est jouée : chante celle qui forme l’intervalle demandé (la quinte, la tierce majeure…).',
+  'lecture-note': "Une note sur une portée, en clé de sol, de fa ou d'ut : quelle est cette note ?",
+  'fais-harmonie': 'Une note sur une portée et un intervalle : quelle note forme cette harmonie (la quinte du Do, la septième du Ré♯…) ?',
+  tonalite: "Trouve la tonalité en regardant l'armure de la portée : ses dièses, ses bémols… ou rien.",
+  'quel-rythme': 'Écoute un rythme de 3 temps et retrouve ses figures : noire, croches, soupir…',
+  'joue-rythme': 'Lis le rythme écrit et tape-le en mesure, au plus juste.',
+  'garde-tempo': 'Après 3 temps de métronome, tape chaque temps le plus longtemps possible, sans t’écarter.',
+  'trouve-tempo': 'Écoute une mélodie et retrouve son tempo, en battements par minute.',
+}

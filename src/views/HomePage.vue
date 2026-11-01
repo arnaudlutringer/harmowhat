@@ -28,7 +28,7 @@
       <section v-for="category in categories" :key="category.title" class="category">
         <h2>{{ category.title }} <small>{{ category.games.length }} jeux</small></h2>
         <div class="games">
-          <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: category.color }" :title="game.description">
+          <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: category.color }" :title="SUMMARIES[idOf(game.path)]">
             <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
             <strong>{{ game.title }}</strong>
             <!-- Médailles GOAT déjà gagnées sur ce jeu (bronze, argent, or, puis diamant en impossible). -->
@@ -49,6 +49,7 @@ import { IonButton, IonContent, IonIcon, IonPage, useIonRouter } from '@ionic/vu
 import { informationCircleOutline } from 'ionicons/icons'
 import BottomNav from '@/components/BottomNav.vue'
 import { GAME_ICONS } from '@/games/icons'
+import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dailyChallenge, dayNumber } from '@/games/dailyChallenge'
 import { challengeDays, earnedTrophies, impossibleUnlocked, TIER_LABELS, type Tier } from '@/games/trophies'
@@ -76,31 +77,26 @@ const earGames = [
     path: '/games/grave-ou-aigu',
     icon: GAME_ICONS['grave-ou-aigu'],
     title: 'Grave ou aigu ?',
-    description: 'La note jouée est-elle plus grave ou plus aiguë que le La3 du diapason ?',
   },
   {
     path: '/games/quelle-note',
     icon: GAME_ICONS['quelle-note'],
     title: 'Quelle est la note ?',
-    description: 'Retrouve la note jouée parmi plusieurs propositions.',
   },
   {
     path: '/games/accords',
     icon: GAME_ICONS.accords,
     title: 'Les accords',
-    description: 'Trois notes jouées ensemble, entre La2 et La4 : retrouve-les toutes les trois.',
   },
   {
     path: '/games/harmonies',
     icon: GAME_ICONS.harmonies,
     title: 'Les harmonies',
-    description: "Deux notes l'une après l'autre : trouve l'intervalle (tierce, quinte, sixte…).",
   },
   {
     path: '/games/modalite',
     icon: GAME_ICONS.modalite,
     title: 'La modalité',
-    description: "Devine la modalité à l'oreille.",
   },
 ]
 
@@ -109,13 +105,11 @@ const voiceGames = [
     path: '/games/chante-note',
     icon: GAME_ICONS['chante-note'],
     title: 'Chante la note',
-    description: 'Chante dans le micro la note demandée, au plus juste.',
   },
   {
     path: '/games/chante-harmonie',
     icon: GAME_ICONS['chante-harmonie'],
     title: "Chante l'harmonie",
-    description: 'Une note est jouée : chante celle qui forme l’intervalle demandé (la quinte, la tierce majeure…).',
   },
 ]
 
@@ -124,19 +118,16 @@ const theoryGames = [
     path: '/games/lecture-note',
     icon: GAME_ICONS['lecture-note'],
     title: 'Lecture de note',
-    description: "Une note sur une portée, en clé de sol, de fa ou d'ut : quelle est cette note ?",
   },
   {
     path: '/games/fais-harmonie',
     icon: GAME_ICONS['fais-harmonie'],
     title: "Fais l'harmonie",
-    description: 'Une note sur une portée et un intervalle : quelle note forme cette harmonie (la quinte du Do, la septième du Ré♯…) ?',
   },
   {
     path: '/games/tonalite',
     icon: GAME_ICONS.tonalite,
     title: 'La tonalité',
-    description: "Trouve la tonalité en regardant l'armure de la portée : ses dièses, ses bémols… ou rien.",
   },
 ]
 
@@ -145,13 +136,11 @@ const rhythmGames = [
     path: '/games/quel-rythme',
     icon: GAME_ICONS['quel-rythme'],
     title: 'Quel rythme ?',
-    description: 'Écoute un rythme de 3 temps et retrouve ses figures : noire, croches, soupir…',
   },
   {
     path: '/games/joue-rythme',
     icon: GAME_ICONS['joue-rythme'],
     title: 'Joue le rythme',
-    description: 'Lis le rythme écrit et tape-le en mesure, au plus juste.',
   },
 ]
 
@@ -160,13 +149,11 @@ const tempoGames = [
     path: '/games/garde-tempo',
     icon: GAME_ICONS['garde-tempo'],
     title: 'Garde le tempo',
-    description: 'Après 3 temps de métronome, tape chaque temps le plus longtemps possible, sans t’écarter.',
   },
   {
     path: '/games/trouve-tempo',
     icon: GAME_ICONS['trouve-tempo'],
     title: 'Trouve le tempo',
-    description: 'Écoute une mélodie et retrouve son tempo, en battements par minute.',
   },
 ]
 

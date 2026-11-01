@@ -182,6 +182,8 @@ interface Stats {
   temposFound: number
   /** Jours (numéros) où le défi du jour a été relevé. */
   challenges: number[]
+  /** Questionnaires terminés, par jeu. */
+  plays: Partial<Record<GameId, number>>
   /** Jeux dont le niveau Impossible est débloqué. */
   impossible: GameId[]
 }
@@ -197,7 +199,7 @@ const STORAGE_KEY = 'harmowhat.trophies'
 
 const emptyStats = (): Stats => ({
   games: 0, correct: 0, lastDay: '', streak: 0, played: [], instruments: [], perfect: [], harmoniesSung: 0,
-  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [],
+  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], plays: {},
 })
 
 function load(): State {
@@ -316,6 +318,7 @@ export function evaluateGame(ctx: GameContext): void {
   s.games++
   s.correct += correct
   s.played = addUnique(s.played, board.game)
+  s.plays = { ...s.plays, [board.game]: (s.plays[board.game] ?? 0) + 1 }
   s.instruments = addUnique(s.instruments, ctx.instrument)
   if (allCorrect) s.perfect = addUnique(s.perfect, board.game)
   // Jours de suite : hier prolonge la série, aujourd'hui ne change rien, sinon elle repart à 1.
@@ -436,6 +439,12 @@ export function trophyEvent(e: TrophyEvent): void {
   }
   checkCounters(state)
   save(state)
+}
+
+/** Nombre de questionnaires terminés dans ce jeu (au moins 1 s'il y a déjà joué avant ce décompte). */
+export function gamesPlayed(game: GameId): number {
+  const s = load().stats
+  return Math.max(s.plays[game] ?? 0, s.played.includes(game) ? 1 : 0)
 }
 
 /** Le joueur a déjà terminé au moins un questionnaire de ce jeu (sa présentation s'affiche alors repliée). */

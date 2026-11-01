@@ -6,6 +6,13 @@
         <ion-back-button class="back" default-href="/home" text="" />
         <span class="big"><ion-icon :icon="GAME_ICONS[game]" aria-hidden="true" /></span>
         <h1>{{ title }}</h1>
+        <p class="summary">{{ SUMMARIES[game] }}</p>
+        <!-- Ton parcours sur ce jeu : record du téléphone, parties terminées, meilleure médaille GOAT. -->
+        <div class="stats">
+          <span>🏆 <b>{{ record ? record.toLocaleString('fr-FR') : '—' }}</b> record</span>
+          <span>🎮 <b>{{ plays }}</b> partie{{ plays > 1 ? 's' : '' }}</span>
+          <span :class="{ off: !goat }">{{ goat ? `${TIER_LABELS[goat].medal} GOAT` : '🐐 GOAT à gagner' }}</span>
+        </div>
       </header>
 
       <div class="tabs" role="tablist">
@@ -89,10 +96,10 @@ import { withTrial } from '@/games/ready'
 import { computed, ref, watch } from 'vue'
 import { IonBackButton, IonButton, IonContent, IonFooter, IonIcon, IonPage, useIonRouter } from '@ionic/vue'
 import { useRoute } from 'vue-router'
-import { getScores, hasLocalScores, levelLabel, scoresHref, type Board, type GameId } from '@/games/highScores'
+import { bestScore, getScores, hasLocalScores, levelLabel, scoresHref, type Board, type GameId } from '@/games/highScores'
 import { GAME_ICONS } from '@/games/icons'
-import { INTROS } from '@/games/intros'
-import { earnedTrophies, gameCategory, hasPlayed, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
+import { INTROS, SUMMARIES } from '@/games/intros'
+import { earnedTrophies, gameCategory, gamesPlayed, hasPlayed, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
 
 /**
  * Écran de réglages d'un jeu : un bandeau à ses couleurs, trois onglets (Jouer, Règles, Records) et,
@@ -163,6 +170,13 @@ function medalWon(key: string) {
   return !!best && TIERS.indexOf(best) >= TIERS.indexOf(tierOf(key, keys.value.indexOf(key)))
 }
 
+// Bandeau : recalculé à chaque retour sur l'écran (après une partie).
+const refresh = ref(0)
+watch(() => route.path, (path) => path === ownPath && refresh.value++)
+const record = computed(() => (refresh.value, bestScore(props.game)))
+const plays = computed(() => (refresh.value, gamesPlayed(props.game)))
+const goat = computed(() => earnedTrophies.value[`goat-${props.game}`]?.tier)
+
 const board = computed<Board>(() => ({ game: props.game, level: props.boardLevel?.(level.value) ?? level.value, questions: questions.value }))
 const boardLabel = computed(() => `${levelLabel(board.value)}${props.questionCounts.length > 1 ? ` · ${questions.value} questions` : ''}`)
 const records = computed(() => getScores(board.value).slice(0, 5))
@@ -185,8 +199,7 @@ function start(trial = false) {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  height: 220px;
-  padding: calc(16px + var(--ion-safe-area-top, 0px)) 16px 34px;
+  padding: calc(56px + var(--ion-safe-area-top, 0px)) 16px 34px;
   background:
     radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.45), transparent 55%),
     var(--cat);
@@ -222,6 +235,33 @@ h1 {
   margin: 14px 0 0;
   font-size: 26px;
   font-weight: 700;
+}
+.summary {
+  max-width: 400px;
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  opacity: 0.8;
+}
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.stats span {
+  padding: 5px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+}
+.stats b {
+  font-size: 14px;
+}
+.stats .off {
+  opacity: 0.7;
 }
 .tabs {
   position: relative;
