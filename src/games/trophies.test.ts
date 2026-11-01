@@ -29,7 +29,7 @@ describe('Trophées', () => {
   beforeEach(() => store.clear())
 
   it('propose une cinquantaine de trophées, sans doublon', () => {
-    expect(TROPHIES.length).toBe(57)
+    expect(TROPHIES.length).toBe(59)
     expect(new Set(TROPHIES.map((t) => t.id)).size).toBe(TROPHIES.length)
   })
 

@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="Mes trophées" back-href="/home" />
+      <page-nav title="Mes trophées" />
       <div class="trophies">
         <p class="count">
           <strong>{{ earnedCount }}</strong> / {{ TROPHIES.length }} trophées
@@ -36,6 +36,7 @@
         </section>
       </div>
     </ion-content>
+    <bottom-nav active="/trophees" />
   </ion-page>
 </template>
 
@@ -44,6 +45,7 @@ import { computed } from 'vue'
 import { IonButton, IonContent, IonIcon, IonPage } from '@ionic/vue'
 import { shareSocialOutline } from 'ionicons/icons'
 import PageNav from '@/components/PageNav.vue'
+import BottomNav from '@/components/BottomNav.vue'
 import { earnedTrophies, FAMILIES, TIER_LABELS, TROPHIES, type Trophy, type TrophyFamily } from '@/games/trophies'
 import { shareImage } from '@/share/shareImage'
 

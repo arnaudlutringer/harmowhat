@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="Paramètres" back-href="/home" />
+      <page-nav title="Paramètres" />
       <!-- Trois onglets : l'instrument (et sa musique de fin), Mon compte (nom et pays du joueur), l'affichage (thème). -->
       <ion-segment :value="tab" class="tabs" @ion-change="switchTab($event.detail.value as Tab)">
         <ion-segment-button value="instrument">
@@ -89,6 +89,7 @@
         </template>
       </div>
     </ion-content>
+    <bottom-nav active="/parametres" />
   </ion-page>
 </template>
 
@@ -101,6 +102,7 @@ import {
 } from '@ionic/vue'
 import { chevronBack, play, stop } from 'ionicons/icons'
 import PageNav from '@/components/PageNav.vue'
+import BottomNav from '@/components/BottomNav.vue'
 import PlayerSettings from '@/components/PlayerSettings.vue'
 import ChoiceRow from '@/components/ChoiceRow.vue'
 import { flag } from '@/player/countries'

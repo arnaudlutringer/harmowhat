@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="Hall of fame" back-href="/home" />
+      <page-nav title="Hall of fame" />
 
       <div class="hall">
         <p class="hint">Les meilleurs scores de chaque jeu, par niveau et par nombre de questions.</p>
@@ -22,6 +22,7 @@
         </ion-list>
       </div>
     </ion-content>
+    <bottom-nav active="/hall-of-fame" />
   </ion-page>
 </template>
 
@@ -29,6 +30,7 @@
 import { ref, watch } from 'vue'
 import { IonContent, IonItem, IonLabel, IonList, IonPage, onIonViewWillEnter } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
+import BottomNav from '@/components/BottomNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
 import { GAMES, getScores, parseBoard, scoresHref, shownLevels, type Board, type GameId } from '@/games/highScores'
 import { cachedRecord, fetchRecord, scope, worldVersion, type WorldRecord } from '@/games/worldScores'

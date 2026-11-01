@@ -1,6 +1,6 @@
 # Trophées : proposition
 
-57 trophées, en 9 familles (pas de trophée de classement pour le lancement). Les trophées GOAT existent en quatre niveaux (Débutant, Normal, Expert, et Impossible une fois débloqué) : avec eux, on arrive à 87 médailles à collectionner.
+59 trophées, en 9 familles (pas de trophée de classement pour le lancement). Les trophées GOAT existent en quatre niveaux (Débutant, Normal, Expert, et Impossible une fois débloqué) : avec eux, on arrive à 89 médailles à collectionner.
 
 Un « questionnaire » est une partie complète (hors mode essai). Tout est calculé sur l'appareil.
 
@@ -115,3 +115,10 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 | Grand huit | Dans une même partie de « Garde le tempo », tiens un palier sous 60 et un autre au-dessus de 140 |
 | Tempo giusto | Trouve un tempo pile, sans un battement d'écart, au curseur de « Trouve le tempo » |
 | Chef d'orchestre | Trouve 20 tempos au total dans « Trouve le tempo » |
+
+## Défi du jour
+
+| Trophée | Condition |
+|---|---|
+| Défi relevé | Relève un défi du jour : au moins 80 % de bonnes réponses |
+| Abonné aux défis | Relève 7 défis du jour |

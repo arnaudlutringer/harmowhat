@@ -9,45 +9,67 @@
           <img class="logo" src="/logo.svg" alt="" />
           <h1>L'oreille</h1>
         </div>
-        <ion-button fill="clear" router-link="/parametres" aria-label="Paramètres" title="Paramètres">
-          <ion-icon slot="icon-only" :icon="settingsOutline" />
-        </ion-button>
+        <span class="spacer" />
       </div>
-      <p class="intro">Tu penses avoir l'oreille absolue&nbsp;?<br />Prouve-le&nbsp;!</p>
-      <!-- Les jeux, rangés par catégorie : l'oreille (on écoute), la voix (on chante), le solfège (on lit la partition). -->
+      <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
+
+      <!-- Défi du jour : le même jeu et le même niveau pour tout le monde, jusqu'à minuit. -->
+      <button class="daily" :class="{ done: challengeDone }" @click="router.push(challenge.href)">
+        <ion-icon class="daily-icon" :icon="GAME_ICONS[challenge.board.game]" aria-hidden="true" />
+        <span class="daily-text">
+          <small>{{ challengeDone ? 'DÉFI DU JOUR RELEVÉ ✓' : 'DÉFI DU JOUR' }}</small>
+          <strong>{{ challenge.title }} · {{ challenge.level }}</strong>
+          <span>{{ challenge.board.questions }} questions · {{ challengeDone ? 'reviens demain pour le suivant' : '80 % de bonnes réponses pour le relever' }}</span>
+        </span>
+        <span class="daily-note" aria-hidden="true">♪</span>
+      </button>
+
+      <!-- Les jeux, rangés par catégorie : l'oreille, la voix, le solfège, le rythme, le tempo. -->
       <section v-for="category in categories" :key="category.title" class="category">
-        <h2>{{ category.title }}</h2>
+        <h2>{{ category.title }} <small>{{ category.games.length }} jeux</small></h2>
         <div class="games">
-          <ion-card v-for="game in category.games" :key="game.path" button :router-link="game.path" :style="{ '--background': category.color }">
-            <ion-card-header>
-              <ion-card-title>{{ game.title }}</ion-card-title>
-              <ion-icon class="icon" :icon="game.icon" aria-hidden="true" />
-            </ion-card-header>
-            <ion-card-content>{{ game.description }}</ion-card-content>
-          </ion-card>
+          <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: category.color }" :title="game.description">
+            <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
+            <strong>{{ game.title }}</strong>
+            <!-- Médailles GOAT déjà gagnées sur ce jeu (bronze, argent, or, puis diamant en impossible). -->
+            <span class="medals" :aria-label="medalLabel(game.path)">
+              <span v-for="m in medalsFor(game.path)" :key="m.medal" :class="{ off: !m.won }">{{ m.medal }}</span>
+            </span>
+          </router-link>
         </div>
       </section>
-      <!-- Hall of fame et Mes trophées, côte à côte, chacun sur la moitié de l'écran. -->
-      <div class="bottom">
-        <ion-button class="hall" router-link="/hall-of-fame">
-          <ion-icon slot="start" :icon="trophyOutline" />
-          Hall of fame
-        </ion-button>
-        <ion-button class="hall" fill="outline" router-link="/trophees" data-trophy-target>
-          <ion-icon slot="start" :icon="medalOutline" />
-          Mes trophées
-        </ion-button>
-      </div>
     </ion-content>
+    <bottom-nav active="/home" />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import {
-  IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonPage,
-} from '@ionic/vue'
-import { informationCircleOutline, medalOutline, settingsOutline, trophyOutline } from 'ionicons/icons'
+import { computed } from 'vue'
+import { IonButton, IonContent, IonIcon, IonPage, useIonRouter } from '@ionic/vue'
+import { informationCircleOutline } from 'ionicons/icons'
+import BottomNav from '@/components/BottomNav.vue'
 import { GAME_ICONS } from '@/games/icons'
+import type { GameId } from '@/games/highScores'
+import { dailyChallenge, dayNumber } from '@/games/dailyChallenge'
+import { challengeDays, earnedTrophies, impossibleUnlocked, TIER_LABELS, type Tier } from '@/games/trophies'
+
+const router = useIonRouter()
+const challenge = dailyChallenge()
+const challengeDone = computed(() => challengeDays.value.includes(dayNumber()))
+
+const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
+const idOf = (path: string) => path.replace('/games/', '') as GameId
+/** Médailles GOAT d'un jeu : celles du niveau atteint et des niveaux en dessous ; le diamant seulement si l'impossible est débloqué. */
+function medalsFor(path: string) {
+  const id = idOf(path)
+  const best = earnedTrophies.value[`goat-${id}`]?.tier
+  const reached = best ? TIERS.indexOf(best) : -1
+  return TIERS.filter((t) => t !== 'impossible' || impossibleUnlocked.value.includes(id)).map((t, i) => ({ medal: TIER_LABELS[t].medal, won: i <= reached }))
+}
+function medalLabel(path: string) {
+  const best = earnedTrophies.value[`goat-${idOf(path)}`]?.tier
+  return best ? `Médaille GOAT : ${TIER_LABELS[best].label}` : 'Pas encore de médaille GOAT'
+}
 
 const earGames = [
   {
@@ -168,71 +190,140 @@ h1 {
 }
 /* Même police manuscrite que le titre, un peu plus grande que le texte courant pour rester lisible. */
 .intro {
+  margin: 4px 0 12px;
   font-family: 'Dancing Script', cursive;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--ion-color-medium);
   text-align: center;
 }
-/* Titre de catégorie : la police manuscrite du titre, en violet. */
+/* Défi du jour : un bandeau sombre, la note en filigrane. */
+.daily {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0 8px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 20px;
+  background: var(--hw-daily, #2d3047);
+  color: #fff;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(45, 48, 71, 0.25);
+}
+.daily-icon {
+  flex: none;
+  font-size: 48px;
+  color: #fff;
+}
+.daily-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.daily-text small {
+  color: #f2c94c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.daily-text strong {
+  font-size: 17px;
+}
+.daily-text span {
+  font-size: 12px;
+  opacity: 0.75;
+}
+.daily.done .daily-text small {
+  color: #7bd88f;
+}
+.daily-note {
+  position: absolute;
+  right: -4px;
+  bottom: -26px;
+  font-size: 96px;
+  opacity: 0.08;
+}
+/* Titre de catégorie : la police manuscrite du titre, en violet, et le nombre de jeux à droite. */
 .category h2 {
-  margin: 20px 0 10px;
+  display: flex;
+  align-items: baseline;
+  margin: 18px 0 10px;
   font-family: 'Dancing Script', cursive;
   font-size: 28px;
   font-weight: 700;
   color: var(--ion-color-primary);
 }
-.category:first-of-type h2 {
-  margin-top: 4px;
+.category h2 small {
+  margin-left: auto;
+  font-family: var(--ion-font-family);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ion-color-medium);
 }
 .games {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
-/* Cartes des jeux : angles droits, la teinte douce de leur catégorie, texte et icône foncés. */
-ion-card {
-  margin: 0;
-  border-radius: 0;
-  --color: var(--hw-card-ink);
-  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.08);
-}
-/* En-tête de carte : le titre du jeu à gauche, son icône à droite. */
-ion-card-header {
-  flex-direction: row;
-  align-items: center;
+/* Carte d'un jeu : coins arrondis, la teinte de sa catégorie, l'icône dans un rond blanc, les médailles. */
+.card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
-  padding: 6px 12px 6px;
-}
-ion-card-title {
-  flex: 1;
+  padding: 12px;
+  border-radius: 18px;
   color: var(--hw-card-ink);
-  font-size: 18px;
-  font-weight: 700;
-  text-align: left;
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgba(45, 48, 71, 0.08);
 }
-ion-card-content {
-  color: var(--hw-card-ink);
-  padding: 0 12px 12px;
-  font-size: 10.5px;
-  line-height: 1.35;
+.card:active {
+  transform: scale(0.98);
 }
-/* Icône au trait, de la couleur du texte. */
-.icon {
-  flex: none;
-  font-size: 36px;
-  color: var(--hw-card-ink);
+/* Un reflet clair dans le coin, pour donner du relief. */
+.card::after {
+  content: '';
+  position: absolute;
+  right: -26px;
+  top: -26px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
 }
-.bottom {
+.disc {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 20px;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--hw-surface, #fff);
+  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.12);
 }
-.hall {
-  margin: 0;
-  --border-radius: 0;
-  font-weight: 700;
+.disc ion-icon {
+  font-size: 32px;
+  color: var(--hw-card-ink);
+}
+.card strong {
+  font-size: 16px;
+  line-height: 1.15;
+}
+.medals {
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+.medals .off {
+  filter: grayscale(1);
+  opacity: 0.35;
 }
 /* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
 /* Infos en haut à gauche, Paramètres en haut à droite, logo et titre centrés entre les deux. */
@@ -253,5 +344,9 @@ ion-card-content {
 .top ion-button {
   --color: var(--ion-color-primary);
   margin: 0;
+}
+/* Même largeur que le bouton Infos : le titre reste centré. */
+.spacer {
+  width: 48px;
 }
 </style>

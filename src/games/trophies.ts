@@ -89,6 +89,8 @@ const NO_IMPOSSIBLE: GameId[] = ['garde-tempo', 'trouve-tempo']
 export const gameCategory = (game: GameId) => CATEGORIES.findIndex((games) => games.includes(game))
 
 export const TROPHIES: Trophy[] = [
+  { id: 'defi-releve', family: 'decouverte', icon: '📅', title: 'Défi relevé', condition: 'Relève un défi du jour : au moins 80 % de bonnes réponses' },
+  { id: 'defis-7', family: 'perseverance', icon: '🗓️', title: 'Abonné aux défis', condition: 'Relève 7 défis du jour' },
   { id: 'premiers-pas', family: 'decouverte', icon: '👣', title: 'Premiers pas', condition: 'Termine ton premier questionnaire' },
   { id: 'bien-prepare', family: 'decouverte', icon: '🎓', title: 'Bien préparé', condition: 'Termine le tutoriel' },
   { id: 'curieux', family: 'decouverte', icon: '🔍', title: 'Curieux', condition: 'Essaie une question dans le mode essai' },
@@ -178,6 +180,8 @@ interface Stats {
   endingsHeard: string[]
   /** Tempos trouvés dans « Trouve le tempo ». */
   temposFound: number
+  /** Jours (numéros) où le défi du jour a été relevé. */
+  challenges: number[]
   /** Jeux dont le niveau Impossible est débloqué. */
   impossible: GameId[]
 }
@@ -193,7 +197,7 @@ const STORAGE_KEY = 'harmowhat.trophies'
 
 const emptyStats = (): Stats => ({
   games: 0, correct: 0, lastDay: '', streak: 0, played: [], instruments: [], perfect: [], harmoniesSung: 0,
-  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0,
+  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [],
 })
 
 function load(): State {
@@ -211,6 +215,8 @@ export const earnedTrophies = ref<Record<string, Earned>>(load().earned)
 export const pendingTrophyCount = ref(load().pending.length)
 /** Jeux dont le niveau Impossible est débloqué (réactif, pour les réglages). */
 export const impossibleUnlocked = ref<GameId[]>(load().stats.impossible)
+/** Jours où le défi du jour a été relevé (réactif, pour l'accueil). */
+export const challengeDays = ref<number[]>(load().stats.challenges)
 
 /**
  * Tests en local (npm run dev seulement, jamais dans l'APK) : ajouter ?impossible=1 à l'adresse d'un écran
@@ -236,6 +242,7 @@ function save(state: State) {
   earnedTrophies.value = { ...state.earned }
   pendingTrophyCount.value = state.pending.length
   impossibleUnlocked.value = [...state.stats.impossible]
+  challengeDays.value = [...state.stats.challenges]
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
@@ -277,6 +284,8 @@ function checkCounters(state: State) {
     ['accords-parfaits', s.chords >= 10],
     ['lecteur-aguerri', s.notesRead >= 100],
     ['chef-d-orchestre', s.temposFound >= 20],
+    ['defi-releve', s.challenges.length >= 1],
+    ['defis-7', s.challenges.length >= 7],
   ]
   for (const [id, ok] of rules) if (ok) award(state, id)
 }
@@ -291,6 +300,8 @@ export interface GameContext {
   forkAvailable: boolean
   forkUsed: boolean
   now?: Date
+  /** La partie est le défi du jour : numéro du jour (voir dailyChallenge.ts). */
+  challengeDay?: number
 }
 
 /** Fin d'un questionnaire : met à jour les compteurs et donne les trophées mérités. */
@@ -312,6 +323,8 @@ export function evaluateGame(ctx: GameContext): void {
   const yesterday = dayOf(new Date(new Date(today).getTime() - 86400000))
   if (s.lastDay !== today) s.streak = s.lastDay === yesterday ? s.streak + 1 : 1
   s.lastDay = today
+  // Défi du jour relevé : au moins 80 % de bonnes réponses.
+  if (ctx.challengeDay !== undefined && results.length > 0 && correct / results.length >= 0.8) s.challenges = addUnique(s.challenges, ctx.challengeDay)
 
   // Compteurs d'abord : « Premiers pas » s'annonce avant les exploits de la partie.
   checkCounters(state)
