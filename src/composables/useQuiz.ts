@@ -241,6 +241,17 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     startQuestion()
   }
 
+  /** Termine la partie tout de suite (jeux sans nombre de questions, comme « Garde le tempo »). */
+  function finish() {
+    clearTimeout(timer)
+    clearTimeout(clockTimer)
+    clearTimeout(openTimer)
+    clearTimeout(replayTimer)
+    stopTicking()
+    finished.value = true
+    stopAll()
+  }
+
   /** Nouvelle partie avec les mêmes réglages. */
   function restart() {
     clearTimeout(timer)
@@ -272,6 +283,6 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     trial,
     forkUsed,
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
-    playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, restart, pause, resume,
+    playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, finish, restart, pause, resume,
   }
 }

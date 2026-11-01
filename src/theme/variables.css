@@ -61,6 +61,7 @@
   --hw-category-voice: #e7ddf3;
   --hw-category-theory: #d9ebe4;
   --hw-category-rhythm: #f3e7c4;
+  --hw-category-tempo: #dbe6f5;
   --hw-card-ink: #3a3350;
 
   /* Surfaces blanches (popin des trophées, trophées gagnés) et fond d'alerte doux. */
@@ -89,6 +90,7 @@
   --hw-category-voice: #3b3452;
   --hw-category-theory: #2c4039;
   --hw-category-rhythm: #463f28;
+  --hw-category-tempo: #2c3a4f;
   --hw-card-ink: #f0eef8;
 
   --hw-surface: #2b2840;

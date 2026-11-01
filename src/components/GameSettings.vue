@@ -4,12 +4,15 @@
       <page-nav :title="title" back-href="/home" :game="game" />
       <div class="settings hw-square">
         <game-intro :game="game" />
+        <!-- Pas de choix quand le jeu n'a qu'une durée (« Garde le tempo » : tant que le joueur tient). -->
+        <template v-if="questionCounts.length > 1">
         <h2>Nombre de questions</h2>
         <ion-segment v-model="questions">
           <ion-segment-button v-for="n in questionCounts" :key="n" :value="n">
             <ion-label>{{ n }}</ion-label>
           </ion-segment-button>
         </ion-segment>
+        </template>
 
         <h2>Niveau</h2>
         <ion-radio-group v-model="level">

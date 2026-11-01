@@ -7,7 +7,8 @@
     <trophy-unlocked :queue="unlocked" />
     <img class="emoji" :src="tierImage" alt="" />
     <h1>{{ summary.points }} <small>pts</small></h1>
-    <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
+    <p v-if="answersLabel" class="answers">{{ answersLabel }}</p>
+    <p v-else class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
     <ion-button class="share" fill="clear" size="small" :disabled="sharing" @click="share('score')">
       <ion-icon slot="start" :icon="shareSocialOutline" />
       Partager mon score
@@ -111,6 +112,8 @@ const props = defineProps<{
   /** Le diapason était proposé pendant les questions, et a servi (trophée « Sans filet »). */
   forkAvailable?: boolean
   forkUsed?: boolean
+  /** Bilan propre au jeu, à la place de « n / total bonnes réponses ». */
+  answersLabel?: string
 }>()
 const emit = defineEmits<{ restart: [] }>()
 

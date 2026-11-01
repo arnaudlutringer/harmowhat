@@ -61,6 +61,18 @@ const SVGS: Record<GameId, string> = {
     `<path d="M80 270v120c0 31 79 56 176 56s176-25 176-56V270" ${S}/>` +
     `<path d="M80 330l88 108M432 330l-88 108M256 326v120" ${S}/>` +
     `<path d="M120 60l116 184M392 60L276 244" ${S}/><circle cx="114" cy="50" r="22"/><circle cx="398" cy="50" r="22"/>`,
+  // Un métronome, son balancier penché : garde le tempo.
+  'garde-tempo':
+    `<path d="M196 72h120l84 376H112z" ${S}/>` +
+    `<path d="M112 384h288" ${S}/>` +
+    `<path d="M256 384L352 120" ${S}/>` +
+    `<rect x="296" y="196" width="56" height="36" rx="6" transform="rotate(20 324 214)"/>`,
+  // Un métronome et un point d'interrogation en exposant : trouve le tempo.
+  'trouve-tempo':
+    `<path d="M128 120h96l68 328H60z" ${S}/>` +
+    `<path d="M60 384h232" ${S}/>` +
+    `<path d="M176 384L236 200" ${S}/>` +
+    `<path d="M340 92a54 54 0 1 1 80 48c-24 14-34 30-34 58" ${S}/><circle cx="386" cy="262" r="18"/>`,
   // Une armure : deux dièses sur la portée.
   tonalite:
     STAFF +

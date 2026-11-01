@@ -123,18 +123,23 @@ export function createRhythmQuestion(level: Level): RhythmQuestion {
   const cfg = LEVELS[level]
   const tempo = cfg.tempoRange ? randomInt(cfg.tempoRange[0], cfg.tempoRange[1]) : cfg.tempo
   const count = onsets(cells).length
-  // Mélodie : des notes de la gamme de Do autour du Mi5, par petits pas ; sinon toujours le Mi5.
-  const pitches: number[] = []
-  let step = 2
-  for (let i = 0; i < count; i++) {
-    if (cfg.melody) step = Math.max(0, Math.min(MELODY_SCALE.length - 1, step + randomInt(-2, 2)))
-    pitches.push(MELODY_SCALE[step])
-  }
+  const pitches = cfg.melody ? melodyPitches(count) : Array<number>(count).fill(MELODY_SCALE[2])
   return { cells, tempo, pitches, choices: [...pool] }
 }
 
 /** Gamme des mélodies du niveau Impossible : Do5 à Do6. */
 const MELODY_SCALE = [72, 74, 76, 77, 79, 81, 83, 84]
+
+/** Une petite mélodie de count notes : la gamme de Do autour du Mi5, par petits pas. */
+export function melodyPitches(count: number): number[] {
+  const pitches: number[] = []
+  let step = 2
+  for (let i = 0; i < count; i++) {
+    step = Math.max(0, Math.min(MELODY_SCALE.length - 1, step + randomInt(-2, 2)))
+    pitches.push(MELODY_SCALE[step])
+  }
+  return pitches
+}
 
 /** Instants où une note commence, en temps depuis le début de la mesure. */
 export function onsets(cells: readonly CellId[]): number[] {

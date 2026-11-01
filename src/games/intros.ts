@@ -53,4 +53,12 @@ export const INTROS: Record<GameId, string[]> = {
     'Un rythme de 3 temps est écrit sur la portée : appuie sur Démarrer, puis, après le décompte de 3 clics, tape chaque note sur le grand bouton.',
     'Chaque frappe est jugée sur sa précision : les points dépendent de ton écart moyen. Tu entends ensuite le rythme joué juste.',
   ],
+  'garde-tempo': [
+    'Le métronome donne 3 temps, puis se tait : tape chaque temps sur le grand bouton, en gardant le même tempo, le plus longtemps possible.',
+    'Toutes les 30 secondes tenues, le tempo change (en débutant, il monte de 10 en 10). La partie s’arrête au premier temps trop tôt, trop tard ou oublié. Chaque palier rapporte des points selon ta précision.',
+  ],
+  'trouve-tempo': [
+    'Le métronome donne 3 temps, puis une mélodie de 3 temps est jouée au même tempo : retrouve ce tempo, en battements par minute.',
+    'En débutant, choisis parmi 4 tempos ronds ; ensuite, règle le métronome (de 40 à 200) : il faut tomber à 10 près en normal, à 4 près en expert.',
+  ],
 }

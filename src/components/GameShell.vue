@@ -5,7 +5,8 @@
       <game-result
         v-if="quiz.finished.value"
         :results="quiz.results.value"
-        :total="quiz.total"
+        :total="endless ? quiz.results.value.length : quiz.total"
+        :answers-label="answersLabel"
         :board="board"
         :settings-href="settingsHref"
         :fork-available="!noTuningFork"
@@ -36,7 +37,8 @@
           <div class="progress">
             <!-- Essai : une seule question, sans total ; « Essai » en grand à la place. -->
             <span v-if="quiz.trial" class="trial">Essai</span>
-            <span v-if="!quiz.trial">Question {{ quiz.number.value }} / {{ quiz.total }}</span>
+            <span v-if="!quiz.trial && endless">Palier {{ quiz.number.value }}</span>
+            <span v-else-if="!quiz.trial">Question {{ quiz.number.value }} / {{ quiz.total }}</span>
             <span v-if="!quiz.trial" class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
           </div>
           <!-- Points gagnés à la question : « +350pts » en biais, qui s'envole des points de la question vers le total (1,5 s). -->
@@ -58,7 +60,8 @@
 
         <div class="feedback" :class="quiz.feedback.value?.correct ? 'ok' : 'ko'" aria-live="polite">
           <template v-if="quiz.feedback.value">
-            <strong>{{ quiz.feedback.value.correct ? 'Bonne réponse !' : 'Mauvaise réponse' }}</strong>
+            <strong v-if="endless">{{ quiz.feedback.value.correct ? 'Palier tenu !' : 'Perdu !' }}</strong>
+            <strong v-else>{{ quiz.feedback.value.correct ? 'Bonne réponse !' : 'Mauvaise réponse' }}</strong>
             <span>{{ quiz.feedback.value.message }}</span>
             <!-- Passage automatique : une barre se remplit jusqu'à la question suivante. -->
             <!-- Essai : pas de question suivante, on revient aux réglages quand on a compris. -->
@@ -107,6 +110,10 @@ const props = defineProps<{
   noTuningFork?: boolean
   /** Délai du passage automatique à la question suivante (ms) : une barre se remplit pendant ce temps. */
   advanceBar?: number
+  /** Partie sans nombre de questions (« Garde le tempo ») : « Palier n », et le bilan compte les paliers. */
+  endless?: boolean
+  /** Bilan propre au jeu, à la place de « n / total bonnes réponses ». */
+  answersLabel?: string
 }>()
 
 // À chaque réponse qui rapporte des points (sauf la première, où le total ne fait que démarrer),

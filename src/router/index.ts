@@ -39,6 +39,10 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/quel-rythme/jouer', component: () => import('@/views/WhichRhythmGame.vue') },
   { path: '/games/joue-rythme', component: () => import('@/views/PlayRhythmSettings.vue') },
   { path: '/games/joue-rythme/jouer', component: () => import('@/views/PlayRhythmGame.vue') },
+  { path: '/games/garde-tempo', component: () => import('@/views/KeepTempoSettings.vue') },
+  { path: '/games/garde-tempo/jouer', component: () => import('@/views/KeepTempoGame.vue') },
+  { path: '/games/trouve-tempo', component: () => import('@/views/FindTempoSettings.vue') },
+  { path: '/games/trouve-tempo/jouer', component: () => import('@/views/FindTempoGame.vue') },
 ]
 
 const router = createRouter({

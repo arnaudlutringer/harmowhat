@@ -133,12 +133,28 @@ const rhythmGames = [
   },
 ]
 
+const tempoGames = [
+  {
+    path: '/games/garde-tempo',
+    icon: GAME_ICONS['garde-tempo'],
+    title: 'Garde le tempo',
+    description: 'Après 3 temps de métronome, tape chaque temps le plus longtemps possible, sans t’écarter.',
+  },
+  {
+    path: '/games/trouve-tempo',
+    icon: GAME_ICONS['trouve-tempo'],
+    title: 'Trouve le tempo',
+    description: 'Écoute une mélodie et retrouve son tempo, en battements par minute.',
+  },
+]
+
 // Une teinte douce par catégorie, un peu plus foncée que le fond crème.
 const categories = [
   { title: "L'oreille", color: 'var(--hw-category-ear)', games: earGames },
   { title: 'La voix', color: 'var(--hw-category-voice)', games: voiceGames },
   { title: 'Le solfège', color: 'var(--hw-category-theory)', games: theoryGames },
   { title: 'Le rythme', color: 'var(--hw-category-rhythm)', games: rhythmGames },
+  { title: 'Le tempo', color: 'var(--hw-category-tempo)', games: tempoGames },
 ]
 </script>
 
