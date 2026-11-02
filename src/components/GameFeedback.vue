@@ -1,6 +1,6 @@
 <template>
   <!-- Message après une réponse : juste ou faux, l'explication, puis la suite (barre, « J'ai compris » ou glisser). -->
-  <div class="feedback" :class="quiz.feedback.value?.correct ? 'ok' : 'ko'" aria-live="polite">
+  <div class="feedback" :class="[quiz.feedback.value?.correct ? 'ok' : 'ko', { reserved: reserve }]" aria-live="polite">
     <template v-if="quiz.feedback.value">
       <strong v-if="endless">{{ quiz.feedback.value.correct ? 'Palier tenu !' : 'Perdu !' }}</strong>
       <strong v-else>{{ quiz.feedback.value.correct ? 'Bonne réponse !' : 'Mauvaise réponse' }}</strong>
@@ -31,6 +31,8 @@ defineProps<{
   endless?: boolean
   advanceBar?: number
   swipeToNext?: boolean
+  /** Garder la place du message avant la réponse : rien ne bouge à l'écran quand il apparaît. */
+  reserve?: boolean
 }>()
 const emit = defineEmits<{ understood: [] }>()
 </script>
@@ -47,9 +49,13 @@ const emit = defineEmits<{ understood: [] }>()
   text-align: center;
 }
 /* Pas de place réservée au message tant qu'on n'a pas répondu : le bas de l'écran (ex. Valider) reste visible. */
-.feedback:empty {
+.feedback:empty:not(.reserved) {
   min-height: 0;
   margin-top: 0;
+}
+/* Place réservée : la hauteur d'un message de deux lignes et de la ligne « Glisse vers la gauche ». */
+.feedback.reserved {
+  min-height: 120px;
 }
 .feedback.ok strong {
   color: var(--ion-color-success);

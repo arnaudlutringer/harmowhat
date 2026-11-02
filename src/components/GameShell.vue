@@ -62,7 +62,7 @@
           <slot />
         </div>
 
-        <game-feedback v-if="!pinned" :quiz="quiz" :endless="endless" :advance-bar="advanceBar" :swipe-to-next="swipeToNext" @understood="backToSettings" />
+        <game-feedback v-if="!pinned" reserve :quiz="quiz" :endless="endless" :advance-bar="advanceBar" :swipe-to-next="swipeToNext" @understood="backToSettings" />
       </div>
     </ion-content>
     <!-- Jeux avec un bouton Valider : lui et le message de la réponse restent fixés en bas de l'écran. -->
@@ -277,9 +277,12 @@ useBackButton(20, (processNextHandler) => {
   margin: 0 auto;
   padding: calc(10px + var(--ion-safe-area-top, 0px)) 16px 4px;
 }
+/* Pied fixe : toujours la même hauteur (Valider avant la réponse, le message après), la question ne bouge pas. */
 .bottom {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  min-height: 150px;
   max-width: 420px;
   margin: 0 auto;
   padding: 8px 16px calc(12px + var(--ion-safe-area-bottom, 0px));
