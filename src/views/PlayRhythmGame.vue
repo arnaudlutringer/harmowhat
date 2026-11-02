@@ -103,7 +103,8 @@ async function start() {
   // Décompte affiché au rythme des clics, puis la mesure, puis le jugement (un peu de marge pour une dernière frappe tardive).
   for (let i = 1; i < COUNT_IN; i++) timers.push(setTimeout(() => (count.value = COUNT_IN - i), barStart - now - (COUNT_IN - i) * beat * 1000))
   count.value = COUNT_IN
-  timers.push(setTimeout(() => (phase.value = 'playing'), Math.max(0, barStart - now - 150)))
+  // Le bouton passe à « Tape ! » 350 ms avant le premier temps : on peut taper le premier temps sans hésiter.
+  timers.push(setTimeout(() => (phase.value = 'playing'), Math.max(0, barStart - now - 350)))
   timers.push(setTimeout(finish, barStart - now + (BEATS * beat + tolerance * 2) * 1000))
 }
 

@@ -34,6 +34,9 @@
     <!-- Normal et expert : le curseur du métronome, puis Valider. -->
     <template v-else>
       <metronome-slider v-model="guess" :min="cfg.low" :max="cfg.high" :disabled="revealed" :target="revealed ? q.tempo : undefined" />
+    </template>
+    <!-- Au curseur : Valider fixé en bas de l'écran, avec le message de la réponse. -->
+    <template v-if="!cfg.choices" #bottom>
       <ion-button v-if="!revealed" expand="block" size="large" class="validate" :disabled="!quiz.canAnswer.value" @click="choose(guess)">
         Valider
       </ion-button>

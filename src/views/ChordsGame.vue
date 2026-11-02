@@ -28,6 +28,8 @@
       </div>
     </div>
 
+    <!-- Valider reste fixé en bas de l'écran, avec le message de la réponse. -->
+    <template #bottom>
     <ion-button
       v-if="!revealed"
       expand="block"
@@ -38,6 +40,7 @@
     >
       Valider ({{ selected.length }}/{{ size }})
     </ion-button>
+    </template>
   </game-shell>
 </template>
 

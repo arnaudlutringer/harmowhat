@@ -131,7 +131,8 @@ async function startStage(tempo: number): Promise<number> {
   const now = performance.now()
   count.value = COUNT_IN
   for (let i = 1; i < COUNT_IN; i++) timers.push(setTimeout(() => (count.value = COUNT_IN - i), barStart - now - (COUNT_IN - i) * beat * 1000))
-  timers.push(setTimeout(() => (phase.value = 'playing'), Math.max(0, barStart - now - 150)))
+  // Le bouton passe à « Tape ! » 350 ms avant le premier temps : on peut taper le premier temps sans hésiter.
+  timers.push(setTimeout(() => (phase.value = 'playing'), Math.max(0, barStart - now - 350)))
   // Un temps passé sans frappe (au-delà de la tolérance) arrête la partie.
   monitor = setInterval(() => {
     if (phase.value !== 'playing' && phase.value !== 'counting') return

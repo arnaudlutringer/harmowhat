@@ -23,6 +23,8 @@ const props = defineProps<{
   correct?: number[]
   wrong?: number[]
   together?: number[]
+  /** Texte écrit à droite de la première note, au milieu de la portée (l'intervalle cherché : « 3M↑ »). */
+  annotation?: string
 }>()
 const host = ref<HTMLDivElement>()
 
@@ -84,6 +86,14 @@ async function draw() {
 
   // Le dessin suit la couleur du texte (thème clair ou sombre).
   const svg = el.querySelector('svg')
+  if (svg && props.annotation && tickables[0]) {
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+    text.setAttribute('x', String(tickables[0].getAbsoluteX() + 34))
+    text.setAttribute('y', String(stave.getYForLine(2) + 7))
+    text.setAttribute('class', 'annotation')
+    text.textContent = props.annotation
+    svg.appendChild(text)
+  }
   if (svg) {
     svg.setAttribute('viewBox', `0 0 ${width} 150`)
     svg.removeAttribute('width')
@@ -92,7 +102,7 @@ async function draw() {
 }
 
 onMounted(draw)
-watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together], draw)
+watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together, props.annotation], draw)
 </script>
 
 <style scoped>
@@ -116,6 +126,17 @@ watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together
 .staff :deep(svg .correct *) {
   fill: var(--ion-color-success);
   stroke: var(--ion-color-success);
+}
+/* Annotation de l'intervalle cherché : violet, en gras. */
+.staff :deep(svg text.annotation) {
+  fill: var(--ion-color-primary);
+  /* Un contour couleur papier : le texte se détache des lignes de la portée. */
+  stroke: #fffdf3;
+  stroke-width: 6px;
+  paint-order: stroke;
+  font-family: var(--ion-font-family);
+  font-size: 20px;
+  font-weight: 700;
 }
 /* Note chantée par erreur : en rouge. */
 .staff :deep(svg .wrong),
