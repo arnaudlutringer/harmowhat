@@ -87,9 +87,9 @@ export function parseSettings(raw: { questions?: unknown; level?: unknown }): Ma
 const NUMBER_NAMES: Record<number, string> = { 2: 'seconde', 3: 'tierce', 4: 'quarte', 5: 'quinte', 6: 'sixte', 7: 'septième' }
 
 /** Nom d'un intervalle dans une phrase, ex. « quinte juste », « septième majeure ». */
-/** Annotation courte d'un intervalle, sur la portée : « 3M↑ », « 6m↓ », « 4J↑ », « 4+↓ ». */
+/** Annotation courte d'un intervalle, sur la portée : « 3M↑ », « 6m↓ », « 4↑ » (juste : sans lettre), « 4+↓ ». */
 export function intervalShort(i: Interval, ascending: boolean): string {
-  const quality = { mineure: 'm', majeure: 'M', juste: 'J', augmentée: '+' }[i.quality]
+  const quality = { mineure: 'm', majeure: 'M', juste: '', augmentée: '+' }[i.quality]
   return `${i.number}${quality}${ascending ? '↑' : '↓'}`
 }
 
