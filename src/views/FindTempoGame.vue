@@ -7,7 +7,17 @@
     settings-href="/games/trouve-tempo"
     swipe-to-next
     no-tuning-fork
+    :compact="!cfg.choices"
   >
+    <!-- Au curseur, un bouton de lecture plus petit, à côté de sa consigne : le métronome et Valider tiennent à l'écran. -->
+    <template v-if="!cfg.choices" #player>
+      <div class="mini-player">
+        <button class="play" :class="{ 'is-playing': quiz.playing.value }" aria-label="Écouter la mélodie" @click="quiz.listen()">
+          <ion-icon :icon="quiz.playing.value ? volumeHigh : play" />
+        </button>
+        <span>{{ quiz.playing.value ? 'Écoute…' : !quiz.hasListened.value ? 'Lecture…' : revealed ? 'Réécouter' : quiz.replayCosts.value ? `Réécouter (−${quiz.replayPenalty} pts)` : ' ' }}</span>
+      </div>
+    </template>
     <!-- Débutant : 4 tempos proposés. -->
     <div v-if="cfg.choices" class="choices">
       <ion-button
@@ -34,7 +44,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { IonButton } from '@ionic/vue'
+import { IonButton, IonIcon } from '@ionic/vue'
+import { play, volumeHigh } from 'ionicons/icons'
 import GameShell from '@/components/GameShell.vue'
 import MetronomeSlider from '@/components/MetronomeSlider.vue'
 import { useQuiz } from '@/composables/useQuiz'
@@ -99,6 +110,22 @@ function colorFor(t: number) {
   font-weight: 700;
 }
 .validate {
-  margin-top: 16px;
+  margin-top: 10px;
+}
+.mini-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.mini-player .play {
+  width: 64px;
+  height: 64px;
+  font-size: 30px;
+  display: grid;
+  place-items: center;
+}
+.mini-player span {
+  color: var(--ion-color-medium);
 }
 </style>

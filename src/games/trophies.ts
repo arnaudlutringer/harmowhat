@@ -186,6 +186,8 @@ interface Stats {
   plays: Partial<Record<GameId, number>>
   /** Médailles de niveau gagnées (un sans faute à ce niveau), par jeu. */
   levelMedals: Partial<Record<GameId, Tier[]>>
+  /** Meilleure réussite (de 0 à 1) par jeu et par niveau de classement : la part de bonnes réponses. */
+  bestResults: Partial<Record<GameId, Record<string, number>>>
   /** Jeux dont le niveau Impossible est débloqué. */
   impossible: GameId[]
 }
@@ -201,7 +203,7 @@ const STORAGE_KEY = 'harmowhat.trophies'
 
 const emptyStats = (): Stats => ({
   games: 0, correct: 0, lastDay: '', streak: 0, played: [], instruments: [], perfect: [], harmoniesSung: 0,
-  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], plays: {}, levelMedals: {},
+  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], plays: {}, levelMedals: {}, bestResults: {},
 })
 
 function load(): State {
@@ -223,6 +225,8 @@ export const impossibleUnlocked = ref<GameId[]>(load().stats.impossible)
 export const challengeDays = ref<number[]>(load().stats.challenges)
 /** Médailles de niveau gagnées, par jeu (réactif, pour l'accueil et les réglages). */
 export const levelMedals = ref<Partial<Record<GameId, Tier[]>>>(load().stats.levelMedals)
+/** Meilleure réussite par jeu et par niveau (réactif, pour le défi du jour). */
+export const bestResults = ref<Partial<Record<GameId, Record<string, number>>>>(load().stats.bestResults)
 
 /**
  * Tests en local (npm run dev seulement, jamais dans l'APK) : ajouter ?impossible=1 à l'adresse d'un écran
@@ -250,6 +254,7 @@ function save(state: State) {
   impossibleUnlocked.value = [...state.stats.impossible]
   challengeDays.value = [...state.stats.challenges]
   levelMedals.value = { ...state.stats.levelMedals }
+  bestResults.value = { ...state.stats.bestResults }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
@@ -324,6 +329,10 @@ export function evaluateGame(ctx: GameContext): void {
   s.correct += correct
   s.played = addUnique(s.played, board.game)
   s.plays = { ...s.plays, [board.game]: (s.plays[board.game] ?? 0) + 1 }
+  // Meilleure réussite à ce niveau (« Garde le tempo » : points / 10 000 ; les autres : part de bonnes réponses).
+  const ratio = board.game === 'garde-tempo' ? Math.min(1, results.reduce((sum, r) => sum + r.points, 0) / 10000) : results.length ? correct / results.length : 0
+  const bests = s.bestResults[board.game] ?? {}
+  s.bestResults = { ...s.bestResults, [board.game]: { ...bests, [board.level]: Math.max(bests[board.level] ?? 0, ratio) } }
   s.instruments = addUnique(s.instruments, ctx.instrument)
   if (allCorrect) s.perfect = addUnique(s.perfect, board.game)
   // Jours de suite : hier prolonge la série, aujourd'hui ne change rien, sinon elle repart à 1.
@@ -361,7 +370,9 @@ export function evaluateGame(ctx: GameContext): void {
   // Médaille du niveau joué : un questionnaire complet sans faute (« intermédiaire » compte comme normal).
   const medalTier = (level as string) === 'intermediaire' ? 'normal' : level
   const won = s.levelMedals[board.game] ?? []
-  if (allCorrect && results.length >= board.questions && TIER_ORDER.includes(medalTier) && !won.includes(medalTier)) {
+  // « Garde le tempo » se termine toujours sur une erreur : sa médaille vient d'un palier de 30 secondes tenu.
+  const perfect = board.game === 'garde-tempo' ? results.some((r) => r.correct) : allCorrect && results.length >= board.questions
+  if (perfect && TIER_ORDER.includes(medalTier) && !won.includes(medalTier)) {
     s.levelMedals = { ...s.levelMedals, [board.game]: [...won, medalTier] }
     state.pending.push({ id: `medal-${board.game}`, tier: medalTier })
   }

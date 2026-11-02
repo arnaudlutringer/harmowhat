@@ -32,10 +32,6 @@
         </span>
         <span class="weight" :style="{ top: `${pos(modelValue)}%` }" />
       </div>
-      <div class="nudge">
-        <button type="button" :disabled="disabled" aria-label="Plus lent" @click="set(modelValue - 1)">−</button>
-        <button type="button" :disabled="disabled" aria-label="Plus rapide" @click="set(modelValue + 1)">+</button>
-      </div>
     </div>
   </div>
 </template>
@@ -46,7 +42,7 @@ import { tempoName } from '@/games/tempo'
 
 /**
  * Curseur vertical façon métronome : le poids glisse sur la tige, lent en haut, rapide en bas.
- * Les boutons − et + ajustent d'un battement par minute.
+ * Au clavier, les flèches haut et bas ajustent d'un battement par minute.
  */
 const props = defineProps<{ modelValue: number; min: number; max: number; disabled?: boolean; target?: number }>()
 const emit = defineEmits<{ 'update:modelValue': [value: number] }>()
@@ -91,7 +87,7 @@ function release() {
   width: 100%;
 }
 .readout {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   font-size: 20px;
 }
 .readout strong {
@@ -107,7 +103,7 @@ function release() {
   display: flex;
   align-items: stretch;
   gap: 12px;
-  height: 280px;
+  height: 220px;
 }
 .scale {
   position: relative;
@@ -166,26 +162,7 @@ function release() {
   font-weight: 700;
   color: var(--ion-color-success);
 }
-.nudge {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 12px;
-}
-.nudge button {
-  width: 48px;
-  height: 48px;
-  border: none;
-  background: var(--hw-button);
-  color: var(--hw-button-text);
-  font-size: 26px;
-  font-weight: 700;
-  cursor: pointer;
-}
 .disabled .track {
   cursor: default;
-}
-.nudge button:disabled {
-  opacity: 0.5;
 }
 </style>

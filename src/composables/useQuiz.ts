@@ -162,7 +162,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     stopTicking()
     points.value = clock.stop()
     if (scored !== undefined) points.value = scored
-    results.value = [...results.value, { correct, points: correct ? points.value : 0 }]
+    // Points donnés par le jeu (précision, palier entamé) : comptés même sans bonne réponse.
+    results.value = [...results.value, { correct, points: correct ? points.value : (scored ?? 0) }]
     feedback.value = { correct, message }
     if (trial) trophyEvent({ type: 'trial' })
     if (advanceDelay !== null) timer = setTimeout(next, advanceDelay)

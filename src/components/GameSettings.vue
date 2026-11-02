@@ -44,11 +44,11 @@
               :class="{ on: level === key, impossible: key === 'impossible' }"
               @click="level = String(key)"
             >
-              <span class="medal" :class="{ off: !medalWon(String(key)) }" aria-hidden="true">{{ medalOf(String(key), i) }}</span>
               <strong>{{ cfg.label }}</strong>
               <small>{{ cfg.description }}</small>
               <slot name="level-extra" :level="String(key)" />
-              <span class="flames" aria-hidden="true">{{ key === 'impossible' ? '💀' : '🔥'.repeat(Math.min(3, i + 1)) }}</span>
+              <!-- Médaille du niveau, sous sa définition : en couleur une fois gagnée (sans faute à ce niveau), grise sinon. -->
+              <span class="medal" :class="{ off: !medalWon(String(key)) }" :aria-label="medalWon(String(key)) ? 'Médaille gagnée' : 'Médaille à gagner'">{{ medalOf(String(key), i) }}</span>
             </button>
           </div>
 
@@ -251,8 +251,11 @@ h1 {
 .stats span {
   padding: 5px 10px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.7);
+  /* Fond et texte du thème : lisibles en clair comme en sombre. */
+  background: var(--hw-surface, #fff);
+  color: var(--ion-text-color);
   font-size: 12px;
+  box-shadow: 0 1px 4px rgba(45, 48, 71, 0.08);
 }
 .stats b {
   font-size: 14px;
@@ -350,7 +353,6 @@ h2 {
 }
 .level strong {
   font-size: 16px;
-  padding-right: 22px;
 }
 .level small {
   font-size: 11px;
@@ -358,19 +360,13 @@ h2 {
   color: var(--ion-color-medium);
 }
 .level .medal {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 18px;
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 22px;
 }
 .level .medal.off {
   filter: grayscale(1);
   opacity: 0.3;
-}
-.level .flames {
-  margin-top: auto;
-  padding-top: 4px;
-  font-size: 12px;
 }
 .level.on {
   outline: 3px solid var(--ion-color-primary);

@@ -61,14 +61,8 @@ export function stageTempo(level: Level, index: number): number {
 /** Nombre de temps à taper dans un palier de 30 secondes. */
 export const stageBeats = (tempo: number) => Math.round((STAGE_SECONDS * tempo) / 60)
 
-/** Écart en dessous duquel une frappe est parfaite. */
-const PERFECT = 0.02
-
-/** Points d'un palier tenu : 10 000 si l'écart moyen est parfait, jusqu'à 100 à la limite de la tolérance. */
-export function stagePoints(meanError: number, tolerance: number): number {
-  const over = Math.max(0, meanError - PERFECT) / Math.max(0.001, tolerance - PERFECT)
-  return Math.max(100, Math.round(10000 - Math.min(1, over) * 9900))
-}
+/** Points d'un palier de 30 secondes tenu jusqu'au bout ; chaque temps en rapporte sa part (10 000 / nombre de temps). */
+export const STAGE_POINTS = 10000
 
 /**
  * Juge une frappe (en secondes depuis le premier temps) : le temps le plus proche, l'écart, et si elle est

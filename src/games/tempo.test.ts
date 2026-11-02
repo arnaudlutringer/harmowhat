@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  CHOICE_GAP, createFindQuestion, FIND_LEVELS, isTempoClose, judgeBeat, parseFindSettings, parseKeepSettings, stageBeats, stagePoints, stageTempo,
+  CHOICE_GAP, createFindQuestion, FIND_LEVELS, isTempoClose, judgeBeat, parseFindSettings, parseKeepSettings, stageBeats, stageTempo,
   tempoName,
 } from './tempo'
 import { onsets } from './rhythm'
@@ -31,10 +31,6 @@ describe('Garde le tempo', () => {
     expect(judgeBeat(0.98, 1, 0.1, done).ok).toBe(false)
   })
 
-  it('points : 10 000 si parfait, 100 au plus juste', () => {
-    expect(stagePoints(0.01, 0.1)).toBe(10000)
-    expect(stagePoints(0.1, 0.1)).toBe(100)
-  })
 
   it('réglages : pas de nombre de questions, débutant par défaut', () => {
     expect(parseKeepSettings({ level: 'toto', questions: '20' })).toEqual({ questions: 1, level: 'debutant' })

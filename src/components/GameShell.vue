@@ -7,6 +7,7 @@
         :results="quiz.results.value"
         :total="endless ? quiz.results.value.length : quiz.total"
         :answers-label="answersLabel"
+        :score-ratio="scoreRatio"
         :board="board"
         :settings-href="settingsHref"
         :fork-available="!noTuningFork"
@@ -23,6 +24,7 @@
       <div
         v-else
         class="game hw-square"
+        :class="{ compact }"
         @pointerdown="onPointerDown"
         @pointerup="onPointerUp"
         @pointercancel="swipeStart = null"
@@ -114,6 +116,10 @@ const props = defineProps<{
   endless?: boolean
   /** Bilan propre au jeu, à la place de « n / total bonnes réponses ». */
   answersLabel?: string
+  /** Réussite de la partie, de 0 à 1, si elle ne se compte pas en bonnes réponses (« Garde le tempo » : points / 10 000). */
+  scoreRatio?: number
+  /** Écran serré (« Trouve le tempo » au curseur) : moins d'espace autour de la consigne et du message. */
+  compact?: boolean
 }>()
 
 // À chaque réponse qui rapporte des points (sauf la première, où le total ne fait que démarrer),
@@ -460,6 +466,14 @@ useBackButton(20, (processNextHandler) => {
 }
 .game {
   touch-action: pan-y;
+}
+/* Écran serré : tout doit tenir sans défiler. */
+.compact .prompt {
+  margin: 10px 0 8px;
+}
+.compact .feedback {
+  margin-top: 8px;
+  min-height: 0;
 }
 .feedback.ok strong {
   color: var(--ion-color-success);

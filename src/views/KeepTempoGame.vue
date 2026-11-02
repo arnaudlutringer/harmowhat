@@ -9,6 +9,7 @@
     endless
     :answers-label="summary"
     :advance-bar="ADVANCE_MS"
+    :score-ratio="quiz.totalPoints.value / STAGE_POINTS"
   >
     <template #player>
       <div class="player">
@@ -17,6 +18,7 @@
         </p>
         <!-- Avancée du palier de 30 secondes. -->
         <div class="stage" aria-hidden="true"><span :style="{ width: `${progress * 100}%` }" /></div>
+        <p class="stage-points">{{ stageScore.toLocaleString('fr-FR') }} / 10 000 pts</p>
         <p class="last" :class="last?.ok ? 'ok' : last ? 'ko' : ''" aria-live="polite">{{ last?.text ?? ' ' }}</p>
       </div>
     </template>
@@ -44,7 +46,7 @@ import { useRoute } from 'vue-router'
 import GameShell from '@/components/GameShell.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { COUNT_IN, playRhythm } from '@/games/rhythmAudio'
-import { judgeBeat, KEEP_LEVELS, parseKeepSettings, STAGE_SECONDS, stageBeats, stagePoints, stageTempo, tempoName } from '@/games/tempo'
+import { judgeBeat, KEEP_LEVELS, parseKeepSettings, STAGE_POINTS, STAGE_SECONDS, stageBeats, stageTempo, tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 
 const settings = parseKeepSettings(useRoute().query)
@@ -81,6 +83,8 @@ const q = computed(() => quiz.question.value)
 const beats = computed(() => stageBeats(q.value.tempo))
 const hits = ref(0)
 const beatsLeft = computed(() => Math.max(0, beats.value - hits.value))
+// Chaque temps tenu rapporte 10 000 / (nombre de temps du palier) : un palier complet vaut 10 000 points.
+const stageScore = computed(() => Math.round((hits.value * STAGE_POINTS) / beats.value))
 
 const summary = computed(() => {
   const n = quiz.results.value.filter((r) => r.correct).length
@@ -161,17 +165,18 @@ function succeed() {
   phase.value = 'held'
   held.push(q.value.tempo)
   const mean = errors.reduce((s, e) => s + e, 0) / errors.length
-  quiz.answer(true, `Palier tenu à ♩ = ${q.value.tempo}, à ${Math.round(mean * 1000)} ms près en moyenne.`, stagePoints(mean, tolerance))
+  quiz.answer(true, `Palier tenu à ♩ = ${q.value.tempo}, à ${Math.round(mean * 1000)} ms près en moyenne.`, STAGE_POINTS)
 }
 
 function fail(reason: string) {
   clearAll()
   phase.value = 'failed'
   last.value = { ok: false, text: reason }
-  // On laisse le temps de lire ce qui s'est passé, puis le bilan ; sans palier tenu, la partie compte comme ratée.
+  // On laisse le temps de lire ce qui s'est passé, puis le bilan. Les temps tenus du palier entamé comptent quand même.
+  const partial = stageScore.value
   timers.push(
     setTimeout(() => {
-      if (!quiz.results.value.length || quiz.trial) quiz.answer(false, reason)
+      if (partial > 0 || !quiz.results.value.length || quiz.trial) quiz.answer(false, reason, partial)
       trophyEvent({ type: 'tempo-run', tempos: [...held] })
       if (!quiz.trial) quiz.finish()
     }, 2000),
@@ -209,6 +214,12 @@ function fail(reason: string) {
   display: block;
   height: 100%;
   background: var(--ion-color-primary);
+}
+.stage-points {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ion-color-primary);
 }
 .last {
   min-height: 24px;

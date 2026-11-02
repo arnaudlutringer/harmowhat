@@ -115,6 +115,8 @@ const props = defineProps<{
   forkUsed?: boolean
   /** Bilan propre au jeu, à la place de « n / total bonnes réponses ». */
   answersLabel?: string
+  /** Réussite de 0 à 1, à la place de la part de bonnes réponses (image de fin et musique). */
+  scoreRatio?: number
 }>()
 const emit = defineEmits<{ restart: [] }>()
 
@@ -215,13 +217,14 @@ watch(
   },
   { immediate: true },
 )
-const tier = computed(() => tierForScore(summary.value.correct, props.total))
+const success = props.scoreRatio !== undefined ? Math.min(1, Math.max(0, props.scoreRatio)) : undefined
+const tier = computed(() => (success !== undefined ? tierForScore(success, 1) : tierForScore(summary.value.correct, props.total)))
 // Image de fin de partie selon le résultat : oreille en or, en argent ou en fer (public/results/).
 const tierImage = computed(() => `${import.meta.env.BASE_URL}results/${tier.value}.png`)
 
 // Musique de fin, selon l'instrument (voir music/endings.ts), d'autant plus mal jouée (musicien éméché)
 // que le joueur a fait d'erreurs (voir music/drunk.ts). Tirée une fois pour cet écran.
-const wrongRatio = props.total ? (props.total - summary.value.correct) / props.total : 0
+const wrongRatio = success !== undefined ? 1 - success : props.total ? (props.total - summary.value.correct) / props.total : 0
 const wrongPercent = Math.round(wrongRatio * 100)
 // Un enregistrement est joué tel quel, sans fausses notes.
 const ending = endingFor(selectedInstrument.value)

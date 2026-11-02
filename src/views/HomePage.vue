@@ -55,7 +55,8 @@ import { dailyChallenge, dayNumber } from '@/games/dailyChallenge'
 import { challengeDays, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
-const challenge = dailyChallenge()
+// Le niveau du défi suit les progrès du joueur : recalculé quand ses résultats changent.
+const challenge = computed(() => dailyChallenge())
 const challengeDone = computed(() => challengeDays.value.includes(dayNumber()))
 
 const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']

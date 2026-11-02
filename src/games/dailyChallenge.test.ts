@@ -23,6 +23,16 @@ describe('Défi du jour', () => {
     expect(games.has('garde-tempo')).toBe(false)
   })
 
+  it('niveau adapté : le premier pas encore réussi (50 % ou plus), sinon le plus difficile', () => {
+    const d = day(9)
+    const game = dailyChallenge(d, {}).board.game
+    const ids = GAMES[game].levels.map((l) => l.id).filter((id) => !id.startsWith('impossible'))
+    expect(dailyChallenge(d, {}).board.level).toBe(ids[0])
+    expect(dailyChallenge(d, { [game]: { [ids[0]]: 0.4 } }).board.level).toBe(ids[0])
+    expect(dailyChallenge(d, { [game]: { [ids[0]]: 0.6 } }).board.level).toBe(ids[1])
+    expect(dailyChallenge(d, { [game]: Object.fromEntries(ids.map((id) => [id, 1])) }).board.level).toBe(ids.at(-1))
+  })
+
   it('reconnaît la partie du défi', () => {
     const c = dailyChallenge(day(5))
     expect(isDailyChallenge(c.board, day(5))).toBe(true)
