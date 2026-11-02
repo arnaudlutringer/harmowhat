@@ -107,7 +107,7 @@ import { evaluateGame, takePendingTrophies, type Tier, type Trophy } from '@/gam
 import TrophyUnlocked from './TrophyUnlocked.vue'
 import MatchResult from './MatchResult.vue'
 import { shareImage } from '@/share/shareImage'
-import { dayNumber, isDailyChallenge } from '@/games/dailyChallenge'
+import { dayNumber, isTodaysChallenge } from '@/games/dailyChallenge'
 
 const props = defineProps<{
   results: QuestionResult[]
@@ -135,7 +135,7 @@ function countTrophies() {
     instrument: selectedInstrument.value,
     forkAvailable: !!props.forkAvailable,
     forkUsed: !!props.forkUsed,
-    challengeDay: isDailyChallenge(props.board) ? dayNumber() : undefined,
+    challengeDay: isTodaysChallenge(props.board) ? dayNumber() : undefined,
   })
   unlocked.value = takePendingTrophies()
 }

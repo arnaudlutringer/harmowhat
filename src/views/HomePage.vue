@@ -14,12 +14,16 @@
       <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
 
       <!-- Défi du jour : le même jeu et le même niveau pour tout le monde, jusqu'à minuit. -->
-      <button class="daily" :class="{ done: challengeDone }" @click="router.push(challenge.href)">
+      <!-- Une fois relevé, il se replie en une ligne jusqu'à minuit. -->
+      <p v-if="challengeDone" class="daily-done">
+        ✓ Défi du jour relevé <small>· {{ challenge.title }} · reviens demain pour le suivant</small>
+      </p>
+      <button v-else class="daily" @click="router.push(challenge.href)">
         <ion-icon class="daily-icon" :icon="GAME_ICONS[challenge.board.game]" aria-hidden="true" />
         <span class="daily-text">
-          <small>{{ challengeDone ? 'DÉFI DU JOUR RELEVÉ ✓' : 'DÉFI DU JOUR' }}</small>
+          <small>DÉFI DU JOUR</small>
           <strong>{{ challenge.title }} · {{ challenge.level }}</strong>
-          <span>{{ challenge.board.questions }} questions · {{ challengeDone ? 'reviens demain pour le suivant' : '80 % de bonnes réponses pour le relever' }}</span>
+          <span>{{ challenge.board.questions }} questions · 80 % de bonnes réponses pour le relever</span>
         </span>
         <span class="daily-note" aria-hidden="true">♪</span>
       </button>
@@ -51,12 +55,12 @@ import BottomNav from '@/components/BottomNav.vue'
 import { GAME_ICONS } from '@/games/icons'
 import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
-import { dailyChallenge, dayNumber } from '@/games/dailyChallenge'
+import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
 import { challengeDays, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
-// Le niveau du défi suit les progrès du joueur : recalculé quand ses résultats changent.
-const challenge = computed(() => dailyChallenge())
+// Le défi du jour, figé pour la journée (son niveau suit les progrès du joueur d'un jour à l'autre).
+const challenge = todaysChallenge()
 const challengeDone = computed(() => challengeDays.value.includes(dayNumber()))
 
 const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
@@ -232,8 +236,19 @@ h1 {
   font-size: 12px;
   opacity: 0.75;
 }
-.daily.done .daily-text small {
-  color: #7bd88f;
+/* Défi relevé : une seule ligne discrète, en vert. */
+.daily-done {
+  margin: 4px 0 8px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-color-success);
+  font-weight: 700;
+  font-size: 14px;
+}
+.daily-done small {
+  font-weight: 400;
+  color: var(--ion-color-medium);
 }
 .daily-note {
   position: absolute;

@@ -39,8 +39,38 @@ export function dailyChallenge(date = new Date(), progress: Partial<Record<GameI
   const best = progress[game] ?? {}
   const level = levels.find((l) => (best[l.id] ?? 0) < LEVEL_PASSED) ?? levels[levels.length - 1]
   const questions = [...info.questionCounts].sort((a, b) => Math.abs(a - 10) - Math.abs(b - 10))[0]
-  const board = { game, level: level.id, questions }
-  return { board, title: info.title, level: levelLabel(board), href: playHref(board) }
+  return describe({ game, level: level.id, questions })
+}
+
+const describe = (board: Board): DailyChallenge => ({ board, title: GAMES[board.game].title, level: levelLabel(board), href: playHref(board) })
+
+const CACHE_KEY = 'harmowhat.dailyChallenge'
+
+/**
+ * Le défi d'aujourd'hui, figé pour la journée : tiré une fois (au niveau du joueur à ce moment-là), il ne change
+ * plus jusqu'à minuit, même si le joueur progresse entre-temps.
+ */
+export function todaysChallenge(date = new Date()): DailyChallenge {
+  const day = dayNumber(date)
+  try {
+    const saved = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null') as { day: number; board: Board } | null
+    if (saved?.day === day && saved.board && GAMES[saved.board.game]) return describe(saved.board)
+  } catch {
+    // Stockage illisible : on tire le défi.
+  }
+  const challenge = dailyChallenge(date)
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ day, board: challenge.board }))
+  } catch {
+    // Stockage indisponible : le défi sera recalculé.
+  }
+  return challenge
+}
+
+/** La partie jouée est-elle le défi d'aujourd'hui (celui affiché sur l'accueil) ? */
+export function isTodaysChallenge(board: Board): boolean {
+  const c = todaysChallenge().board
+  return c.game === board.game && c.level === board.level && c.questions === board.questions
 }
 
 /** La partie jouée est-elle le défi du jour ? */
