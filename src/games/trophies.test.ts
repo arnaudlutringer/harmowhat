@@ -53,9 +53,23 @@ describe('Trophées', () => {
     expect(ids()).not.toContain('impossible-accords')
   })
 
+  it('médailles de niveau : un sans faute complet à ce niveau, annoncé une seule fois', async () => {
+    const { levelMedalWon } = await import('./trophies')
+    game({ board: { game: 'tonalite', level: 'normal', questions: 10 }, results: results(Array(9).fill(5000)) })
+    expect(levelMedalWon('tonalite', 'normal')).toBe(false)
+    game({ board: { game: 'tonalite', level: 'normal', questions: 10 } })
+    expect(levelMedalWon('tonalite', 'normal')).toBe(true)
+    expect(levelMedalWon('tonalite', 'debutant')).toBe(false)
+    expect(ids()).toContain('medal-tonalite')
+    game({ board: { game: 'tonalite', level: 'normal', questions: 10 } })
+    expect(ids()).not.toContain('medal-tonalite')
+    game({ board: { game: 'lecture-note', level: 'intermediaire', questions: 10 } })
+    expect(levelMedalWon('lecture-note', 'normal')).toBe(true)
+  })
+
   it('donne Premiers pas, Sans faute et Virtuose à un premier questionnaire parfait, une seule fois', () => {
     game()
-    expect(ids()).toEqual(['premiers-pas', 'sans-faute', 'virtuose'])
+    expect(ids()).toEqual(['premiers-pas', 'sans-faute', 'virtuose', 'medal-grave-ou-aigu'])
     game()
     expect(ids()).toEqual([])
   })

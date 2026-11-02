@@ -52,7 +52,7 @@ import { GAME_ICONS } from '@/games/icons'
 import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dailyChallenge, dayNumber } from '@/games/dailyChallenge'
-import { challengeDays, earnedTrophies, impossibleUnlocked, TIER_LABELS, type Tier } from '@/games/trophies'
+import { challengeDays, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
 const challenge = dailyChallenge()
@@ -60,16 +60,21 @@ const challengeDone = computed(() => challengeDays.value.includes(dayNumber()))
 
 const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
 const idOf = (path: string) => path.replace('/games/', '') as GameId
-/** Médailles GOAT d'un jeu : celles du niveau atteint et des niveaux en dessous ; le diamant seulement si l'impossible est débloqué. */
+/**
+ * Médailles d'un jeu : bronze, argent et or (un sans faute en débutant, normal, expert), la couronne en impossible
+ * une fois ce niveau débloqué, puis le diamant du GOAT.
+ */
 function medalsFor(path: string) {
   const id = idOf(path)
-  const best = earnedTrophies.value[`goat-${id}`]?.tier
-  const reached = best ? TIERS.indexOf(best) : -1
-  return TIERS.filter((t) => t !== 'impossible' || impossibleUnlocked.value.includes(id)).map((t, i) => ({ medal: TIER_LABELS[t].medal, won: i <= reached }))
+  const levels = TIERS.filter((t) => t !== 'impossible' || impossibleUnlocked.value.includes(id))
+  return [
+    ...levels.map((t) => ({ medal: LEVEL_MEDALS[t].medal, won: levelMedalWon(id, t) })),
+    { medal: '💎', won: !!earnedTrophies.value[`goat-${id}`] },
+  ]
 }
 function medalLabel(path: string) {
-  const best = earnedTrophies.value[`goat-${idOf(path)}`]?.tier
-  return best ? `Médaille GOAT : ${TIER_LABELS[best].label}` : 'Pas encore de médaille GOAT'
+  const won = medalsFor(path).filter((m) => m.won).map((m) => m.medal)
+  return won.length ? `Médailles gagnées : ${won.join(' ')}` : 'Pas encore de médaille'
 }
 
 const earGames = [

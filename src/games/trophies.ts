@@ -184,6 +184,8 @@ interface Stats {
   challenges: number[]
   /** Questionnaires terminés, par jeu. */
   plays: Partial<Record<GameId, number>>
+  /** Médailles de niveau gagnées (un sans faute à ce niveau), par jeu. */
+  levelMedals: Partial<Record<GameId, Tier[]>>
   /** Jeux dont le niveau Impossible est débloqué. */
   impossible: GameId[]
 }
@@ -199,7 +201,7 @@ const STORAGE_KEY = 'harmowhat.trophies'
 
 const emptyStats = (): Stats => ({
   games: 0, correct: 0, lastDay: '', streak: 0, played: [], instruments: [], perfect: [], harmoniesSung: 0,
-  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], plays: {},
+  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], plays: {}, levelMedals: {},
 })
 
 function load(): State {
@@ -219,6 +221,8 @@ export const pendingTrophyCount = ref(load().pending.length)
 export const impossibleUnlocked = ref<GameId[]>(load().stats.impossible)
 /** Jours où le défi du jour a été relevé (réactif, pour l'accueil). */
 export const challengeDays = ref<number[]>(load().stats.challenges)
+/** Médailles de niveau gagnées, par jeu (réactif, pour l'accueil et les réglages). */
+export const levelMedals = ref<Partial<Record<GameId, Tier[]>>>(load().stats.levelMedals)
 
 /**
  * Tests en local (npm run dev seulement, jamais dans l'APK) : ajouter ?impossible=1 à l'adresse d'un écran
@@ -245,6 +249,7 @@ function save(state: State) {
   pendingTrophyCount.value = state.pending.length
   impossibleUnlocked.value = [...state.stats.impossible]
   challengeDays.value = [...state.stats.challenges]
+  levelMedals.value = { ...state.stats.levelMedals }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
@@ -353,6 +358,13 @@ export function evaluateGame(ctx: GameContext): void {
   ]
   for (const [id, ok] of rules) if (ok) award(state, id)
   if (atLeast(GOAT_POINTS) && TIER_ORDER.includes(level)) award(state, `goat-${board.game}`, level)
+  // Médaille du niveau joué : un questionnaire complet sans faute (« intermédiaire » compte comme normal).
+  const medalTier = (level as string) === 'intermediaire' ? 'normal' : level
+  const won = s.levelMedals[board.game] ?? []
+  if (allCorrect && results.length >= board.questions && TIER_ORDER.includes(medalTier) && !won.includes(medalTier)) {
+    s.levelMedals = { ...s.levelMedals, [board.game]: [...won, medalTier] }
+    state.pending.push({ id: `medal-${board.game}`, tier: medalTier })
+  }
   // Exploit en expert (questionnaire complet, sans faute, plus de 9 000 points à chaque question) : le niveau Impossible se débloque.
   const exploit = level === 'expert' && results.length >= board.questions && results.every((r) => r.correct && r.points > IMPOSSIBLE_POINTS)
   if (exploit && !NO_IMPOSSIBLE.includes(board.game) && !s.impossible.includes(board.game)) {
@@ -459,16 +471,36 @@ export function takePendingTrophies(): { trophy: Trophy; tier?: Tier }[] {
   state.pending = []
   save(state)
   return pending.flatMap((p) => {
-    const trophy = TROPHY_BY_ID[p.id] ?? unlockNotice(p.id)
-    return trophy ? [{ trophy, tier: p.tier }] : []
+    const trophy = TROPHY_BY_ID[p.id] ?? unlockNotice(p.id) ?? medalNotice(p.id, p.tier)
+    // L'annonce d'une médaille de niveau porte déjà sa médaille : pas de ligne « 💎 niveau » en plus.
+    return trophy ? [{ trophy, tier: p.id.startsWith('medal-') ? undefined : p.tier }] : []
   })
 }
 
+/** Niveaux des trophées GOAT : la médaille du GOAT est toujours le diamant, le niveau dit où il a été gagné. */
 export const TIER_LABELS: Record<Tier, { label: string; medal: string }> = {
-  debutant: { label: 'Débutant', medal: '🥉' },
-  normal: { label: 'Normal', medal: '🥈' },
-  expert: { label: 'Expert', medal: '🥇' },
+  debutant: { label: 'Débutant', medal: '💎' },
+  normal: { label: 'Normal', medal: '💎' },
+  expert: { label: 'Expert', medal: '💎' },
   impossible: { label: 'Impossible', medal: '💎' },
+}
+
+/** Médailles de niveau : un questionnaire sans faute en débutant, normal, expert, puis impossible. */
+export const LEVEL_MEDALS: Record<Tier, { medal: string; name: string }> = {
+  debutant: { medal: '🥉', name: 'Médaille de bronze' },
+  normal: { medal: '🥈', name: 'Médaille d’argent' },
+  expert: { medal: '🥇', name: 'Médaille d’or' },
+  impossible: { medal: '👑', name: 'Couronne' },
+}
+
+/** La médaille de ce niveau est-elle gagnée sur ce jeu ? */
+export const levelMedalWon = (game: GameId, tier: Tier) => !!levelMedals.value[game]?.includes(tier)
+
+/** Annonce d'une médaille de niveau gagnée, dans la popin des trophées. */
+function medalNotice(id: string, tier?: Tier): Trophy | null {
+  const game = id.replace(/^medal-/, '') as GameId
+  if (!id.startsWith('medal-') || !tier || !GAME_NAMES[game]) return null
+  return { id, family: 'sans-faute', icon: LEVEL_MEDALS[tier].medal, title: LEVEL_MEDALS[tier].name, condition: `« ${GAME_NAMES[game]} » : sans faute en ${TIER_LABELS[tier].label.toLowerCase()}` }
 }
 
 /** Annonce d'un niveau Impossible débloqué, dans la popin des trophées (ce n'est pas un trophée de la liste). */

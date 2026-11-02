@@ -122,3 +122,7 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 |---|---|
 | Défi relevé | Relève un défi du jour : au moins 80 % de bonnes réponses |
 | Abonné aux défis | Relève 7 défis du jour |
+
+## Médailles de niveau (hors trophées)
+
+Chaque jeu a une médaille par niveau, affichée sur sa carte de l'accueil et sur les tuiles de ses réglages : 🥉 pour un questionnaire complet sans faute en débutant, 🥈 en normal (ou intermédiaire), 🥇 en expert, 👑 en impossible. La médaille du GOAT, elle, est le diamant 💎, avec le niveau le plus haut où il a été gagné.

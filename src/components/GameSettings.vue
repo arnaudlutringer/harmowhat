@@ -11,7 +11,7 @@
         <div class="stats">
           <span>🏆 <b>{{ record ? record.toLocaleString('fr-FR') : '—' }}</b> record</span>
           <span>🎮 <b>{{ plays }}</b> partie{{ plays > 1 ? 's' : '' }}</span>
-          <span :class="{ off: !goat }">{{ goat ? `${TIER_LABELS[goat].medal} GOAT` : '🐐 GOAT à gagner' }}</span>
+          <span :class="{ off: !goat }">{{ goat ? `💎 GOAT (${TIER_LABELS[goat].label.toLowerCase()})` : '💎 GOAT à gagner' }}</span>
         </div>
       </header>
 
@@ -99,7 +99,7 @@ import { useRoute } from 'vue-router'
 import { bestScore, getScores, hasLocalScores, levelLabel, scoresHref, type Board, type GameId } from '@/games/highScores'
 import { GAME_ICONS } from '@/games/icons'
 import { INTROS, SUMMARIES } from '@/games/intros'
-import { earnedTrophies, gameCategory, gamesPlayed, hasPlayed, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
+import { earnedTrophies, gameCategory, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
 
 /**
  * Écran de réglages d'un jeu : un bandeau à ses couleurs, trois onglets (Jouer, Règles, Records) et,
@@ -160,15 +160,12 @@ watch(
   },
 )
 
-// Médaille GOAT de chaque niveau : allumée si le GOAT a été gagné à ce niveau ou au-dessus.
+// Médaille de chaque niveau (bronze, argent, or, couronne) : allumée après un questionnaire sans faute à ce niveau.
 const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
 const tierOf = (key: string, index: number): Tier => (TIERS.includes(key as Tier) ? (key as Tier) : TIERS[Math.min(index, 2)])
 const keys = computed(() => Object.keys(shownLevels.value))
-const medalOf = (key: string, index: number) => TIER_LABELS[tierOf(key, index)].medal
-function medalWon(key: string) {
-  const best = earnedTrophies.value[`goat-${props.game}`]?.tier
-  return !!best && TIERS.indexOf(best) >= TIERS.indexOf(tierOf(key, keys.value.indexOf(key)))
-}
+const medalOf = (key: string, index: number) => LEVEL_MEDALS[tierOf(key, index)].medal
+const medalWon = (key: string) => levelMedalWon(props.game, tierOf(key, keys.value.indexOf(key)))
 
 // Bandeau : recalculé à chaque retour sur l'écran (après une partie).
 const refresh = ref(0)

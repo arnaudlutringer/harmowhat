@@ -9,14 +9,14 @@
         <!-- Par famille : les trophées gagnés en couleur (avec leur date), les autres grisés avec leur condition. -->
         <section v-for="(label, family) in FAMILIES" :key="family">
           <h2>{{ label }}</h2>
-          <p v-if="family === 'goat'" class="hint">Médaille 🥉 en débutant, 🥈 en normal, 🥇 en expert, 💎 en impossible.</p>
+          <p v-if="family === 'goat'" class="hint">La médaille du GOAT est le diamant 💎 ; à côté, le niveau le plus haut où tu l'as gagné.</p>
           <div class="grid">
             <div v-for="t in byFamily(family)" :key="t.id" class="trophy" :class="{ earned: earnedTrophies[t.id] }">
               <span class="icon" aria-hidden="true">{{ t.icon }}</span>
               <span class="text">
                 <strong>
                   {{ t.title }}
-                  <span v-if="earnedTrophies[t.id]?.tier" :title="TIER_LABELS[earnedTrophies[t.id].tier!].label">{{ TIER_LABELS[earnedTrophies[t.id].tier!].medal }}</span>
+                  <span v-if="earnedTrophies[t.id]?.tier" class="goat-tier">💎 {{ TIER_LABELS[earnedTrophies[t.id].tier!].label }}</span>
                 </strong>
                 <small>{{ t.condition }}</small>
                 <small v-if="earnedTrophies[t.id]" class="date">Gagné le {{ formatDate(earnedTrophies[t.id].date) }}</small>
@@ -54,7 +54,7 @@ const byFamily = (family: TrophyFamily) => TROPHIES.filter((t) => t.family === f
 /** Image de partage d'un trophée gagné (avec sa médaille pour un GOAT). */
 function share(t: Trophy) {
   const tier = earnedTrophies.value[t.id]?.tier
-  const label = tier ? `${TIER_LABELS[tier].medal} GOAT · Niveau ${TIER_LABELS[tier].label}` : undefined
+  const label = tier ? `💎 GOAT · Niveau ${TIER_LABELS[tier].label}` : undefined
   shareImage({ kind: 'trophy', title: t.title, condition: t.condition, icon: t.icon, game: t.game, tier: label }).catch(() => {})
 }
 const formatDate =(iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -123,6 +123,13 @@ h2 {
 .text small {
   font-size: 12px;
   color: var(--ion-color-medium);
+}
+/* Niveau du GOAT, à côté de son diamant. */
+.goat-tier {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3aa7d8;
 }
 .text .date {
   color: var(--ion-color-primary);
