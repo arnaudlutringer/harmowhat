@@ -264,7 +264,9 @@ function fail(reason: string) {
 .pad:disabled {
   opacity: 0.6;
 }
+/* Hauteur fixe (deux lignes) : le texte change ou disparaît sans faire bouger l'écran. */
 .hint {
+  min-height: 40px;
   margin: 10px 0 0;
   text-align: center;
   color: var(--ion-color-medium);

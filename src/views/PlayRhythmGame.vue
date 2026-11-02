@@ -11,8 +11,10 @@
     <template #player>
       <div class="player">
         <rhythm-staff class="written" :cells="q.cells" :label="rhythmLabel" />
-        <!-- Après la mesure : les notes attendues (traits) et les frappes (points verts dans le temps, rouges sinon). -->
-        <svg v-if="verdict" class="timeline" viewBox="0 0 320 44" aria-hidden="true">
+        <!-- Après la mesure : les notes attendues (traits) et les frappes (points verts dans le temps, rouges sinon).
+             La frise garde sa place avant la réponse : le grand bouton ne bouge pas quand elle apparaît. -->
+        <svg class="timeline" viewBox="0 0 320 44" aria-hidden="true">
+          <template v-if="verdict">
           <line x1="10" y1="22" x2="310" y2="22" class="axis" />
           <line v-for="b in BEATS + 1" :key="`b${b}`" :x1="x(b - 1)" y1="14" :x2="x(b - 1)" y2="30" class="beat" />
           <line v-for="(m, i) in verdict.matches" :key="`e${i}`" :x1="x(m.expected)" y1="6" :x2="x(m.expected)" y2="38" class="expected" />
@@ -20,6 +22,7 @@
             <circle v-if="m.tap !== null" :cx="x(m.tap)" cy="22" r="6" :class="m.onTime ? 'ok' : 'ko'" />
           </template>
           <circle v-for="(t, i) in verdict.extra" :key="`x${i}`" :cx="x(t)" cy="22" r="6" class="ko" />
+          </template>
         </svg>
       </div>
     </template>
@@ -203,7 +206,9 @@ function finish() {
 .pad:disabled {
   opacity: 0.6;
 }
+/* Hauteur fixe (deux lignes) : le texte change ou disparaît sans faire bouger l'écran. */
 .hint {
+  min-height: 40px;
   margin: 10px 0 0;
   text-align: center;
   color: var(--ion-color-medium);
