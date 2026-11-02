@@ -13,6 +13,7 @@
         <ion-icon :icon="active === item.path ? item.iconOn : item.icon" aria-hidden="true" />
         <span>{{ item.label }}</span>
         <i v-if="item.path === '/trophees' && pendingTrophyCount" class="dot" aria-label="Nouveaux trophées" />
+        <i v-if="item.path === '/matchs' && unseenResults" class="dot" aria-label="Nouveaux résultats de matchs" />
       </button>
     </nav>
   </ion-footer>
@@ -20,17 +21,22 @@
 
 <script setup lang="ts">
 import { IonFooter, IonIcon, useIonRouter } from '@ionic/vue'
-import { medal, medalOutline, musicalNotes, musicalNotesOutline, settings, settingsOutline, trophy, trophyOutline } from 'ionicons/icons'
+import { flash, flashOutline, medal, medalOutline, musicalNotes, musicalNotesOutline, settings, settingsOutline, trophy, trophyOutline } from 'ionicons/icons'
+import { featureEnabled } from '@/config/features'
+import { matchesAvailable, unseenResults } from '@/games/matches'
 import { pendingTrophyCount } from '@/games/trophies'
 
-const props = defineProps<{ active: '/home' | '/trophees' | '/hall-of-fame' | '/parametres' }>()
+const props = defineProps<{ active: '/home' | '/trophees' | '/hall-of-fame' | '/matchs' | '/parametres' }>()
 
-const ITEMS = [
+const ALL_ITEMS = [
   { path: '/home', label: 'Jeux', icon: musicalNotesOutline, iconOn: musicalNotes },
   { path: '/trophees', label: 'Trophées', icon: medalOutline, iconOn: medal },
   { path: '/hall-of-fame', label: 'Hall of fame', icon: trophyOutline, iconOn: trophy },
+  { path: '/matchs', label: 'Matchs', icon: flashOutline, iconOn: flash },
   { path: '/parametres', label: 'Paramètres', icon: settingsOutline, iconOn: settings },
 ] as const
+// « Matchs » seulement quand la fonctionnalité est activée (voir config/features.ts).
+const ITEMS = ALL_ITEMS.filter((i) => i.path !== '/matchs' || (featureEnabled('matchs') && matchesAvailable))
 
 const router = useIonRouter()
 

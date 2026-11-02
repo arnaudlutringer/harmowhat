@@ -16,6 +16,9 @@
 
     <!-- Le score entre dans au moins un classement (monde, pays, téléphone) : on propose de l'enregistrer dans les trois. -->
     <!-- Sauvegarde automatique (Mon compte) : le score est déjà enregistré ; on montre sous quel nom, et le classement. -->
+    <!-- Partie d'un match : publier son défi, ou le résultat contre celui qui l'a lancé. -->
+    <match-result :board="board" :points="summary.points" :correct="summary.correct" />
+
     <div v-if="autoSaved" class="record auto">
       <strong>🏅 Tu entres dans les meilleurs scores !</strong>
       <p class="tops">
@@ -102,6 +105,7 @@ import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
 import { evaluateGame, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
 import TrophyUnlocked from './TrophyUnlocked.vue'
+import MatchResult from './MatchResult.vue'
 import { shareImage } from '@/share/shareImage'
 import { dayNumber, isDailyChallenge } from '@/games/dailyChallenge'
 

@@ -63,7 +63,8 @@ export function parseScope(raw: unknown): Scope | undefined {
   return worldEnabled && (raw === 'monde' || raw === 'pays') ? raw : raw === 'appareil' ? 'appareil' : undefined
 }
 
-async function request(path: string, init: RequestInit = {}): Promise<Response> {
+/** Requête à l'API REST de Supabase (clé publique), avec un délai maximal. Partagée avec les matchs. */
+export async function request(path: string, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   try {

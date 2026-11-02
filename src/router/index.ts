@@ -13,6 +13,9 @@ const routes: RouteRecordRaw[] = [
   { path: '/trophees', component: () => import('@/views/TrophiesPage.vue') },
   // L'écran Joueur est un onglet des paramètres.
   { path: '/joueur', redirect: '/parametres?onglet=joueur' },
+  // Matchs (fonctionnalité en préparation, voir config/features.ts) ; lien direct loreille://match/CODE.
+  { path: '/matchs', component: () => import('@/views/MatchesPage.vue') },
+  { path: '/match/:code', redirect: (to) => ({ path: '/matchs', query: { onglet: 'relever', code: String(to.params.code) } }) },
   { path: '/scores/:game', component: () => import('@/views/ScoresPage.vue') },
   { path: '/games/grave-ou-aigu', component: () => import('@/views/HighLowSettings.vue') },
   { path: '/games/grave-ou-aigu/jouer', component: () => import('@/views/HighLowGame.vue') },

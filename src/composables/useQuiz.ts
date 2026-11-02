@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { stopAll } from '@/audio/engine'
 import { isTrial } from '@/games/ready'
 import { trophyEvent } from '@/games/trophies'
+import { seedFromQuery, withSeed } from '@/games/seed'
 
 export interface Feedback {
   correct: boolean
@@ -42,13 +43,17 @@ export const ADVANCE_DELAY = 1500
 
 export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart, answersOpen, untimed = false, pauseOnReplay = false }: QuizOptions<Q>) {
   // Mode essai (`essai=1` dans l'adresse du jeu) : une seule question, sans passage automatique ni score.
-  const trial = getCurrentInstance() ? isTrial(useRoute()?.query ?? {}) : false
+  const query = getCurrentInstance() ? (useRoute()?.query ?? {}) : {}
+  const trial = isTrial(query)
+  // Match (« graine=… » dans l'adresse) : les questions sont tirées de la graine, les mêmes pour les deux joueurs.
+  const seed = seedFromQuery(query)
   if (trial) {
     total = 1
     advanceDelay = null
   }
   const index = ref(0)
-  const question = shallowRef<Q>(createQuestion())
+  const draw = () => (seed === undefined ? createQuestion() : withSeed(seed + index.value * 7919, createQuestion))
+  const question = shallowRef<Q>(draw())
   const hasListened = ref(false)
   const feedback = ref<Feedback | null>(null)
   const finished = ref(false)
@@ -222,7 +227,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     replayHold = false
     plays = 0
     points.value = untimed ? 0 : clock.points
-    question.value = createQuestion()
+    question.value = draw()
     hasListened.value = false
     feedback.value = null
     if (first) startCountdown()
@@ -282,6 +287,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   return {
     trial,
+    /** Partie d'un match (questions tirées d'une graine). */
+    seeded: seed !== undefined,
     forkUsed,
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
     playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, finish, restart, pause, resume,

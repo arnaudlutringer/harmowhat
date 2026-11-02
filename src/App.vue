@@ -16,6 +16,8 @@ import { useRouter } from 'vue-router'
 import { App } from '@capacitor/app'
 import { stopAll } from '@/audio/engine'
 import { syncWorldScores } from '@/games/worldScores'
+import { featureEnabled } from '@/config/features'
+import { parseCode, refreshUnseen } from '@/games/matches'
 
 const router = useRouter()
 const ionRouter = useIonRouter()
@@ -34,6 +36,17 @@ const splash = ref(true)
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 void Promise.race([Promise.all([syncWorldScores(), wait(SPLASH_MIN_MS)]), wait(SPLASH_MAX_MS)]).finally(() => (splash.value = false))
 void App.addListener('resume', () => void syncWorldScores()).catch(() => {})
+
+// Matchs (fonctionnalité en préparation) : nouveaux résultats au lancement et au retour dans l'appli ;
+// un lien direct loreille://match/CODE ouvre le match.
+if (featureEnabled('matchs')) {
+  refreshUnseen()
+  void App.addListener('resume', refreshUnseen).catch(() => {})
+  void App.addListener('appUrlOpen', ({ url }) => {
+    const code = parseCode(url.match(/match\/([A-Za-z0-9]{6})/)?.[1] ?? '')
+    if (code) void router.push(`/match/${code}`)
+  }).catch(() => {})
+}
 
 // Bouton retour du téléphone : on coupe le son, puis Ionic revient à l'écran précédent.
 useBackButton(10, (processNextHandler) => {

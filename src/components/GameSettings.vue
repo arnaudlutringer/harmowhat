@@ -85,6 +85,8 @@
     <ion-footer class="ion-no-border">
       <div class="actions">
         <button class="trial" @click="start(true)">Un<br />essai</button>
+        <!-- Matchs (fonctionnalité en préparation) : jouer la partie comme un défi, que d'autres pourront relever. -->
+        <button v-if="matchs" class="trial" @click="start(false, true)">⚔️<br />Défier</button>
         <button class="start" @click="start()">C'est parti&nbsp;!</button>
       </div>
     </ion-footer>
@@ -99,6 +101,9 @@ import { useRoute } from 'vue-router'
 import { bestScore, getScores, hasLocalScores, levelLabel, scoresHref, type Board, type GameId } from '@/games/highScores'
 import { GAME_ICONS } from '@/games/icons'
 import { INTROS, SUMMARIES } from '@/games/intros'
+import { featureEnabled } from '@/config/features'
+import { matchesAvailable } from '@/games/matches'
+import { newSeed } from '@/games/seed'
 import { earnedTrophies, gameCategory, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
 
 /**
@@ -178,14 +183,18 @@ const board = computed<Board>(() => ({ game: props.game, level: props.boardLevel
 const boardLabel = computed(() => `${levelLabel(board.value)}${props.questionCounts.length > 1 ? ` · ${questions.value} questions` : ''}`)
 const records = computed(() => getScores(board.value).slice(0, 5))
 
-function start(trial = false) {
+const matchs = featureEnabled('matchs') && matchesAvailable
+
+function start(trial = false, challenge = false) {
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(props.storageKey, JSON.stringify({ ...settings, ...props.extra }))
   } catch {
     // Stockage indisponible : on joue quand même.
   }
-  router.push(withTrial(props.nextPath?.(settings) ?? `${props.playPath}?questions=${settings.questions}&level=${settings.level}`, trial))
+  const path = props.nextPath?.(settings) ?? `${props.playPath}?questions=${settings.questions}&level=${settings.level}`
+  // Défi : les questions viennent d'une graine, que l'adversaire recevra avec le code du match.
+  router.push(challenge ? `${path}&graine=${newSeed()}&defi=1` : withTrial(path, trial))
 }
 </script>
 
