@@ -27,10 +27,13 @@
             <!-- 2. Les jeux -->
             <template v-else-if="step === 2">
               <!-- Un jeu par catégorie (l'oreille, la voix, le solfège, le rythme, le tempo), en tuiles inclinées comme des cartes posées. -->
+              <!-- Deux tuiles en haut, trois en dessous. -->
               <div class="showcase" aria-hidden="true">
-                <span v-for="t in SHOWCASE" :key="t.game" class="tile" :style="{ background: t.color, transform: `rotate(${t.tilt}deg)` }">
-                  <ion-icon :icon="GAME_ICONS[t.game]" />
-                </span>
+                <div v-for="(row, r) in [SHOWCASE.slice(0, 2), SHOWCASE.slice(2)]" :key="r" class="showcase-row">
+                  <span v-for="t in row" :key="t.game" class="tile" :style="{ background: t.color, transform: `rotate(${t.tilt}deg)` }">
+                    <ion-icon :icon="GAME_ICONS[t.game]" />
+                  </span>
+                </div>
               </div>
               <div class="lines">
                 <p class="lead">Plein de mini-jeux sont là pour tester ton oreille, mais pas que&nbsp;!</p>
@@ -39,8 +42,8 @@
               <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
             </template>
 
-            <!-- 3. Le diapason -->
-            <template v-else-if="step === 3">
+            <!-- 4. Le diapason -->
+            <template v-else-if="step === 4">
               <div class="fork-wrap">
                 <button class="play fork" :class="{ 'is-playing': sound.current.value === 'fork' }" aria-label="Écouter le diapason, La3 440 Hz" @click="listenFork">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -60,8 +63,8 @@
               <ion-button expand="block" size="large" :disabled="!forkTried" @click="next">Suivant</ion-button>
             </template>
 
-            <!-- 4. Les médailles : une par niveau (sans faute), et le diamant du GOAT. -->
-            <template v-else-if="step === 4">
+            <!-- 3. Les médailles : une par niveau (sans faute), et le diamant du GOAT. -->
+            <template v-else-if="step === 3">
               <div class="medals" aria-hidden="true">
                 <span v-for="(m, i) in MEDALS" :key="m.medal" class="medal" :style="{ animationDelay: `${i * 0.15}s` }">{{ m.medal }}</span>
               </div>
@@ -179,10 +182,10 @@ const MEDALS = [
 
 /** Écran des mini-jeux : un jeu par catégorie, aux couleurs de l'accueil. */
 const SHOWCASE = [
-  { game: 'quelle-note', color: 'var(--hw-category-ear)', tilt: -10 },
-  { game: 'chante-note', color: 'var(--hw-category-voice)', tilt: -5 },
-  { game: 'lecture-note', color: 'var(--hw-category-theory)', tilt: 0 },
-  { game: 'joue-rythme', color: 'var(--hw-category-rhythm)', tilt: 5 },
+  { game: 'quelle-note', color: 'var(--hw-category-ear)', tilt: -7 },
+  { game: 'chante-note', color: 'var(--hw-category-voice)', tilt: 6 },
+  { game: 'lecture-note', color: 'var(--hw-category-theory)', tilt: -8 },
+  { game: 'joue-rythme', color: 'var(--hw-category-rhythm)', tilt: 2 },
   { game: 'garde-tempo', color: 'var(--hw-category-tempo)', tilt: 10 },
 ] as const
 const step = ref(1)
@@ -330,20 +333,25 @@ onIonViewWillLeave(stopAll)
 /* Trois tuiles de jeux, inclinées comme des cartes posées. */
 .showcase {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 12px;
 }
+.showcase-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
 .tile {
-  width: 58px;
-  height: 58px;
+  width: 70px;
+  height: 70px;
   display: grid;
   place-items: center;
   box-shadow: 0 4px 12px rgba(45, 48, 71, 0.12);
 }
 .tile ion-icon {
-  font-size: 38px;
+  font-size: 46px;
   color: var(--hw-card-ink);
 }
 /* Écran des médailles : elles tombent l'une après l'autre, puis la liste de ce qu'il faut faire. */
