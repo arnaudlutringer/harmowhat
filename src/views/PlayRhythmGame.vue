@@ -27,14 +27,16 @@
     <!-- Grand bouton : démarrer le décompte, puis tapoter le rythme. -->
     <button
       class="pad"
-      :class="{ counting: phase === 'counting', playing: phase === 'playing' }"
-      :disabled="!quiz.canAnswer.value || phase === 'done'"
+      :class="{ counting: phase === 'counting', playing: phase === 'playing', next: phase === 'done' }"
+      :disabled="phase === 'done' ? quiz.trial : !quiz.canAnswer.value"
       @pointerdown.prevent="onPad"
     >
       <template v-if="phase === 'ready'">▶ Démarrer</template>
       <template v-else-if="phase === 'counting'">{{ count }}</template>
       <template v-else-if="phase === 'playing'">Tape !</template>
-      <template v-else>✓</template>
+      <!-- Après la réponse, le grand bouton passe à la suite (en essai, « J'ai compris » est sous le message). -->
+      <template v-else-if="quiz.trial">✓</template>
+      <template v-else>{{ quiz.number.value < quiz.total ? 'Suivant ›' : 'Voir mon score ›' }}</template>
     </button>
     <p class="hint">{{ hint }}</p>
   </game-shell>
@@ -109,6 +111,7 @@ async function start() {
 }
 
 function onPad() {
+  if (phase.value === 'done') return void (!quiz.trial && quiz.next())
   if (!quiz.canAnswer.value) return
   if (phase.value === 'ready') return void start()
   if (phase.value === 'counting' || phase.value === 'playing') taps.push((performance.now() - barStart) / 1000)
@@ -193,6 +196,9 @@ function finish() {
 .pad.counting {
   background: var(--ion-color-secondary);
   font-size: 56px;
+}
+.pad.next {
+  font-size: 24px;
 }
 .pad:disabled {
   opacity: 0.6;
