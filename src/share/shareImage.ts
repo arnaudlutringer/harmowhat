@@ -20,7 +20,7 @@ const CREAM = '#fff7ec'
 const SANS = '"Fredoka Variable", system-ui, sans-serif'
 const SCRIPT = '"Dancing Script", cursive'
 /** Teintes des catégories de l'accueil (thème clair), dans l'ordre de gameCategory. */
-const CATEGORY_COLORS = ['#f6dccc', '#e7ddf3', '#d9ebe4', '#f3e7c4']
+const CATEGORY_COLORS = ['#f6dccc', '#e7ddf3', '#d9ebe4', '#f3e7c4', '#dbe6f5']
 /** Tuile d'un trophée qui n'est pas lié à un jeu. */
 const TROPHY_TILE = '#f6e7b8'
 

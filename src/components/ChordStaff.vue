@@ -23,6 +23,8 @@ const props = defineProps<{
   correct?: number[]
   wrong?: number[]
   together?: number[]
+  /** Texte écrit à droite de la première note, au milieu de la portée (l'intervalle cherché : « 3M↑ »). */
+  annotation?: string
 }>()
 const host = ref<HTMLDivElement>()
 
@@ -84,6 +86,24 @@ async function draw() {
 
   // Le dessin suit la couleur du texte (thème clair ou sombre).
   const svg = el.querySelector('svg')
+  if (svg && props.annotation && tickables[0]) {
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+    text.setAttribute('x', String(tickables[0].getAbsoluteX() + 34))
+    text.setAttribute('y', String(stave.getYForLine(2) + 7))
+    text.setAttribute('class', 'annotation')
+    text.textContent = props.annotation
+    svg.appendChild(text)
+    // Un fond blanc arrondi derrière le texte : les lignes de la portée ne le traversent pas.
+    const box = text.getBBox()
+    const back = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+    back.setAttribute('x', String(box.x - 5))
+    back.setAttribute('y', String(box.y - 2))
+    back.setAttribute('width', String(box.width + 10))
+    back.setAttribute('height', String(box.height + 4))
+    back.setAttribute('rx', '6')
+    back.setAttribute('class', 'annotation-back')
+    svg.insertBefore(back, text)
+  }
   if (svg) {
     svg.setAttribute('viewBox', `0 0 ${width} 150`)
     svg.removeAttribute('width')
@@ -92,7 +112,7 @@ async function draw() {
 }
 
 onMounted(draw)
-watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together], draw)
+watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together, props.annotation], draw)
 </script>
 
 <style scoped>
@@ -116,6 +136,19 @@ watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together
 .staff :deep(svg .correct *) {
   fill: var(--ion-color-success);
   stroke: var(--ion-color-success);
+}
+/* Annotation de l'intervalle cherché : violet, en gras. */
+.staff :deep(svg text.annotation) {
+  fill: var(--ion-color-primary);
+  stroke: none;
+  font-family: var(--ion-font-family);
+  font-size: 20px;
+  font-weight: 700;
+}
+.staff :deep(svg rect.annotation-back) {
+  fill: #fff;
+  stroke: rgba(108, 92, 231, 0.35);
+  stroke-width: 1px;
 }
 /* Note chantée par erreur : en rouge. */
 .staff :deep(svg .wrong),

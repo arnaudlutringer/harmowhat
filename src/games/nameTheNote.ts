@@ -2,7 +2,7 @@ import { PIANO_HIGHEST, PIANO_LOWEST, randomInt, shuffle } from '@/music/notes'
 import { isBlackKey, randomSpelling, spell, spelledName, spelledPitchName } from '@/music/spelling'
 import { currentInstrument, rangeFor, type Instrument } from '@/audio/instruments'
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -14,6 +14,8 @@ export interface LevelConfig {
   naturalsOnly: boolean
   /** Nombre de propositions affichées, dont la bonne réponse. */
   choices: number
+  /** Impossible : un instrument différent à chaque question, et pas de diapason du tout. */
+  randomInstrument?: boolean
 }
 
 export const LEVELS: Record<Level, LevelConfig> = {
@@ -40,6 +42,15 @@ export const LEVELS: Record<Level, LevelConfig> = {
     high: PIANO_HIGHEST,
     naturalsOnly: false,
     choices: 6,
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'Les 12 notes en propositions, un instrument différent à chaque question, et aucun diapason, même avant la partie.',
+    low: PIANO_LOWEST,
+    high: PIANO_HIGHEST,
+    naturalsOnly: false,
+    choices: 12,
+    randomInstrument: true,
   },
 }
 

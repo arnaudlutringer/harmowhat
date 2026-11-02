@@ -10,6 +10,8 @@ import { LEVELS as MODALITY_LEVELS, QUESTION_COUNTS as MODALITY_COUNTS } from '.
 import { LEVELS as SING_LEVELS, QUESTION_COUNTS as SING_COUNTS } from './singTheNote'
 import { LEVELS as SING_HARMONY_LEVELS, QUESTION_COUNTS as SING_HARMONY_COUNTS } from './singHarmony'
 import { LEVELS as RHYTHM_LEVELS, QUESTION_COUNTS as RHYTHM_COUNTS } from './rhythm'
+import { FIND_LEVELS, FIND_QUESTION_COUNTS, KEEP_LEVELS, KEEP_QUESTION_COUNTS } from './tempo'
+import { impossibleShown } from './trophies'
 import { profile, saveProfile } from '@/player/profile'
 import { SCORING_VERSION } from './scoring'
 
@@ -19,7 +21,7 @@ import { SCORING_VERSION } from './scoring'
  * Les scores sont aussi envoyés au classement mondial (voir worldScores.ts).
  */
 
-export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note' | 'fais-harmonie' | 'tonalite' | 'modalite' | 'chante-note' | 'chante-harmonie' | 'quel-rythme' | 'joue-rythme'
+export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note' | 'fais-harmonie' | 'tonalite' | 'modalite' | 'chante-note' | 'chante-harmonie' | 'quel-rythme' | 'joue-rythme' | 'garde-tempo' | 'trouve-tempo'
 
 /** Un classement : le jeu, le niveau (identifiant) et le nombre de questions. */
 export interface Board {
@@ -126,6 +128,32 @@ export const GAMES: Record<GameId, GameInfo> = {
     levels: Object.entries(RHYTHM_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: RHYTHM_COUNTS,
   },
+  'garde-tempo': {
+    title: 'Garde le tempo',
+    emoji: '⏱️',
+    levels: Object.entries(KEEP_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: KEEP_QUESTION_COUNTS,
+  },
+  'trouve-tempo': {
+    title: 'Trouve le tempo',
+    emoji: '🎚️',
+    levels: Object.entries(FIND_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: FIND_QUESTION_COUNTS,
+  },
+}
+
+/** Le niveau Impossible (seul ou avec une précision) est encore caché pour ce joueur. */
+export const isHiddenLevel = (game: GameId, level: string) => level.startsWith('impossible') && !impossibleShown(game)
+
+/** Niveaux à montrer dans les classements : « Impossible » seulement une fois débloqué. */
+export const shownLevels = (game: GameId) => GAMES[game].levels.filter((l) => !isHiddenLevel(game, l.id))
+
+/** Meilleur score enregistré sur le téléphone pour ce jeu, tous niveaux et nombres de questions confondus. */
+export function bestScore(game: GameId): number {
+  const info = GAMES[game]
+  let best = 0
+  for (const l of info.levels) for (const questions of info.questionCounts) best = Math.max(best, getScores({ game, level: l.id, questions })[0]?.points ?? 0)
+  return best
 }
 
 export function isGameId(raw: unknown): raw is GameId {
@@ -166,7 +194,7 @@ export function cleanName(raw: string): string {
 
 /** Écran de jeu pour rejouer avec les réglages d'un classement. */
 export function playHref({ game, level, questions }: Board): string {
-  if (game === 'quelle-note') return afterSettings('quelle-note', level === 'expert', `questions=${questions}&level=${level}`)
+  if (game === 'quelle-note' || game === 'chante-note') return afterSettings(game, level === 'expert', `questions=${questions}&level=${level}`)
   if (game === 'harmonies') {
     const [lvl, precision] = level.split('-')
     return `/games/harmonies/jouer?questions=${questions}&level=${lvl}&precision=${precision}`

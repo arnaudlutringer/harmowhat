@@ -29,13 +29,13 @@ describe('Meilleurs scores', () => {
   })
 
   it('un classement par jeu, niveau et nombre de questions', () => {
-    expect(GAMES['quelle-note'].levels.map((l) => l.id)).toEqual(['debutant', 'normal', 'expert'])
-    expect(GAMES.harmonies.levels).toHaveLength(6)
-    expect(GAMES['lecture-note'].levels.map((l) => l.id)).toEqual(['debutant', 'intermediaire', 'expert'])
+    expect(GAMES['quelle-note'].levels.map((l) => l.id)).toEqual(['debutant', 'normal', 'expert', 'impossible'])
+    expect(GAMES.harmonies.levels).toHaveLength(8)
+    expect(GAMES['lecture-note'].levels.map((l) => l.id)).toEqual(['debutant', 'intermediaire', 'expert', 'impossible'])
     expect(levelLabel({ game: 'harmonies', level: 'expert-precise', questions: 20 })).toBe('Expert · Précise')
     expect(parseBoard('quelle-note', { level: 'toto', questions: '7' })).toEqual({ game: 'quelle-note', level: 'debutant', questions: 20 })
     expect(parseBoard('accords', {})).toEqual({ game: 'accords', level: 'debutant', questions: 20 })
-    expect(GAMES['grave-ou-aigu'].levels.map((l) => l.id)).toEqual(['debutant', 'normal', 'expert'])
+    expect(GAMES['grave-ou-aigu'].levels.map((l) => l.id)).toEqual(['debutant', 'normal', 'expert', 'impossible'])
     expect(GAMES.accords.questionCounts).toEqual([10, 20, 30, 50])
   })
 

@@ -139,9 +139,10 @@ export function onStopAll(fn: () => void): () => void {
 
 /** Joue une note (numéro MIDI) avec l'instrument choisi. Renvoie la durée jouée, en secondes. */
 export async function playPiano(midi: number, options: PlayOptions = {}): Promise<number> {
-  const sample = nearestSample(midi)
+  const inst = options.instrument ?? currentInstrument()
+  const sample = nearestSample(midi, inst)
   const gen = generation
-  const buffer = await loadSample(sample)
+  const buffer = await loadSample(sample, inst)
   if (gen !== generation) return 0
   const { ctx } = audio()
   schedule(buffer, sample, midi, ctx.currentTime + (options.when ?? 0), options)
@@ -151,11 +152,12 @@ export async function playPiano(midi: number, options: PlayOptions = {}): Promis
 /** Joue plusieurs touches en même temps (un accord). */
 export async function playChord(midis: number[], options: PlayOptions = {}): Promise<number> {
   const gen = generation
-  const buffers = await Promise.all(midis.map((m) => loadSample(nearestSample(m))))
+  const inst = options.instrument ?? currentInstrument()
+  const buffers = await Promise.all(midis.map((m) => loadSample(nearestSample(m, inst), inst)))
   if (gen !== generation) return 0
   const { ctx } = audio()
   const at = ctx.currentTime + 0.02 + (options.when ?? 0)
-  midis.forEach((m, i) => schedule(buffers[i], nearestSample(m), m, at, { velocity: 0.6, ...options }))
+  midis.forEach((m, i) => schedule(buffers[i], nearestSample(m, inst), m, at, { velocity: 0.6, ...options }))
   return options.duration ?? 2.5
 }
 
@@ -166,6 +168,42 @@ export interface SequenceNote {
   len: number
   /** Volume propre à cette note (sinon celui de la séquence). */
   velocity?: number
+  /** Clic de métronome (décompte des jeux de rythme) au lieu d'une note de l'instrument ; `midi` est ignoré. */
+  click?: boolean
+}
+
+let clickSound: AudioBuffer | undefined
+
+/**
+ * Clic de métronome synthétisé une fois, façon bloc de bois : un « toc » aigu très court
+ * (deux sinus à 1 600 et 2 500 Hz qui s'éteignent en quelques millisecondes) et un claquement de bruit.
+ */
+function clickBuffer(ctx: AudioContext): AudioBuffer {
+  if (clickSound) return clickSound
+  const rate = ctx.sampleRate
+  const buffer = ctx.createBuffer(1, Math.round(rate * 0.06), rate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < data.length; i++) {
+    const t = i / rate
+    const tone = (Math.sin(2 * Math.PI * 1600 * t) + 0.5 * Math.sin(2 * Math.PI * 2500 * t)) * Math.exp(-t * 90)
+    const snap = (Math.random() * 2 - 1) * Math.exp(-t * 400) * 0.6
+    data[i] = (tone + snap) * 0.6
+  }
+  return (clickSound = buffer)
+}
+
+function scheduleClick(at: number, velocity: number): Voice {
+  const { ctx, out } = audio()
+  const src = ctx.createBufferSource()
+  src.buffer = clickBuffer(ctx)
+  const g = ctx.createGain()
+  g.gain.value = velocity * 0.56
+  src.connect(g).connect(out)
+  src.start(at)
+  const voice = { src, gain: g }
+  active.add(voice)
+  src.onended = () => active.delete(voice)
+  return voice
 }
 
 export interface Playback {
@@ -191,7 +229,7 @@ export async function playSequence(
   instrument: Instrument = currentInstrument(),
 ): Promise<Playback> {
   const gen = generation
-  const loaded = await Promise.all(notes.map(({ midi }) => loadSample(nearestSample(midi, instrument), instrument)))
+  const loaded = await Promise.all(notes.map(({ midi, click }) => (click ? null : loadSample(nearestSample(midi, instrument), instrument))))
   if (gen !== generation) return { duration: 0, startedAt: performance.now(), stop() {} }
   const { ctx } = audio()
   const t0 = ctx.currentTime + 0.05
@@ -199,9 +237,11 @@ export async function playSequence(
   const startedAt = performance.now() + (t0 - ctx.currentTime + latency) * 1000
   const { legato } = instrument
   const voices = notes.map((n, i) => {
+    const buffer = loaded[i]
+    if (!buffer) return scheduleClick(t0 + n.at * unit, n.velocity ?? velocity)
     // Lié (chœur) : chaque note démarre après son attaque et déborde sur la suivante, qui entre en fondu.
     const duration = Math.max(0.3, n.len * unit + (legato?.overlap ?? 0.15))
-    return schedule(loaded[i], nearestSample(n.midi, instrument), n.midi, t0 + n.at * unit, {
+    return schedule(buffer, nearestSample(n.midi, instrument), n.midi, t0 + n.at * unit, {
       duration,
       fadeIn: legato ? 0.06 : 0,
       fadeOut: Math.min(legato ? legato.overlap : 0.4, duration / 2),

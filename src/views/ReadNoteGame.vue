@@ -10,7 +10,7 @@
   >
     <!-- Jeu visuel : pas de son à deviner. La note sonne une fois à la réponse, sans réécoute possible. -->
     <template #player>
-      <div class="sheet" :class="{ sounding: quiz.playing.value }">
+      <div class="sheet" :class="{ sounding: quiz.playing.value, vanished: flash.hidden.value }">
         <chord-staff :notes="[q.note]" :clef="CLEFS[q.clef].vex" :label="`${CLEFS[q.clef].label}, note à lire`" />
       </div>
     </template>
@@ -36,6 +36,7 @@ import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
 import { trophyEvent } from '@/games/trophies'
 import ChordStaff from '@/components/ChordStaff.vue'
+import { useFlash } from '@/composables/useFlash'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
 import { CHOICES, CLEFS, createQuestion, LEVELS, parseSettings, type Question } from '@/games/readNote'
@@ -49,6 +50,8 @@ const quiz = useQuiz({
   createQuestion: () => createQuestion(settings.level),
   play: (question: Question): Promise<number> => (quiz.feedback.value ? playPiano(question.note.midi) : Promise.resolve(0)),
 })
+// Impossible : la portée s'efface au bout de quelques secondes.
+const flash = useFlash(quiz, LEVELS[settings.level].flashMs)
 const q = computed(() => quiz.question.value)
 const revealed = computed(() => quiz.feedback.value !== null)
 
@@ -71,6 +74,10 @@ function colorFor(pc: number) {
 
 <style scoped>
 /* Portée en grand : c'est elle qu'on lit. */
+/* Impossible : la portée effacée laisse son cadre vide. */
+.sheet.vanished > * {
+  visibility: hidden;
+}
 .sheet {
   width: 100%;
   max-width: 340px;

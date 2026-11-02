@@ -23,7 +23,7 @@
       <template v-else>
         <div class="buttons">
           <div class="button">
-            <button class="play" :class="{ 'is-playing': quiz.playing.value }" aria-label="Réécouter la note" :disabled="recording" @click="replay">
+            <button class="play" :class="{ 'is-playing': quiz.playing.value }" aria-label="Réécouter la note" :disabled="recording || (noReplay && !quiz.feedback.value)" @click="replay">
               <ion-icon :icon="quiz.playing.value ? volumeHigh : play" />
             </button>
             <span>Son</span>
@@ -72,17 +72,24 @@ import { playPiano } from '@/audio/engine'
 import { midiOf } from '@/audio/pitch'
 import { pitchClassName } from '@/music/notes'
 import { spelledName, spelledPitchName } from '@/music/spelling'
-import { createQuestion, judge, parseSettings, type Question, type Verdict } from '@/games/singHarmony'
+import { createQuestion, judge, LEVELS, parseSettings, type Question, type Verdict } from '@/games/singHarmony'
+import { currentInstrument, randomInstrument, type Instrument } from '@/audio/instruments'
 
 const settings = parseSettings(useRoute().query)
+// Impossible : la note de départ ne s'entend qu'une fois (pas de réécoute), jouée par un instrument au hasard.
+const noReplay = !!LEVELS[settings.level].noReplay
+let instrument: Instrument = currentInstrument()
 
 /** Durée de la note jouée. */
 const NOTE_MS = 2500
 
 const quiz = useQuiz<Question>({
   total: settings.questions,
-  createQuestion: () => createQuestion(settings.level),
-  play: (question) => playPiano(question.base.midi, { duration: NOTE_MS / 1000 }),
+  createQuestion: () => {
+    if (noReplay) instrument = randomInstrument()
+    return createQuestion(settings.level)
+  },
+  play: (question) => playPiano(question.base.midi, { duration: NOTE_MS / 1000, instrument }),
   // Le décompte des points démarre aux 80 % de la note jouée.
   countdownStart: () => NOTE_MS * 0.8,
   // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
@@ -130,7 +137,7 @@ const staffNotes = computed(() => (result.value ? [q.value.base, q.value.target,
 const staffLabel = computed(() => staffNotes.value.map(spelledName).join(', '))
 
 function onNote(frequency: number) {
-  const verdict = judge(frequency, q.value)
+  const verdict = judge(frequency, q.value, settings.level)
   result.value = verdict
   if (verdict.correct) trophyEvent({ type: 'harmony-sung', semitones: q.value.interval.semitones })
   const { base, target, label } = q.value

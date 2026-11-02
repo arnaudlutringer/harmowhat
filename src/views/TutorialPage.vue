@@ -26,11 +26,14 @@
 
             <!-- 2. Les jeux -->
             <template v-else-if="step === 2">
-              <!-- Un jeu par catégorie (l'oreille, la voix, le solfège, le rythme), en tuiles inclinées comme des cartes posées. -->
+              <!-- Un jeu par catégorie (l'oreille, la voix, le solfège, le rythme, le tempo), en tuiles inclinées comme des cartes posées. -->
+              <!-- Deux tuiles en haut, trois en dessous. -->
               <div class="showcase" aria-hidden="true">
-                <span v-for="t in SHOWCASE" :key="t.game" class="tile" :style="{ background: t.color, transform: `rotate(${t.tilt}deg)` }">
-                  <ion-icon :icon="GAME_ICONS[t.game]" />
-                </span>
+                <div v-for="(row, r) in [SHOWCASE.slice(0, 2), SHOWCASE.slice(2)]" :key="r" class="showcase-row">
+                  <span v-for="t in row" :key="t.game" class="tile" :style="{ background: t.color, transform: `rotate(${t.tilt}deg)` }">
+                    <ion-icon :icon="GAME_ICONS[t.game]" />
+                  </span>
+                </div>
               </div>
               <div class="lines">
                 <p class="lead">Plein de mini-jeux sont là pour tester ton oreille, mais pas que&nbsp;!</p>
@@ -39,8 +42,8 @@
               <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
             </template>
 
-            <!-- 3. Le diapason -->
-            <template v-else-if="step === 3">
+            <!-- 4. Le diapason -->
+            <template v-else-if="step === 4">
               <div class="fork-wrap">
                 <button class="play fork" :class="{ 'is-playing': sound.current.value === 'fork' }" aria-label="Écouter le diapason, La3 440 Hz" @click="listenFork">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -60,8 +63,20 @@
               <ion-button expand="block" size="large" :disabled="!forkTried" @click="next">Suivant</ion-button>
             </template>
 
-            <!-- 4. L'instrument -->
-            <template v-else-if="step === 4">
+            <!-- 3. Les médailles : une par niveau (sans faute), et le diamant du GOAT. -->
+            <template v-else-if="step === 3">
+              <div class="medals" aria-hidden="true">
+                <span v-for="(m, i) in MEDALS" :key="m.medal" class="medal" :style="{ animationDelay: `${i * 0.15}s` }">{{ m.medal }}</span>
+              </div>
+              <p class="lead">Dans chaque jeu, gagne une médaille par niveau.</p>
+              <ul class="medal-list">
+                <li v-for="m in MEDALS" :key="m.medal"><span>{{ m.medal }}</span> {{ m.text }}</li>
+              </ul>
+              <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
+            </template>
+
+            <!-- 5. L'instrument -->
+            <template v-else-if="step === 5">
               <p class="lead">Quel est ton instrument de prédilection ?</p>
               <p class="how">Touche un instrument pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
               <div class="list">
@@ -78,8 +93,8 @@
               </div>
             </template>
 
-            <!-- 5. Le morceau -->
-            <template v-else-if="step === 5">
+            <!-- 6. Le morceau -->
+            <template v-else-if="step === 6">
               <p class="lead">Quel est ton morceau favori parmi ceux-là ?</p>
               <p class="how">Touche un morceau pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
               <div class="list">
@@ -96,8 +111,8 @@
               </div>
             </template>
 
-            <!-- 6. Bien joué… ou la catastrophe -->
-            <template v-else-if="step === 6">
+            <!-- 7. Bien joué… ou la catastrophe -->
+            <template v-else-if="step === 7">
               <p class="lead">À chaque jeu, fais en sorte que ton morceau soit bien joué à la fin !</p>
               <div class="row single">
                 <span class="piece">{{ ending.title }} <small>{{ ending.composer }}</small></span>
@@ -120,15 +135,15 @@
               <ion-button expand="block" size="large" :disabled="!drunkTried" @click="next">Suivant</ion-button>
             </template>
 
-            <!-- 7. Le compte du joueur : nom et pays, pour les classements. -->
-            <template v-else-if="step === 7">
+            <!-- 8. Le compte du joueur : nom et pays, pour les classements. -->
+            <template v-else-if="step === 8">
               <p class="lead">Comment t'appelles-tu, et d'où joues-tu ?</p>
               <player-settings class="account" hide-id />
               <p class="later">Tu pourras modifier ces informations plus tard, dans Paramètres › Mon compte.</p>
               <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
             </template>
 
-            <!-- 8. C'est parti -->
+            <!-- 9. C'est parti -->
             <template v-else>
               <div class="big" aria-hidden="true">🏆</div>
               <p class="lead">Maintenant tu es prêt !</p>
@@ -155,14 +170,23 @@ import { chooseEnding, endingFor, endingsFor, playEnding, type Ending, type Endi
 import { markTutorialDone } from '@/tutorial'
 import { trophyEvent } from '@/games/trophies'
 
-const STEPS = 8
+const STEPS = 9
+
+/** Écran des médailles : bronze, argent, or pour un sans faute à chaque niveau, le diamant pour le GOAT. */
+const MEDALS = [
+  { medal: '🥉', text: 'Un questionnaire sans faute en débutant' },
+  { medal: '🥈', text: 'Sans faute en normal' },
+  { medal: '🥇', text: 'Sans faute en expert' },
+  { medal: '💎', text: 'Le GOAT : chaque réponse à 10 000 points' },
+]
 
 /** Écran des mini-jeux : un jeu par catégorie, aux couleurs de l'accueil. */
 const SHOWCASE = [
-  { game: 'quelle-note', color: 'var(--hw-category-ear)', tilt: -9 },
-  { game: 'chante-note', color: 'var(--hw-category-voice)', tilt: -3 },
-  { game: 'lecture-note', color: 'var(--hw-category-theory)', tilt: 3 },
-  { game: 'joue-rythme', color: 'var(--hw-category-rhythm)', tilt: 9 },
+  { game: 'quelle-note', color: 'var(--hw-category-ear)', tilt: -7 },
+  { game: 'chante-note', color: 'var(--hw-category-voice)', tilt: 6 },
+  { game: 'lecture-note', color: 'var(--hw-category-theory)', tilt: -8 },
+  { game: 'joue-rythme', color: 'var(--hw-category-rhythm)', tilt: 2 },
+  { game: 'garde-tempo', color: 'var(--hw-category-tempo)', tilt: 10 },
 ] as const
 const step = ref(1)
 const closing = ref(false)
@@ -309,14 +333,19 @@ onIonViewWillLeave(stopAll)
 /* Trois tuiles de jeux, inclinées comme des cartes posées. */
 .showcase {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
 }
+.showcase-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
 .tile {
-  width: 68px;
-  height: 68px;
+  width: 70px;
+  height: 70px;
   display: grid;
   place-items: center;
   box-shadow: 0 4px 12px rgba(45, 48, 71, 0.12);
@@ -324,6 +353,44 @@ onIonViewWillLeave(stopAll)
 .tile ion-icon {
   font-size: 46px;
   color: var(--hw-card-ink);
+}
+/* Écran des médailles : elles tombent l'une après l'autre, puis la liste de ce qu'il faut faire. */
+.medals {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 8px;
+  font-size: 46px;
+}
+.medal {
+  animation: drop 0.5s ease-out backwards;
+}
+@keyframes drop {
+  from {
+    transform: translateY(-30px) scale(0.6);
+    opacity: 0;
+  }
+}
+.medal-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+.medal-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: var(--hw-surface, #fff);
+  font-size: 15px;
+}
+.medal-list span {
+  font-size: 22px;
 }
 /* Deux phrases bien séparées. */
 .lines {

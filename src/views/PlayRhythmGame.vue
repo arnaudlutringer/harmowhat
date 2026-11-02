@@ -11,8 +11,10 @@
     <template #player>
       <div class="player">
         <rhythm-staff class="written" :cells="q.cells" :label="rhythmLabel" />
-        <!-- Après la mesure : les notes attendues (traits) et les frappes (points verts dans le temps, rouges sinon). -->
-        <svg v-if="verdict" class="timeline" viewBox="0 0 320 44" aria-hidden="true">
+        <!-- Après la mesure : les notes attendues (traits) et les frappes (points verts dans le temps, rouges sinon).
+             La frise garde sa place avant la réponse : le grand bouton ne bouge pas quand elle apparaît. -->
+        <svg class="timeline" viewBox="0 0 320 44" aria-hidden="true">
+          <template v-if="verdict">
           <line x1="10" y1="22" x2="310" y2="22" class="axis" />
           <line v-for="b in BEATS + 1" :key="`b${b}`" :x1="x(b - 1)" y1="14" :x2="x(b - 1)" y2="30" class="beat" />
           <line v-for="(m, i) in verdict.matches" :key="`e${i}`" :x1="x(m.expected)" y1="6" :x2="x(m.expected)" y2="38" class="expected" />
@@ -20,6 +22,7 @@
             <circle v-if="m.tap !== null" :cx="x(m.tap)" cy="22" r="6" :class="m.onTime ? 'ok' : 'ko'" />
           </template>
           <circle v-for="(t, i) in verdict.extra" :key="`x${i}`" :cx="x(t)" cy="22" r="6" class="ko" />
+          </template>
         </svg>
       </div>
     </template>
@@ -27,14 +30,16 @@
     <!-- Grand bouton : démarrer le décompte, puis tapoter le rythme. -->
     <button
       class="pad"
-      :class="{ counting: phase === 'counting', playing: phase === 'playing' }"
-      :disabled="!quiz.canAnswer.value || phase === 'done'"
+      :class="{ counting: phase === 'counting', playing: phase === 'playing', next: phase === 'done' }"
+      :disabled="phase === 'done' ? quiz.trial : !quiz.canAnswer.value"
       @pointerdown.prevent="onPad"
     >
       <template v-if="phase === 'ready'">▶ Démarrer</template>
       <template v-else-if="phase === 'counting'">{{ count }}</template>
       <template v-else-if="phase === 'playing'">Tape !</template>
-      <template v-else>✓</template>
+      <!-- Après la réponse, le grand bouton passe à la suite (en essai, « J'ai compris » est sous le message). -->
+      <template v-else-if="quiz.trial">✓</template>
+      <template v-else>{{ quiz.number.value < quiz.total ? 'Suivant ›' : 'Voir mon score ›' }}</template>
     </button>
     <p class="hint">{{ hint }}</p>
   </game-shell>
@@ -50,7 +55,7 @@ import { BEATS, CELLS, createRhythmQuestion, judgeTaps, LEVELS, onsets, parseSet
 import { COUNT_IN, playRhythm } from '@/games/rhythmAudio'
 
 const settings = parseSettings(useRoute().query)
-const { tempo, tolerance } = LEVELS[settings.level]
+const { tolerance } = LEVELS[settings.level]
 
 const quiz = useQuiz({
   total: settings.questions,
@@ -69,7 +74,7 @@ const phase = ref<Phase>('ready')
 const count = ref(COUNT_IN)
 const verdict = ref<TapVerdict | null>(null)
 let barStart = 0
-let beat = 60 / tempo
+let beat = 1
 let taps: number[] = []
 let timers: ReturnType<typeof setTimeout>[] = []
 
@@ -96,18 +101,20 @@ const hint = computed(() => {
 async function start() {
   phase.value = 'counting'
   taps = []
-  const playback = await playRhythm(q.value.cells, tempo, { notes: false, clicks: true })
+  const playback = await playRhythm(q.value.cells, q.value.tempo, { notes: false, clicks: true })
   barStart = playback.barStart
   beat = playback.beat
   const now = performance.now()
   // Décompte affiché au rythme des clics, puis la mesure, puis le jugement (un peu de marge pour une dernière frappe tardive).
   for (let i = 1; i < COUNT_IN; i++) timers.push(setTimeout(() => (count.value = COUNT_IN - i), barStart - now - (COUNT_IN - i) * beat * 1000))
   count.value = COUNT_IN
-  timers.push(setTimeout(() => (phase.value = 'playing'), Math.max(0, barStart - now - 150)))
+  // Le bouton passe à « Tape ! » 350 ms avant le premier temps : on peut taper le premier temps sans hésiter.
+  timers.push(setTimeout(() => (phase.value = 'playing'), Math.max(0, barStart - now - 350)))
   timers.push(setTimeout(finish, barStart - now + (BEATS * beat + tolerance * 2) * 1000))
 }
 
 function onPad() {
+  if (phase.value === 'done') return void (!quiz.trial && quiz.next())
   if (!quiz.canAnswer.value) return
   if (phase.value === 'ready') return void start()
   if (phase.value === 'counting' || phase.value === 'playing') taps.push((performance.now() - barStart) / 1000)
@@ -130,7 +137,7 @@ function finish() {
     tapPoints(v, tolerance),
   )
   // On entend ensuite le rythme joué juste.
-  void playRhythm(q.value.cells, tempo, { notes: true, clicks: false }).catch(() => {})
+  void playRhythm(q.value.cells, q.value.tempo, { notes: true, clicks: false, pitches: q.value.pitches }).catch(() => {})
 }
 </script>
 
@@ -193,10 +200,15 @@ function finish() {
   background: var(--ion-color-secondary);
   font-size: 56px;
 }
+.pad.next {
+  font-size: 24px;
+}
 .pad:disabled {
   opacity: 0.6;
 }
+/* Hauteur fixe (deux lignes) : le texte change ou disparaît sans faire bouger l'écran. */
 .hint {
+  min-height: 40px;
   margin: 10px 0 0;
   text-align: center;
   color: var(--ion-color-medium);

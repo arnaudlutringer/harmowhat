@@ -21,22 +21,29 @@ import GameShell from '@/components/GameShell.vue'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
 import { A440, noteName } from '@/music/notes'
-import { createHighLowQuestion, parseSettings } from '@/games/highLow'
+import { createHighLowQuestion, LEVELS, parseSettings } from '@/games/highLow'
+import { randomInstrument, type Instrument } from '@/audio/instruments'
 
 const settings = parseSettings(useRoute().query)
+let instrument: Instrument | undefined
 
 // La référence est le La3 du diapason ; la note jouée en est plus ou moins éloignée selon le niveau.
 // Après la réponse, une barre se remplit en 1,5 s, puis vient la question suivante.
 const quiz = useQuiz({
   total: settings.questions,
-  createQuestion: () => createHighLowQuestion(settings.level),
-  play: (note) => playPiano(note),
+  createQuestion: () => {
+    // Impossible : un instrument au hasard pour chaque question.
+    instrument = LEVELS[settings.level].quarterTone ? randomInstrument(A440) : undefined
+    return createHighLowQuestion(settings.level, instrument)
+  },
+  play: (note) => playPiano(note, { instrument }),
 })
 
 function choose(guess: 'grave' | 'aigu') {
   const note = quiz.question.value
   const truth = note < A440 ? 'grave' : 'aigu'
-  quiz.answer(guess === truth, `C'était un ${noteName(note)}, plus ${truth} que le La3.`)
+  const what = Number.isInteger(note) ? `un ${noteName(note)}` : `un La3 un quart de ton plus ${truth}`
+  quiz.answer(guess === truth, Number.isInteger(note) ? `C'était ${what}, plus ${truth} que le La3.` : `C'était ${what}.`)
 }
 </script>
 

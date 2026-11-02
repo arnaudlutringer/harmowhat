@@ -1,105 +1,90 @@
 <template>
-  <ion-page>
-    <ion-content class="ion-padding">
-      <page-nav title="Les harmonies" back-href="/home" game="harmonies" />
-      <div class="settings hw-square">
-        <game-intro game="harmonies" />
-        <h2>Nombre de questions</h2>
-        <ion-segment v-model="questions">
-          <ion-segment-button v-for="n in QUESTION_COUNTS" :key="n" :value="n">
-            <ion-label>{{ n }}</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-
-        <h2>Difficulté</h2>
-        <ion-radio-group v-model="level">
-          <ion-item v-for="(cfg, key) in LEVELS" :key="key" lines="full">
-            <ion-radio :value="key" justify="space-between">
-              <ion-label class="ion-text-wrap">
-                <strong>{{ cfg.label }}</strong>
-                <p>{{ cfg.description }}</p>
-              </ion-label>
-            </ion-radio>
-          </ion-item>
-        </ion-radio-group>
-
-        <h2>Précision</h2>
-        <ion-radio-group v-model="precision">
-          <ion-item v-for="(cfg, key) in PRECISIONS" :key="key" lines="full">
-            <ion-radio :value="key" justify="space-between">
-              <ion-label class="ion-text-wrap">
-                <strong>{{ cfg.label }}</strong>
-                <p>{{ cfg.description }}</p>
-              </ion-label>
-            </ion-radio>
-          </ion-item>
-        </ion-radio-group>
-
-        <ion-button expand="block" size="large" class="start" @click="start()">C'est parti&nbsp;!</ion-button>
-        <ion-button expand="block" class="trial" @click="start(true)">Essayer une question</ion-button>
+  <game-settings
+    game="harmonies"
+    title="Les harmonies"
+    :levels="LEVELS"
+    :question-counts="QUESTION_COUNTS"
+    storage-key="harmowhat.harmonies.settings"
+    play-path="/games/harmonies/jouer"
+    :parse="parseSettings"
+    :next-path="nextPath"
+    :extra="{ precision }"
+    :board-level="(level) => `${level}-${precision}`"
+  >
+    <!-- La précision : intervalle seul, ou avec sa qualité (tierce mineure, quarte augmentée…). -->
+    <template #extra>
+      <h2 class="extra-title">Précision</h2>
+      <div class="precisions" role="radiogroup" aria-label="Précision">
+        <button
+          v-for="(cfg, key) in PRECISIONS"
+          :key="key"
+          role="radio"
+          :aria-checked="precision === key"
+          :class="{ on: precision === key }"
+          @click="precision = key"
+        >
+          <strong>{{ cfg.label }}</strong>
+          <small>{{ cfg.description }}</small>
+        </button>
       </div>
-    </ion-content>
-  </ion-page>
+    </template>
+  </game-settings>
 </template>
 
 <script setup lang="ts">
-import { withTrial } from '@/games/ready'
 import { ref } from 'vue'
-import {
-  IonButton, IonContent, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, useIonRouter,
-} from '@ionic/vue'
-import PageNav from '@/components/PageNav.vue'
-import GameIntro from '@/components/GameIntro.vue'
-import { LEVELS, parseSettings, PRECISIONS, QUESTION_COUNTS, type Level, type Precision } from '@/games/intervals'
+import GameSettings from '@/components/GameSettings.vue'
+import { LEVELS, parseSettings, PRECISIONS, QUESTION_COUNTS, type Precision } from '@/games/intervals'
 
-const STORAGE_KEY = 'harmowhat.harmonies.settings'
-
-// On repropose les derniers réglages choisis.
-function loadSaved() {
+function savedPrecision(): Precision {
   try {
-    return parseSettings(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}'))
+    return parseSettings(JSON.parse(localStorage.getItem('harmowhat.harmonies.settings') ?? '{}')).precision
   } catch {
-    return parseSettings({})
+    return parseSettings({}).precision
   }
 }
 
-const saved = loadSaved()
-const questions = ref<number>(saved.questions)
-const level = ref<Level>(saved.level)
-const precision = ref<Precision>(saved.precision)
-const router = useIonRouter()
-
-function start(trial = false) {
-  const settings = { questions: questions.value, level: level.value, precision: precision.value }
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-  } catch {
-    // Stockage indisponible : on joue quand même.
-  }
-  // Pas besoin de diapason pour reconnaître un intervalle : on lance directement le jeu.
-  router.push(withTrial(`/games/harmonies/jouer?questions=${settings.questions}&level=${settings.level}&precision=${settings.precision}`, trial))
-}
+const precision = ref<Precision>(savedPrecision())
+const nextPath = ({ questions, level }: { questions: number; level: string }) =>
+  `/games/harmonies/jouer?questions=${questions}&level=${level}&precision=${precision.value}`
 </script>
 
 <style scoped>
-.settings {
-  max-width: 480px;
-  margin: 0 auto;
-}
-h2 {
-  font-size: 18px;
-  margin: 24px 0 12px;
-}
-ion-radio {
-  width: 100%;
-}
-ion-radio::part(label) {
-  white-space: normal;
-}
-ion-label p {
+.extra-title {
+  margin: 18px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   color: var(--ion-color-medium);
 }
-.start {
-  margin-top: 32px;
+.precisions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.precisions button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 12px;
+  border: none;
+  border-radius: 18px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-text-color);
+  font-family: inherit;
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(45, 48, 71, 0.07);
+  cursor: pointer;
+}
+.precisions small {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ion-color-medium);
+}
+.precisions .on {
+  outline: 3px solid var(--ion-color-primary);
+  background: var(--hw-button-active);
 }
 </style>

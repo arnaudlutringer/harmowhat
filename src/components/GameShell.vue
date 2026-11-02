@@ -1,11 +1,33 @@
 <template>
   <ion-page>
-    <!-- Pas d'en-tête ni de bouton Retour dans les jeux : le bouton retour du téléphone propose de quitter la partie. -->
+    <!-- Pas de bouton Retour dans les jeux : le bouton retour du téléphone propose de quitter la partie.
+         Pendant les questions, le score, le diapason et le total restent fixés en haut. -->
+    <ion-header v-if="playing" class="ion-no-border game-header">
+        <div class="meta">
+          <div class="points" :class="{ frozen: quiz.feedback.value }" aria-label="Points de la question">
+            <strong>{{ quiz.points.value }}</strong>
+            <span>pts</span>
+          </div>
+          <!-- Le diapason n'est disponible que pendant les questions (et jamais en mode expert). -->
+          <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
+          <div class="progress">
+            <!-- Essai : une seule question, sans total ; « Essai » en grand à la place. -->
+            <span v-if="quiz.trial" class="trial">Essai</span>
+            <span v-if="!quiz.trial && endless">Palier {{ quiz.number.value }}</span>
+            <span v-else-if="!quiz.trial">Question {{ quiz.number.value }} / {{ quiz.total }}</span>
+            <span v-if="!quiz.trial" class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
+          </div>
+          <!-- Points gagnés à la question : « +350pts » en biais, qui s'envole des points de la question vers le total (1,5 s). -->
+          <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}pts</strong>
+        </div>
+    </ion-header>
     <ion-content class="ion-padding">
       <game-result
         v-if="quiz.finished.value"
         :results="quiz.results.value"
-        :total="quiz.total"
+        :total="endless ? quiz.results.value.length : quiz.total"
+        :answers-label="answersLabel"
+        :score-ratio="scoreRatio"
         :board="board"
         :settings-href="settingsHref"
         :fork-available="!noTuningFork"
@@ -22,28 +44,12 @@
       <div
         v-else
         class="game hw-square"
+        :class="{ compact }"
         @pointerdown="onPointerDown"
         @pointerup="onPointerUp"
         @pointercancel="swipeStart = null"
       >
-        <div class="meta">
-          <div class="points" :class="{ frozen: quiz.feedback.value }" aria-label="Points de la question">
-            <strong>{{ quiz.points.value }}</strong>
-            <span>pts</span>
-          </div>
-          <!-- Le diapason n'est disponible que pendant les questions (et jamais en mode expert). -->
-          <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
-          <div class="progress">
-            <!-- Essai : une seule question, sans total ; « Essai » en grand à la place. -->
-            <span v-if="quiz.trial" class="trial">Essai</span>
-            <span v-if="!quiz.trial">Question {{ quiz.number.value }} / {{ quiz.total }}</span>
-            <span v-if="!quiz.trial" class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
-          </div>
-          <!-- Points gagnés à la question : « +350pts » en biais, qui s'envole des points de la question vers le total (1,5 s). -->
-          <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}pts</strong>
-        </div>
-
-        <p class="prompt">{{ prompt }}</p>
+        <p class="prompt"><slot name="prompt">{{ prompt }}</slot></p>
 
         <slot name="player">
           <button class="play" :class="{ 'is-playing': quiz.playing.value }" aria-label="Écouter la note" @click="quiz.listen()">
@@ -56,41 +62,31 @@
           <slot />
         </div>
 
-        <div class="feedback" :class="quiz.feedback.value?.correct ? 'ok' : 'ko'" aria-live="polite">
-          <template v-if="quiz.feedback.value">
-            <strong>{{ quiz.feedback.value.correct ? 'Bonne réponse !' : 'Mauvaise réponse' }}</strong>
-            <span>{{ quiz.feedback.value.message }}</span>
-            <!-- Passage automatique : une barre se remplit jusqu'à la question suivante. -->
-            <!-- Essai : pas de question suivante, on revient aux réglages quand on a compris. -->
-            <ion-button v-if="quiz.trial" class="understood" @click="backToSettings">J'ai compris</ion-button>
-            <span
-              v-else-if="advanceBar"
-              :key="quiz.number.value"
-              class="advance-bar"
-              :style="{ animationDuration: `${advanceBar}ms` }"
-              aria-hidden="true"
-            />
-            <button v-if="swipeToNext && !quiz.trial" class="next-hint" @click="quiz.next()">
-              Glisse vers la gauche pour {{ quiz.number.value < quiz.total ? 'la question suivante' : 'voir ton score' }} ›
-            </button>
-          </template>
-        </div>
+        <game-feedback v-if="!pinned" reserve :quiz="quiz" :endless="endless" :advance-bar="advanceBar" :swipe-to-next="swipeToNext" @understood="backToSettings" />
       </div>
     </ion-content>
+    <!-- Jeux avec un bouton Valider : lui et le message de la réponse restent fixés en bas de l'écran. -->
+    <ion-footer v-if="playing && pinned" class="ion-no-border game-footer" @pointerdown="onPointerDown" @pointerup="onPointerUp">
+      <div class="bottom">
+        <slot name="bottom" />
+        <game-feedback :quiz="quiz" :endless="endless" :advance-bar="advanceBar" :swipe-to-next="swipeToNext" @understood="backToSettings" />
+      </div>
+    </ion-footer>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  alertController, IonButton, IonContent, IonIcon, IonPage, onIonViewWillLeave, useBackButton, useIonRouter,
+  alertController, IonContent, IonFooter, IonHeader, IonIcon, IonPage, onIonViewWillLeave, useBackButton, useIonRouter,
 } from '@ionic/vue'
 import { useRoute } from 'vue-router'
 import { play, volumeHigh } from 'ionicons/icons'
 import TuningForkButton from './TuningForkButton.vue'
 import GameResult from './GameResult.vue'
+import GameFeedback from './GameFeedback.vue'
 import type { useQuiz } from '@/composables/useQuiz'
 import type { Board } from '@/games/highScores'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
 import { preloadPiano, stopAll } from '@/audio/engine'
 
 const props = defineProps<{
@@ -107,7 +103,21 @@ const props = defineProps<{
   noTuningFork?: boolean
   /** Délai du passage automatique à la question suivante (ms) : une barre se remplit pendant ce temps. */
   advanceBar?: number
+  /** Partie sans nombre de questions (« Garde le tempo ») : « Palier n », et le bilan compte les paliers. */
+  endless?: boolean
+  /** Bilan propre au jeu, à la place de « n / total bonnes réponses ». */
+  answersLabel?: string
+  /** Réussite de la partie, de 0 à 1, si elle ne se compte pas en bonnes réponses (« Garde le tempo » : points / 10 000). */
+  scoreRatio?: number
+  /** Écran serré (« Trouve le tempo » au curseur) : moins d'espace autour de la consigne et du message. */
+  compact?: boolean
 }>()
+
+/** Pendant les questions (ni compte à rebours ni écran de fin) : en-tête et pied fixes. */
+const playing = computed(() => !props.quiz.finished.value && props.quiz.countdown.value === null)
+/** Le jeu met son bouton Valider dans le pied : le message de la réponse l'y rejoint. */
+const slots = useSlots()
+const pinned = computed(() => !!slots.bottom)
 
 // À chaque réponse qui rapporte des points (sauf la première, où le total ne fait que démarrer),
 // le gain s'envole vers le total en 1,5 s ; le total « saute » et n'augmente qu'au moment où il l'atteint.
@@ -248,12 +258,37 @@ useBackButton(20, (processNextHandler) => {
     opacity: 1;
   }
 }
+/* La question remplit la hauteur entre l'en-tête et le pied : ses éléments se répartissent, sans vide en bas. */
 .game {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: space-evenly;
+  max-width: 420px;
+  min-height: 100%;
+  margin: 0 auto;
+}
+.game-header,
+.game-footer {
+  background: var(--ion-background-color);
+}
+.game-header .meta {
   max-width: 420px;
   margin: 0 auto;
+  padding: calc(10px + var(--ion-safe-area-top, 0px)) 16px 4px;
+}
+/* Pied fixe : toujours la même hauteur (Valider avant la réponse, le message après), la question ne bouge pas. */
+.bottom {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 150px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 8px 16px calc(12px + var(--ion-safe-area-bottom, 0px));
+}
+.bottom :deep(.feedback) {
+  margin-top: 8px;
 }
 .meta {
   position: relative;
@@ -307,11 +342,6 @@ useBackButton(20, (processNextHandler) => {
 .countdown .countdown-trial {
   color: var(--ion-color-danger);
   font-size: 26px;
-}
-.understood {
-  margin-top: 12px;
-  --border-radius: 0;
-  font-weight: 700;
 }
 .total.bump {
   animation: bump 0.25s ease-out;
@@ -405,59 +435,11 @@ useBackButton(20, (processNextHandler) => {
 .answers {
   width: 100%;
 }
-.feedback {
-  min-height: 64px;
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 18px;
-}
-.advance-bar {
-  position: relative;
-  overflow: hidden;
-  width: 160px;
-  height: 4px;
-  margin-top: 10px;
-  border-radius: 2px;
-  background: rgba(108, 92, 231, 0.18);
-}
-.advance-bar::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--ion-color-primary);
-  transform-origin: left;
-  transform: scaleX(0);
-  animation: advance linear forwards;
-  animation-duration: inherit;
-}
-@keyframes advance {
-  to {
-    transform: scaleX(1);
-  }
-}
-/* Pas de place réservée au message tant qu'on n'a pas répondu : le bas de l'écran (ex. Valider) reste visible. */
-.feedback:empty {
-  min-height: 0;
-  margin-top: 0;
-}
-.next-hint {
-  margin-top: 12px;
-  background: none;
-  border: none;
-  color: var(--ion-color-medium);
-  font-size: 14px;
-  cursor: pointer;
-}
 .game {
   touch-action: pan-y;
 }
-.feedback.ok strong {
-  color: var(--ion-color-success);
-}
-.feedback.ko strong {
-  color: var(--ion-color-danger);
+/* Écran serré : tout doit tenir sans défiler. */
+.compact .prompt {
+  margin: 10px 0 8px;
 }
 </style>

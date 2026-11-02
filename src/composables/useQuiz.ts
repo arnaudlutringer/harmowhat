@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { stopAll } from '@/audio/engine'
 import { isTrial } from '@/games/ready'
 import { trophyEvent } from '@/games/trophies'
+import { seedFromQuery, withSeed } from '@/games/seed'
 
 export interface Feedback {
   correct: boolean
@@ -29,6 +30,8 @@ export interface QuizOptions<Q> {
   answersOpen?: (question: Q) => number
   /** Pas de chronomètre : les points viennent de la réponse elle-même (voir nswer), 0 en attendant. */
   untimed?: boolean
+  /** Le décompte des points s'arrête pendant une réécoute, et reprend 50 ms avant la fin du son (jeux de rythme). */
+  pauseOnReplay?: boolean
 }
 
 /**
@@ -38,15 +41,19 @@ export interface QuizOptions<Q> {
 /** Délai du passage automatique à la question suivante, après une réponse (ms). */
 export const ADVANCE_DELAY = 1500
 
-export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart, answersOpen, untimed = false }: QuizOptions<Q>) {
+export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = ADVANCE_DELAY, countdownStart, answersOpen, untimed = false, pauseOnReplay = false }: QuizOptions<Q>) {
   // Mode essai (`essai=1` dans l'adresse du jeu) : une seule question, sans passage automatique ni score.
-  const trial = getCurrentInstance() ? isTrial(useRoute()?.query ?? {}) : false
+  const query = getCurrentInstance() ? (useRoute()?.query ?? {}) : {}
+  const trial = isTrial(query)
+  // Match (« graine=… » dans l'adresse) : les questions sont tirées de la graine, les mêmes pour les deux joueurs.
+  const seed = seedFromQuery(query)
   if (trial) {
     total = 1
     advanceDelay = null
   }
   const index = ref(0)
-  const question = shallowRef<Q>(createQuestion())
+  const draw = () => (seed === undefined ? createQuestion() : withSeed(seed + index.value * 7919, createQuestion))
+  const question = shallowRef<Q>(draw())
   const hasListened = ref(false)
   const feedback = ref<Feedback | null>(null)
   const finished = ref(false)
@@ -63,6 +70,9 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
   let clockTimer: ReturnType<typeof setTimeout> | undefined
   let openTimer: ReturnType<typeof setTimeout> | undefined
   let countdownTimer: ReturnType<typeof setTimeout> | undefined
+  let replayTimer: ReturnType<typeof setTimeout> | undefined
+  /** Décompte arrêté pendant une réécoute (pauseOnReplay). */
+  let replayHold = false
   let frame: number | undefined
   /** Partie en pause (popin « Quitter la partie ? ») ; startPending : le décompte devait démarrer pendant la pause. */
   let paused = false
@@ -97,10 +107,28 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     const q = question.value
     const first = plays++ === 0
     if (!first && questionOpen()) clock.penalize(REPLAY_PENALTY)
+    // Réécoute (jeux avec `pauseOnReplay`) : les points ne baissent plus pendant le son.
+    const hold = pauseOnReplay && !first && questionOpen() && clock.running
+    if (hold) {
+      clearTimeout(replayTimer)
+      clock.pause()
+      replayHold = true
+    }
     tick()
     return sound
       .track(play(q))
-      .then(() => {
+      .then((seconds) => {
+        if (hold) {
+          const c = clock
+          // Le décompte reprend 50 ms avant la fin du son.
+          replayTimer = setTimeout(() => {
+            if (c !== clock || !replayHold) return
+            replayHold = false
+            if (paused) return
+            c.resume()
+            tick()
+          }, Math.max(0, seconds * 1000 - 50))
+        }
         if (question.value !== q || !questionOpen()) return
         // Délai propre au jeu : les réponses s'ouvrent avec le décompte ; sinon, dès le début du son.
         if (!countdownStart || !first) hasListened.value = true
@@ -139,7 +167,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     stopTicking()
     points.value = clock.stop()
     if (scored !== undefined) points.value = scored
-    results.value = [...results.value, { correct, points: correct ? points.value : 0 }]
+    // Points donnés par le jeu (précision, palier entamé) : comptés même sans bonne réponse.
+    results.value = [...results.value, { correct, points: correct ? points.value : (scored ?? 0) }]
     feedback.value = { correct, message }
     if (trial) trophyEvent({ type: 'trial' })
     if (advanceDelay !== null) timer = setTimeout(next, advanceDelay)
@@ -181,7 +210,8 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
       startPending = false
       clock.start()
     }
-    clock.resume()
+    // Pendant une réécoute, le décompte reste arrêté jusqu'à la fin du son.
+    if (!replayHold) clock.resume()
     tick()
     if (countdown.value !== null) countdownTimer = setTimeout(countdownStep, 1000)
   }
@@ -190,12 +220,14 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     stopTicking()
     clearTimeout(clockTimer)
     clearTimeout(openTimer)
+    clearTimeout(replayTimer)
     stopAll()
     clock = new QuestionClock()
     startPending = false
+    replayHold = false
     plays = 0
     points.value = untimed ? 0 : clock.points
-    question.value = createQuestion()
+    question.value = draw()
     hasListened.value = false
     feedback.value = null
     if (first) startCountdown()
@@ -213,6 +245,17 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
     }
     index.value++
     startQuestion()
+  }
+
+  /** Termine la partie tout de suite (jeux sans nombre de questions, comme « Garde le tempo »). */
+  function finish() {
+    clearTimeout(timer)
+    clearTimeout(clockTimer)
+    clearTimeout(openTimer)
+    clearTimeout(replayTimer)
+    stopTicking()
+    finished.value = true
+    stopAll()
   }
 
   /** Nouvelle partie avec les mêmes réglages. */
@@ -236,6 +279,7 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
       clearTimeout(clockTimer)
       clearTimeout(openTimer)
       clearTimeout(countdownTimer)
+      clearTimeout(replayTimer)
       stopTicking()
       stopAll()
     })
@@ -243,8 +287,10 @@ export function useQuiz<Q>({ total = 20, createQuestion, play, advanceDelay = AD
 
   return {
     trial,
+    /** Partie d'un match (questions tirées d'une graine). */
+    seeded: seed !== undefined,
     forkUsed,
     total, index, number, score, points, totalPoints, results, question, hasListened, feedback, finished, canAnswer, countdown,
-    playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, restart, pause, resume,
+    playing: sound.playing, replayCosts, replayPenalty: REPLAY_PENALTY, listen, penalizeTuningFork, answer, next, finish, restart, pause, resume,
   }
 }

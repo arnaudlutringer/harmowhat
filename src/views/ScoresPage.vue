@@ -9,14 +9,14 @@
         <p class="board">{{ levelLabel(board) }} · {{ board.questions }} questions</p>
 
         <ion-select
-          v-if="info.levels.length > 1"
+          v-if="levels.length > 1"
           v-model="board.level"
           label="Niveau"
           interface="popover"
           fill="outline"
           class="level"
         >
-          <ion-select-option v-for="l in info.levels" :key="l.id" :value="l.id">{{ l.label }}</ion-select-option>
+          <ion-select-option v-for="l in levels" :key="l.id" :value="l.id">{{ l.label }}</ion-select-option>
         </ion-select>
         <ion-segment v-if="info.questionCounts.length > 1" v-model="board.questions">
           <ion-segment-button v-for="n in info.questionCounts" :key="n" :value="n">
@@ -72,7 +72,7 @@ import {
 import { GAME_ICONS } from '@/games/icons'
 import PageNav from '@/components/PageNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
-import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref } from '@/games/highScores'
+import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref, shownLevels } from '@/games/highScores'
 import { cachedBoard, fetchBoard, parseScope, scope, updateCachedBoard, worldVersion, type WorldScore } from '@/games/worldScores'
 import { flag } from '@/player/countries'
 import { profile } from '@/player/profile'
@@ -93,6 +93,8 @@ const route = useRoute()
 const router = useIonRouter()
 const game = isGameId(route.params.game) ? route.params.game : 'grave-ou-aigu'
 const info = GAMES[game]
+// Le niveau Impossible n'apparaît qu'une fois débloqué.
+const levels = shownLevels(game)
 const board = reactive(parseBoard(game, route.query))
 const initial = { ...board }
 const entries = ref<Row[]>([])

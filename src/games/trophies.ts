@@ -9,7 +9,7 @@ import type { Board, GameId } from './highScores'
  * mémorisés sur l'appareil avec les compteurs dont ils ont besoin. Les nouveaux sont annoncés en fin de partie.
  */
 
-export type TrophyFamily = 'decouverte' | 'sans-faute' | 'rapidite' | 'goat' | 'perseverance' | 'voix' | 'oreille' | 'clins'
+export type TrophyFamily = 'decouverte' | 'sans-faute' | 'rapidite' | 'goat' | 'perseverance' | 'voix' | 'oreille' | 'tempo' | 'clins'
 
 export const FAMILIES: Record<TrophyFamily, string> = {
   decouverte: 'Découverte',
@@ -19,6 +19,7 @@ export const FAMILIES: Record<TrophyFamily, string> = {
   perseverance: 'Persévérance',
   voix: 'La voix',
   oreille: "L'oreille et le solfège",
+  tempo: 'Le tempo',
   clins: "Clins d'œil",
 }
 
@@ -35,6 +36,8 @@ export interface Trophy {
 /** GOAT : chaque réponse d'un questionnaire à 10 000 points, c'est-à-dire donnée pendant la marge avant le décompte. */
 export const GOAT_POINTS = 10000
 const ECLAIR_POINTS = 10000
+/** Niveau Impossible : à débloquer par un sans faute en expert, plus de 9 000 points à chaque question. */
+export const IMPOSSIBLE_POINTS = 9000
 
 const GOAT_TITLES: Record<GameId, string> = {
   'grave-ou-aigu': 'Sismographe',
@@ -49,6 +52,8 @@ const GOAT_TITLES: Record<GameId, string> = {
   tonalite: 'Maître des clés',
   'quel-rythme': 'Métronome humain',
   'joue-rythme': 'Batteur de génie',
+  'garde-tempo': 'Horloge atomique',
+  'trouve-tempo': 'Métronome dans la tête',
 }
 
 const GAME_NAMES: Record<GameId, string> = {
@@ -64,6 +69,8 @@ const GAME_NAMES: Record<GameId, string> = {
   tonalite: 'La tonalité',
   'quel-rythme': 'Quel rythme ?',
   'joue-rythme': 'Joue le rythme',
+  'garde-tempo': 'Garde le tempo',
+  'trouve-tempo': 'Trouve le tempo',
 }
 
 const ALL_GAMES = Object.keys(GOAT_TITLES) as GameId[]
@@ -72,24 +79,31 @@ const CATEGORIES: GameId[][] = [
   ['chante-note', 'chante-harmonie'],
   ['lecture-note', 'fais-harmonie', 'tonalite'],
   ['quel-rythme', 'joue-rythme'],
+  ['garde-tempo', 'trouve-tempo'],
 ]
 
-/** Catégorie d'un jeu, dans l'ordre de l'accueil : 0 l'oreille, 1 la voix, 2 le solfège, 3 le rythme. */
+/** Jeux sans niveau Impossible : l'exploit en expert n'y débloque rien. */
+const NO_IMPOSSIBLE: GameId[] = ['garde-tempo', 'trouve-tempo']
+
+/** Catégorie d'un jeu, dans l'ordre de l'accueil : 0 l'oreille, 1 la voix, 2 le solfège, 3 le rythme, 4 le tempo. */
 export const gameCategory = (game: GameId) => CATEGORIES.findIndex((games) => games.includes(game))
 
 export const TROPHIES: Trophy[] = [
+  { id: 'defi-releve', family: 'decouverte', icon: '📅', title: 'Défi relevé', condition: 'Relève un défi du jour : au moins 80 % de bonnes réponses' },
+  { id: 'defis-7', family: 'perseverance', icon: '🗓️', title: 'Abonné aux défis', condition: 'Relève 7 défis du jour' },
   { id: 'premiers-pas', family: 'decouverte', icon: '👣', title: 'Premiers pas', condition: 'Termine ton premier questionnaire' },
   { id: 'bien-prepare', family: 'decouverte', icon: '🎓', title: 'Bien préparé', condition: 'Termine le tutoriel' },
   { id: 'curieux', family: 'decouverte', icon: '🔍', title: 'Curieux', condition: 'Essaie une question dans le mode essai' },
-  { id: 'touche-a-tout', family: 'decouverte', icon: '🧭', title: 'Touche-à-tout', condition: 'Termine un questionnaire dans chacune des 4 catégories' },
-  { id: 'explorateur', family: 'decouverte', icon: '🗺️', title: 'Explorateur', condition: 'Termine un questionnaire dans les 12 jeux' },
+  { id: 'touche-a-tout', family: 'decouverte', icon: '🧭', title: 'Touche-à-tout', condition: 'Termine un questionnaire dans chacune des 5 catégories' },
+  { id: 'explorateur', family: 'decouverte', icon: '🗺️', title: 'Explorateur', condition: 'Termine un questionnaire dans les 14 jeux' },
   { id: 'homme-orchestre', family: 'decouverte', icon: '🎺', title: 'Homme-orchestre', condition: 'Joue un questionnaire avec 5 instruments différents' },
 
   { id: 'sans-faute', family: 'sans-faute', icon: '✅', title: 'Sans faute', condition: 'Termine un questionnaire sans aucune erreur' },
   { id: 'oreille-de-lynx', family: 'sans-faute', icon: '🐆', title: 'Oreille de lynx', condition: 'Termine un questionnaire sans faute en expert' },
   { id: 'sans-filet', family: 'sans-faute', icon: '🎪', title: 'Sans filet', condition: 'Termine un questionnaire sans faute sans toucher au diapason (quand il est proposé)' },
   { id: 'marathonien', family: 'sans-faute', icon: '🏃', title: 'Marathonien', condition: 'Termine un questionnaire de 50 questions sans faute' },
-  { id: 'grand-chelem', family: 'sans-faute', icon: '👑', title: 'Grand chelem', condition: 'Fais au moins un sans faute dans chacun des 12 jeux' },
+  { id: 'impossible', family: 'sans-faute', icon: '💎', title: "L'impossible n'existe pas", condition: 'Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question' },
+  { id: 'grand-chelem', family: 'sans-faute', icon: '👑', title: 'Grand chelem', condition: 'Fais au moins un sans faute dans chacun des 14 jeux' },
 
   { id: 'rapide', family: 'rapidite', icon: '🐇', title: 'Rapide', condition: "Donne toutes les réponses d'un questionnaire à 7 000 points ou plus" },
   { id: 'tres-rapide', family: 'rapidite', icon: '🚀', title: 'Très rapide', condition: "Donne toutes les réponses d'un questionnaire à 8 000 points ou plus" },
@@ -124,6 +138,11 @@ export const TROPHIES: Trophy[] = [
   { id: 'sept-modes', family: 'oreille', icon: '🎭', title: 'Les sept modes', condition: 'Reconnais les 7 modes au moins une fois chacun' },
   { id: 'toutes-les-cles', family: 'oreille', icon: '🗝️', title: 'Toutes les clés', condition: "Lis juste une note en clé de sol, de fa et d'ut" },
   { id: 'armures', family: 'oreille', icon: '🛡️', title: 'Armures au complet', condition: 'Trouve les 15 tonalités majeures au moins une fois chacune' },
+  { id: 'comme-une-horloge', family: 'tempo', icon: '🕰️', title: 'Comme une horloge', condition: 'Tiens 2 minutes de suite dans « Garde le tempo »' },
+  { id: 'infatigable', family: 'tempo', icon: '🔋', title: 'Infatigable', condition: 'Tiens 5 minutes de suite dans « Garde le tempo »' },
+  { id: 'grand-huit', family: 'tempo', icon: '🎢', title: 'Grand huit', condition: 'Dans une même partie de « Garde le tempo », tiens un palier sous 60 et un autre au-dessus de 140' },
+  { id: 'tempo-giusto', family: 'tempo', icon: '🎯', title: 'Tempo giusto', condition: 'Trouve un tempo pile, sans un battement d’écart, au curseur de « Trouve le tempo »' },
+  { id: 'chef-d-orchestre', family: 'tempo', icon: '🪄', title: "Chef d'orchestre", condition: 'Trouve 20 tempos au total dans « Trouve le tempo »' },
   { id: 'accords-parfaits', family: 'oreille', icon: '🎹', title: 'Accords parfaits', condition: 'Trouve 10 accords en entier au total' },
   { id: 'lecteur-aguerri', family: 'oreille', icon: '📖', title: 'Lecteur aguerri', condition: 'Lis juste 100 notes au total' },
 
@@ -134,8 +153,8 @@ export const TROPHIES: Trophy[] = [
 
 export const TROPHY_BY_ID = Object.fromEntries(TROPHIES.map((t) => [t.id, t])) as Record<string, Trophy>
 
-export type Tier = 'debutant' | 'normal' | 'expert'
-const TIER_ORDER: Tier[] = ['debutant', 'normal', 'expert']
+export type Tier = 'debutant' | 'normal' | 'expert' | 'impossible'
+const TIER_ORDER: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
 
 export interface Earned {
   date: string
@@ -159,6 +178,18 @@ interface Stats {
   chords: number
   notesRead: number
   endingsHeard: string[]
+  /** Tempos trouvés dans « Trouve le tempo ». */
+  temposFound: number
+  /** Jours (numéros) où le défi du jour a été relevé. */
+  challenges: number[]
+  /** Questionnaires terminés, par jeu. */
+  plays: Partial<Record<GameId, number>>
+  /** Médailles de niveau gagnées (un sans faute à ce niveau), par jeu. */
+  levelMedals: Partial<Record<GameId, Tier[]>>
+  /** Meilleure réussite (de 0 à 1) par jeu et par niveau de classement : la part de bonnes réponses. */
+  bestResults: Partial<Record<GameId, Record<string, number>>>
+  /** Jeux dont le niveau Impossible est débloqué. */
+  impossible: GameId[]
 }
 
 interface State {
@@ -172,7 +203,7 @@ const STORAGE_KEY = 'harmowhat.trophies'
 
 const emptyStats = (): Stats => ({
   games: 0, correct: 0, lastDay: '', streak: 0, played: [], instruments: [], perfect: [], harmoniesSung: 0,
-  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [],
+  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], plays: {}, levelMedals: {}, bestResults: {},
 })
 
 function load(): State {
@@ -188,10 +219,42 @@ function load(): State {
 export const earnedTrophies = ref<Record<string, Earned>>(load().earned)
 /** Nombre de trophées gagnés pas encore annoncés (réactif : l'annonce les affiche dès que possible). */
 export const pendingTrophyCount = ref(load().pending.length)
+/** Jeux dont le niveau Impossible est débloqué (réactif, pour les réglages). */
+export const impossibleUnlocked = ref<GameId[]>(load().stats.impossible)
+/** Jours où le défi du jour a été relevé (réactif, pour l'accueil). */
+export const challengeDays = ref<number[]>(load().stats.challenges)
+/** Médailles de niveau gagnées, par jeu (réactif, pour l'accueil et les réglages). */
+export const levelMedals = ref<Partial<Record<GameId, Tier[]>>>(load().stats.levelMedals)
+/** Meilleure réussite par jeu et par niveau (réactif, pour le défi du jour). */
+export const bestResults = ref<Partial<Record<GameId, Record<string, number>>>>(load().stats.bestResults)
+
+/**
+ * Tests en local (npm run dev seulement, jamais dans l'APK) : ajouter ?impossible=1 à l'adresse d'un écran
+ * montre les niveaux Impossible de tous les jeux, ?impossible=0 revient à la normale. Le choix est mémorisé.
+ */
+const DEV_KEY = 'harmowhat.dev.impossible'
+function devShowAll(): boolean {
+  if (!import.meta.env?.DEV || typeof location === 'undefined') return false
+  try {
+    const flag = new URLSearchParams(location.search).get('impossible')
+    if (flag === '1') localStorage.setItem(DEV_KEY, '1')
+    if (flag === '0') localStorage.removeItem(DEV_KEY)
+    return localStorage.getItem(DEV_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Le niveau Impossible de ce jeu est proposé : débloqué, ou montré pour les tests en local. */
+export const impossibleShown = (game: GameId) => impossibleUnlocked.value.includes(game) || devShowAll()
 
 function save(state: State) {
   earnedTrophies.value = { ...state.earned }
   pendingTrophyCount.value = state.pending.length
+  impossibleUnlocked.value = [...state.stats.impossible]
+  challengeDays.value = [...state.stats.challenges]
+  levelMedals.value = { ...state.stats.levelMedals }
+  bestResults.value = { ...state.stats.bestResults }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
@@ -232,6 +295,9 @@ function checkCounters(state: State) {
     ['armures', s.majorKeys.length >= 15],
     ['accords-parfaits', s.chords >= 10],
     ['lecteur-aguerri', s.notesRead >= 100],
+    ['chef-d-orchestre', s.temposFound >= 20],
+    ['defi-releve', s.challenges.length >= 1],
+    ['defis-7', s.challenges.length >= 7],
   ]
   for (const [id, ok] of rules) if (ok) award(state, id)
 }
@@ -246,6 +312,8 @@ export interface GameContext {
   forkAvailable: boolean
   forkUsed: boolean
   now?: Date
+  /** La partie est le défi du jour : numéro du jour (voir dailyChallenge.ts). */
+  challengeDay?: number
 }
 
 /** Fin d'un questionnaire : met à jour les compteurs et donne les trophées mérités. */
@@ -260,6 +328,11 @@ export function evaluateGame(ctx: GameContext): void {
   s.games++
   s.correct += correct
   s.played = addUnique(s.played, board.game)
+  s.plays = { ...s.plays, [board.game]: (s.plays[board.game] ?? 0) + 1 }
+  // Meilleure réussite à ce niveau (« Garde le tempo » : points / 10 000 ; les autres : part de bonnes réponses).
+  const ratio = board.game === 'garde-tempo' ? Math.min(1, results.reduce((sum, r) => sum + r.points, 0) / 10000) : results.length ? correct / results.length : 0
+  const bests = s.bestResults[board.game] ?? {}
+  s.bestResults = { ...s.bestResults, [board.game]: { ...bests, [board.level]: Math.max(bests[board.level] ?? 0, ratio) } }
   s.instruments = addUnique(s.instruments, ctx.instrument)
   if (allCorrect) s.perfect = addUnique(s.perfect, board.game)
   // Jours de suite : hier prolonge la série, aujourd'hui ne change rien, sinon elle repart à 1.
@@ -267,6 +340,8 @@ export function evaluateGame(ctx: GameContext): void {
   const yesterday = dayOf(new Date(new Date(today).getTime() - 86400000))
   if (s.lastDay !== today) s.streak = s.lastDay === yesterday ? s.streak + 1 : 1
   s.lastDay = today
+  // Défi du jour relevé : au moins 80 % de bonnes réponses.
+  if (ctx.challengeDay !== undefined && results.length > 0 && correct / results.length >= 0.8) s.challenges = addUnique(s.challenges, ctx.challengeDay)
 
   // Compteurs d'abord : « Premiers pas » s'annonce avant les exploits de la partie.
   checkCounters(state)
@@ -292,6 +367,22 @@ export function evaluateGame(ctx: GameContext): void {
   ]
   for (const [id, ok] of rules) if (ok) award(state, id)
   if (atLeast(GOAT_POINTS) && TIER_ORDER.includes(level)) award(state, `goat-${board.game}`, level)
+  // Médaille du niveau joué : un questionnaire complet sans faute (« intermédiaire » compte comme normal).
+  const medalTier = (level as string) === 'intermediaire' ? 'normal' : level
+  const won = s.levelMedals[board.game] ?? []
+  // « Garde le tempo » se termine toujours sur une erreur : sa médaille vient d'un palier de 30 secondes tenu.
+  const perfect = board.game === 'garde-tempo' ? results.some((r) => r.correct) : allCorrect && results.length >= board.questions
+  if (perfect && TIER_ORDER.includes(medalTier) && !won.includes(medalTier)) {
+    s.levelMedals = { ...s.levelMedals, [board.game]: [...won, medalTier] }
+    state.pending.push({ id: `medal-${board.game}`, tier: medalTier })
+  }
+  // Exploit en expert (questionnaire complet, sans faute, plus de 9 000 points à chaque question) : le niveau Impossible se débloque.
+  const exploit = level === 'expert' && results.length >= board.questions && results.every((r) => r.correct && r.points > IMPOSSIBLE_POINTS)
+  if (exploit && !NO_IMPOSSIBLE.includes(board.game) && !s.impossible.includes(board.game)) {
+    s.impossible = [...s.impossible, board.game]
+    state.pending.push({ id: `impossible-${board.game}` })
+    award(state, 'impossible')
+  }
   // Puis ceux qui dépendent des sans faute de cette partie (Grand chelem).
   checkCounters(state)
   save(state)
@@ -311,6 +402,10 @@ export type TrophyEvent =
   | { type: 'clef'; clef: string }
   | { type: 'chord' }
   | { type: 'ending'; instrument: InstrumentId; id: string }
+  /** Fin d'une partie de « Garde le tempo » : tempos des paliers tenus (30 s chacun). */
+  | { type: 'tempo-run'; tempos: number[] }
+  /** Tempo trouvé dans « Trouve le tempo », avec l'écart (0 au curseur : pile). */
+  | { type: 'tempo-found'; error: number }
 
 /** Un geste qui compte pour les trophées (bonne réponse particulière, tutoriel, écoute…). */
 export function trophyEvent(e: TrophyEvent): void {
@@ -348,6 +443,17 @@ export function trophyEvent(e: TrophyEvent): void {
     case 'chord':
       s.chords++
       break
+    case 'tempo-run': {
+      const minutes = (e.tempos.length * 30) / 60
+      if (minutes >= 2) award(state, 'comme-une-horloge')
+      if (minutes >= 5) award(state, 'infatigable')
+      if (e.tempos.some((t) => t < 60) && e.tempos.some((t) => t > 140)) award(state, 'grand-huit')
+      break
+    }
+    case 'tempo-found':
+      s.temposFound++
+      if (e.error === 0) award(state, 'tempo-giusto')
+      break
     case 'ending': {
       s.endingsHeard = addUnique(s.endingsHeard, `${e.instrument}/${e.id}`)
       if (endingsFor(e.instrument).every((x) => s.endingsHeard.includes(`${e.instrument}/${x.id}`))) award(state, 'melomane')
@@ -356,6 +462,12 @@ export function trophyEvent(e: TrophyEvent): void {
   }
   checkCounters(state)
   save(state)
+}
+
+/** Nombre de questionnaires terminés dans ce jeu (au moins 1 s'il y a déjà joué avant ce décompte). */
+export function gamesPlayed(game: GameId): number {
+  const s = load().stats
+  return Math.max(s.plays[game] ?? 0, s.played.includes(game) ? 1 : 0)
 }
 
 /** Le joueur a déjà terminé au moins un questionnaire de ce jeu (sa présentation s'affiche alors repliée). */
@@ -369,11 +481,48 @@ export function takePendingTrophies(): { trophy: Trophy; tier?: Tier }[] {
   const pending = state.pending
   state.pending = []
   save(state)
-  return pending.filter((p) => TROPHY_BY_ID[p.id]).map((p) => ({ trophy: TROPHY_BY_ID[p.id], tier: p.tier }))
+  return pending.flatMap((p) => {
+    const trophy = TROPHY_BY_ID[p.id] ?? unlockNotice(p.id) ?? medalNotice(p.id, p.tier)
+    // L'annonce d'une médaille de niveau porte déjà sa médaille : pas de ligne « 💎 niveau » en plus.
+    return trophy ? [{ trophy, tier: p.id.startsWith('medal-') ? undefined : p.tier }] : []
+  })
 }
 
+/** Niveaux des trophées GOAT : la médaille du GOAT est toujours le diamant, le niveau dit où il a été gagné. */
 export const TIER_LABELS: Record<Tier, { label: string; medal: string }> = {
-  debutant: { label: 'Débutant', medal: '🥉' },
-  normal: { label: 'Normal', medal: '🥈' },
-  expert: { label: 'Expert', medal: '🥇' },
+  debutant: { label: 'Débutant', medal: '💎' },
+  normal: { label: 'Normal', medal: '💎' },
+  expert: { label: 'Expert', medal: '💎' },
+  impossible: { label: 'Impossible', medal: '💎' },
+}
+
+/** Médailles de niveau : un questionnaire sans faute en débutant, normal, expert, puis impossible. */
+export const LEVEL_MEDALS: Record<Tier, { medal: string; name: string }> = {
+  debutant: { medal: '🥉', name: 'Médaille de bronze' },
+  normal: { medal: '🥈', name: 'Médaille d’argent' },
+  expert: { medal: '🥇', name: 'Médaille d’or' },
+  impossible: { medal: '👑', name: 'Couronne' },
+}
+
+/** La médaille de ce niveau est-elle gagnée sur ce jeu ? */
+export const levelMedalWon = (game: GameId, tier: Tier) => !!levelMedals.value[game]?.includes(tier)
+
+/** Annonce d'une médaille de niveau gagnée, dans la popin des trophées. */
+function medalNotice(id: string, tier?: Tier): Trophy | null {
+  const game = id.replace(/^medal-/, '') as GameId
+  if (!id.startsWith('medal-') || !tier || !GAME_NAMES[game]) return null
+  return { id, family: 'sans-faute', icon: LEVEL_MEDALS[tier].medal, title: LEVEL_MEDALS[tier].name, condition: `« ${GAME_NAMES[game]} » : sans faute en ${TIER_LABELS[tier].label.toLowerCase()}` }
+}
+
+/** Annonce d'un niveau Impossible débloqué, dans la popin des trophées (ce n'est pas un trophée de la liste). */
+function unlockNotice(id: string): Trophy | null {
+  const game = id.replace(/^impossible-/, '') as GameId
+  if (!id.startsWith('impossible-') || !GAME_NAMES[game]) return null
+  return { id, family: 'sans-faute', icon: '🔓', title: 'Niveau Impossible débloqué', condition: `« ${GAME_NAMES[game]} » : un nouveau niveau t'attend dans les réglages du jeu` }
+}
+
+/** Niveaux d'un jeu à proposer : « Impossible » seulement une fois débloqué. */
+export function visibleLevels<K extends string, T>(game: GameId, levels: Record<K, T>): Record<K, T> {
+  if (impossibleShown(game)) return levels
+  return Object.fromEntries(Object.entries(levels).filter(([id]) => id !== 'impossible')) as Record<K, T>
 }

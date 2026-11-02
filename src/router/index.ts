@@ -13,6 +13,9 @@ const routes: RouteRecordRaw[] = [
   { path: '/trophees', component: () => import('@/views/TrophiesPage.vue') },
   // L'écran Joueur est un onglet des paramètres.
   { path: '/joueur', redirect: '/parametres?onglet=joueur' },
+  // Matchs (fonctionnalité en préparation, voir config/features.ts) ; lien direct loreille://match/CODE.
+  { path: '/matchs', component: () => import('@/views/MatchesPage.vue') },
+  { path: '/match/:code', redirect: (to) => ({ path: '/matchs', query: { onglet: 'relever', code: String(to.params.code) } }) },
   { path: '/scores/:game', component: () => import('@/views/ScoresPage.vue') },
   { path: '/games/grave-ou-aigu', component: () => import('@/views/HighLowSettings.vue') },
   { path: '/games/grave-ou-aigu/jouer', component: () => import('@/views/HighLowGame.vue') },
@@ -39,6 +42,10 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/quel-rythme/jouer', component: () => import('@/views/WhichRhythmGame.vue') },
   { path: '/games/joue-rythme', component: () => import('@/views/PlayRhythmSettings.vue') },
   { path: '/games/joue-rythme/jouer', component: () => import('@/views/PlayRhythmGame.vue') },
+  { path: '/games/garde-tempo', component: () => import('@/views/KeepTempoSettings.vue') },
+  { path: '/games/garde-tempo/jouer', component: () => import('@/views/KeepTempoGame.vue') },
+  { path: '/games/trouve-tempo', component: () => import('@/views/FindTempoSettings.vue') },
+  { path: '/games/trouve-tempo/jouer', component: () => import('@/views/FindTempoGame.vue') },
 ]
 
 const router = createRouter({

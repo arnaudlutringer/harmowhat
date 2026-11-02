@@ -7,7 +7,8 @@
     <trophy-unlocked :queue="unlocked" />
     <img class="emoji" :src="tierImage" alt="" />
     <h1>{{ summary.points }} <small>pts</small></h1>
-    <p class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
+    <p v-if="answersLabel" class="answers">{{ answersLabel }}</p>
+    <p v-else class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
     <ion-button class="share" fill="clear" size="small" :disabled="sharing" @click="share('score')">
       <ion-icon slot="start" :icon="shareSocialOutline" />
       Partager mon score
@@ -15,6 +16,9 @@
 
     <!-- Le score entre dans au moins un classement (monde, pays, téléphone) : on propose de l'enregistrer dans les trois. -->
     <!-- Sauvegarde automatique (Mon compte) : le score est déjà enregistré ; on montre sous quel nom, et le classement. -->
+    <!-- Partie d'un match : publier son défi, ou le résultat contre celui qui l'a lancé. -->
+    <match-result :board="board" :points="summary.points" :correct="summary.correct" />
+
     <div v-if="autoSaved" class="record auto">
       <strong>🏅 Tu entres dans les meilleurs scores !</strong>
       <p class="tops">
@@ -101,7 +105,9 @@ import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
 import { evaluateGame, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
 import TrophyUnlocked from './TrophyUnlocked.vue'
+import MatchResult from './MatchResult.vue'
 import { shareImage } from '@/share/shareImage'
+import { dayNumber, isTodaysChallenge } from '@/games/dailyChallenge'
 
 const props = defineProps<{
   results: QuestionResult[]
@@ -111,6 +117,10 @@ const props = defineProps<{
   /** Le diapason était proposé pendant les questions, et a servi (trophée « Sans filet »). */
   forkAvailable?: boolean
   forkUsed?: boolean
+  /** Bilan propre au jeu, à la place de « n / total bonnes réponses ». */
+  answersLabel?: string
+  /** Réussite de 0 à 1, à la place de la part de bonnes réponses (image de fin et musique). */
+  scoreRatio?: number
 }>()
 const emit = defineEmits<{ restart: [] }>()
 
@@ -125,6 +135,7 @@ function countTrophies() {
     instrument: selectedInstrument.value,
     forkAvailable: !!props.forkAvailable,
     forkUsed: !!props.forkUsed,
+    challengeDay: isTodaysChallenge(props.board) ? dayNumber() : undefined,
   })
   unlocked.value = takePendingTrophies()
 }
@@ -210,13 +221,14 @@ watch(
   },
   { immediate: true },
 )
-const tier = computed(() => tierForScore(summary.value.correct, props.total))
+const success = props.scoreRatio !== undefined ? Math.min(1, Math.max(0, props.scoreRatio)) : undefined
+const tier = computed(() => (success !== undefined ? tierForScore(success, 1) : tierForScore(summary.value.correct, props.total)))
 // Image de fin de partie selon le résultat : oreille en or, en argent ou en fer (public/results/).
 const tierImage = computed(() => `${import.meta.env.BASE_URL}results/${tier.value}.png`)
 
 // Musique de fin, selon l'instrument (voir music/endings.ts), d'autant plus mal jouée (musicien éméché)
 // que le joueur a fait d'erreurs (voir music/drunk.ts). Tirée une fois pour cet écran.
-const wrongRatio = props.total ? (props.total - summary.value.correct) / props.total : 0
+const wrongRatio = success !== undefined ? 1 - success : props.total ? (props.total - summary.value.correct) / props.total : 0
 const wrongPercent = Math.round(wrongRatio * 100)
 // Un enregistrement est joué tel quel, sans fausses notes.
 const ending = endingFor(selectedInstrument.value)

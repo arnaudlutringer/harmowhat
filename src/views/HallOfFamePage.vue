@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-content class="ion-padding">
-      <page-nav title="Hall of fame" back-href="/home" />
+      <page-nav title="Hall of fame" />
 
       <div class="hall">
         <p class="hint">Les meilleurs scores de chaque jeu, par niveau et par nombre de questions.</p>
@@ -22,6 +22,7 @@
         </ion-list>
       </div>
     </ion-content>
+    <bottom-nav active="/hall-of-fame" />
   </ion-page>
 </template>
 
@@ -29,8 +30,9 @@
 import { ref, watch } from 'vue'
 import { IonContent, IonItem, IonLabel, IonList, IonPage, onIonViewWillEnter } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
+import BottomNav from '@/components/BottomNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
-import { GAMES, getScores, parseBoard, scoresHref, type Board, type GameId } from '@/games/highScores'
+import { GAMES, getScores, parseBoard, scoresHref, shownLevels, type Board, type GameId } from '@/games/highScores'
 import { cachedRecord, fetchRecord, scope, worldVersion, type WorldRecord } from '@/games/worldScores'
 import { flag } from '@/player/countries'
 import { profile } from '@/player/profile'
@@ -57,7 +59,7 @@ function deviceRows(): GameRow[] {
   return ids.map((id) => {
     const info = GAMES[id]
     const row: GameRow = { id, title: info.title, board: parseBoard(id, {}) }
-    for (const l of info.levels) {
+    for (const l of shownLevels(id)) {
       for (const questions of info.questionCounts) {
         const board = { game: id, level: l.id, questions }
         const top = getScores(board)[0]

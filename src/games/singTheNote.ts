@@ -8,7 +8,7 @@ import { centsFromPitchClass, midiOf, type Pitch } from '@/audio/pitch'
  * demandée, en cents (centièmes de demi-ton).
  */
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -37,6 +37,12 @@ export const LEVELS: Record<Level, LevelConfig> = {
     description: 'Les 12 notes, à 15 cents près : il faut chanter juste.',
     naturalsOnly: false,
     tolerance: 15,
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'Les 12 notes, à 8 cents près, sans aucun diapason, même avant la partie : l’oreille absolue, ou rien.',
+    naturalsOnly: false,
+    tolerance: 8,
   },
 }
 

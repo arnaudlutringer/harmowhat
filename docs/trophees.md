@@ -1,6 +1,6 @@
 # Trophées : proposition
 
-47 trophées, en 8 familles (pas de trophée de classement pour le lancement). Les trophées GOAT existent en trois niveaux (Débutant, Normal, Expert) : avec eux, on arrive à 67 médailles à collectionner.
+59 trophées, en 9 familles (pas de trophée de classement pour le lancement). Les trophées GOAT existent en quatre niveaux (Débutant, Normal, Expert, et Impossible une fois débloqué) : avec eux, on arrive à 89 médailles à collectionner.
 
 Un « questionnaire » est une partie complète (hors mode essai). Tout est calculé sur l'appareil.
 
@@ -11,8 +11,8 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Premiers pas | Termine ton premier questionnaire |
 | Bien préparé | Terminer le tutoriel |
 | Curieux | Essaie une question dans le mode essai |
-| Touche-à-tout | Termine un questionnaire dans chacune des 4 catégories (L'oreille, La voix, Le solfège, Le rythme) |
-| Explorateur | Termine un questionnaire dans les 12 jeux |
+| Touche-à-tout | Termine un questionnaire dans chacune des 5 catégories (L'oreille, La voix, Le solfège, Le rythme, Le tempo) |
+| Explorateur | Termine un questionnaire dans les 14 jeux |
 | Homme-orchestre | Joue un questionnaire avec 5 instruments différents |
 
 ## 2. Sans faute (5)
@@ -23,7 +23,8 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Oreille de lynx | Un questionnaire sans faute en expert |
 | Sans filet | Un questionnaire sans faute sans toucher au diapason |
 | Marathonien | Un questionnaire de 50 questions sans faute |
-| Grand chelem | Au moins un sans faute dans chacun des 12 jeux |
+| L'impossible n'existe pas | Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question |
+| Grand chelem | Au moins un sans faute dans chacun des 14 jeux |
 
 ## 3. Rapidité (5)
 
@@ -35,7 +36,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Éclair | Une bonne réponse à 10 000 points |
 | Réflexe | 10 bonnes réponses de suite à 9 000 points ou plus |
 
-## 4. GOAT, 10 000 points à chaque question d'un questionnaire (10 × 3 niveaux)
+## 4. GOAT, 10 000 points à chaque question d'un questionnaire (14 jeux, 💎 en impossible quand le jeu en a un)
 
 Les 10 000 points s'obtiennent en répondant pendant la marge de 0,3 s qui précède le décompte des points (GRACE_MS dans src/games/scoring.ts).
 
@@ -55,6 +56,8 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 | La tonalité | Maître des clés |
 | Quel rythme ? | Métronome humain |
 | Joue le rythme | Batteur de génie |
+| Garde le tempo | Horloge atomique |
+| Trouve le tempo | Métronome dans la tête |
 
 ## 5. Persévérance (7)
 
@@ -102,3 +105,24 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 - Une page « Mes trophées », depuis l'accueil et l'écran de résultat : les trophées gagnés en couleur, les autres grisés avec leur condition, et un compteur (par exemple « 12 / 47 »).
 - En fin de questionnaire, chaque nouveau trophée s'annonce dans une popin blanche, qui s'envole au bout de 2 s vers « Mes trophées » en haut à droite.
 - Les scores enregistrés ne gardent que les 10 meilleurs de chaque classement. Il faudra donc tenir à part, sur l'appareil, les compteurs dont certains trophées ont besoin : questionnaires joués, jours de suite, bonnes réponses, notes chantées, modes, tonalités…
+
+## Le tempo
+
+| Trophée | Condition |
+|---|---|
+| Comme une horloge | Tiens 2 minutes de suite dans « Garde le tempo » |
+| Infatigable | Tiens 5 minutes de suite dans « Garde le tempo » |
+| Grand huit | Dans une même partie de « Garde le tempo », tiens un palier sous 60 et un autre au-dessus de 140 |
+| Tempo giusto | Trouve un tempo pile, sans un battement d'écart, au curseur de « Trouve le tempo » |
+| Chef d'orchestre | Trouve 20 tempos au total dans « Trouve le tempo » |
+
+## Défi du jour
+
+| Trophée | Condition |
+|---|---|
+| Défi relevé | Relève un défi du jour : au moins 80 % de bonnes réponses |
+| Abonné aux défis | Relève 7 défis du jour |
+
+## Médailles de niveau (hors trophées)
+
+Chaque jeu a une médaille par niveau, affichée sur sa carte de l'accueil et sur les tuiles de ses réglages : 🥉 pour un questionnaire complet sans faute en débutant, 🥈 en normal (ou intermédiaire), 🥇 en expert, 👑 en impossible. La médaille du GOAT, elle, est le diamant 💎, avec le niveau le plus haut où il a été gagné.

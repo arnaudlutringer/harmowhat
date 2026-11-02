@@ -6,7 +6,7 @@
     :board="{ game: 'chante-note', level: settings.level, questions: settings.questions }"
     settings-href="/games/chante-note"
     :advance-bar="ADVANCE_DELAY"
-    :no-tuning-fork="settings.level === 'expert'"
+    :no-tuning-fork="settings.level === 'expert' || settings.level === 'impossible'"
   >
     <!-- Pas de son à écouter : le bouton lance l'enregistrement de la voix, et le score est en pause pendant la prise. -->
     <template #player>

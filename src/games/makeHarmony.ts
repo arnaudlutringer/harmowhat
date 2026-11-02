@@ -11,7 +11,7 @@ import { CHOICES, CLEFS, noteAt, randomAlter, stepRange, type ClefId } from './r
 
 export { CHOICES, CLEFS }
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -23,6 +23,8 @@ export interface LevelConfig {
   /** Intervalles descendants aussi. */
   directions: boolean
   clefs: ClefId[]
+  /** Impossible : la portée s'efface au bout de ce délai (ms), et revient avec la réponse. */
+  flashMs?: number
 }
 
 const ALL = INTERVALS.filter((i) => i.number < 8).map((i) => i.semitones)
@@ -52,6 +54,15 @@ export const LEVELS: Record<Level, LevelConfig> = {
     directions: true,
     clefs: ['sol', 'fa', 'ut1', 'ut3', 'ut4'],
   },
+  impossible: {
+    label: 'Impossible',
+    description: 'Tous les intervalles, dans les deux sens, toutes les clés, et la note s’efface au bout de 2 secondes.',
+    semitones: ALL,
+    alterations: true,
+    directions: true,
+    clefs: ['sol', 'fa', 'ut1', 'ut3', 'ut4'],
+    flashMs: 2000,
+  },
 }
 
 export const QUESTION_COUNTS = [10, 20, 30, 50] as const
@@ -76,6 +87,12 @@ export function parseSettings(raw: { questions?: unknown; level?: unknown }): Ma
 const NUMBER_NAMES: Record<number, string> = { 2: 'seconde', 3: 'tierce', 4: 'quarte', 5: 'quinte', 6: 'sixte', 7: 'septième' }
 
 /** Nom d'un intervalle dans une phrase, ex. « quinte juste », « septième majeure ». */
+/** Annotation courte d'un intervalle, sur la portée : « 3M↑ », « 6m↓ », « 4↑ » (juste : sans lettre), « 4+↓ ». */
+export function intervalShort(i: Interval, ascending: boolean): string {
+  const quality = { mineure: 'm', majeure: 'M', juste: '', augmentée: '+' }[i.quality]
+  return `${i.number}${quality}${ascending ? '↑' : '↓'}`
+}
+
 export function intervalLabel(i: Interval): string {
   return `${NUMBER_NAMES[i.number]} ${i.quality}`
 }

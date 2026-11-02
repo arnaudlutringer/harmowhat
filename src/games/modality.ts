@@ -36,7 +36,7 @@ export const MODES: ModeInfo[] = [
 
 export const modeById = (id: string) => MODES.find((m) => m.id === id)
 
-export type Level = 'debutant' | 'normal' | 'expert'
+export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
 export interface LevelConfig {
   label: string
@@ -45,6 +45,8 @@ export interface LevelConfig {
   showStaff: boolean
   /** Les tons (1) et demi-tons (½) entre les notes sont écrits pendant la question. */
   showSteps: boolean
+  /** Impossible : la gamme est jouée en descendant une fois sur deux, par un instrument différent à chaque question. */
+  twisted?: boolean
 }
 
 export const LEVELS: Record<Level, LevelConfig> = {
@@ -65,6 +67,13 @@ export const LEVELS: Record<Level, LevelConfig> = {
     description: 'À l’oreille seulement : la portée n’apparaît qu’avec la réponse.',
     showStaff: false,
     showSteps: false,
+  },
+  impossible: {
+    label: 'Impossible',
+    description: 'À l’oreille seulement, la gamme jouée en descendant une fois sur deux, par un instrument différent à chaque question.',
+    showStaff: false,
+    showSteps: false,
+    twisted: true,
   },
 }
 

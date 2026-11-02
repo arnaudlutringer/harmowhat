@@ -6,7 +6,7 @@
     :board="{ game: 'quelle-note', level: settings.level, questions: settings.questions }"
     settings-href="/games/quelle-note"
     :advance-bar="ADVANCE_DELAY"
-    :no-tuning-fork="settings.level === 'expert'"
+    :no-tuning-fork="settings.level === 'expert' || settings.level === 'impossible'"
   >
     <div class="choices">
       <ion-button
@@ -30,13 +30,20 @@ import GameShell from '@/components/GameShell.vue'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
 import { createQuestion, LEVELS, parseSettings } from '@/games/nameTheNote'
+import { currentInstrument, randomInstrument, type Instrument } from '@/audio/instruments'
+
+let instrument: Instrument = currentInstrument()
 
 const settings = parseSettings(useRoute().query)
 
 const quiz = useQuiz({
   total: settings.questions,
-  createQuestion: () => createQuestion(settings.level),
-  play: (q) => playPiano(q.midi),
+  createQuestion: () => {
+    // Impossible : un instrument au hasard pour chaque question.
+    instrument = LEVELS[settings.level].randomInstrument ? randomInstrument() : currentInstrument()
+    return createQuestion(settings.level, instrument)
+  },
+  play: (q) => playPiano(q.midi, { instrument }),
 })
 
 function choose(choice: string) {

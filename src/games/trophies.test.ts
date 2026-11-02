@@ -29,13 +29,47 @@ describe('Trophées', () => {
   beforeEach(() => store.clear())
 
   it('propose une cinquantaine de trophées, sans doublon', () => {
-    expect(TROPHIES.length).toBe(49)
+    expect(TROPHIES.length).toBe(59)
     expect(new Set(TROPHIES.map((t) => t.id)).size).toBe(TROPHIES.length)
+  })
+
+  it('débloque le niveau Impossible après un sans faute en expert à plus de 9 000 points par question', async () => {
+    const { impossibleUnlocked, visibleLevels } = await import('./trophies')
+    const levels = { expert: 1, impossible: 2 }
+    const expert = { game: 'accords' as const, level: 'expert', questions: 10 }
+    game({ board: expert, results: results([...Array(9).fill(9500), 9000]) })
+    expect(ids()).not.toContain('impossible')
+    expect(Object.keys(visibleLevels('accords', levels))).toEqual(['expert'])
+    game({ board: { ...expert, level: 'normal' }, results: results(Array(10).fill(9500)) })
+    expect(impossibleUnlocked.value).not.toContain('accords')
+    game({ board: expert, results: results(Array(10).fill(9500)) })
+    const announced = ids()
+    expect(announced).toContain('impossible-accords')
+    expect(announced).toContain('impossible')
+    expect(impossibleUnlocked.value).toContain('accords')
+    expect(Object.keys(visibleLevels('accords', levels))).toEqual(['expert', 'impossible'])
+    // Débloqué une fois pour toutes : pas de nouvelle annonce.
+    game({ board: expert, results: results(Array(10).fill(9500)) })
+    expect(ids()).not.toContain('impossible-accords')
+  })
+
+  it('médailles de niveau : un sans faute complet à ce niveau, annoncé une seule fois', async () => {
+    const { levelMedalWon } = await import('./trophies')
+    game({ board: { game: 'tonalite', level: 'normal', questions: 10 }, results: results(Array(9).fill(5000)) })
+    expect(levelMedalWon('tonalite', 'normal')).toBe(false)
+    game({ board: { game: 'tonalite', level: 'normal', questions: 10 } })
+    expect(levelMedalWon('tonalite', 'normal')).toBe(true)
+    expect(levelMedalWon('tonalite', 'debutant')).toBe(false)
+    expect(ids()).toContain('medal-tonalite')
+    game({ board: { game: 'tonalite', level: 'normal', questions: 10 } })
+    expect(ids()).not.toContain('medal-tonalite')
+    game({ board: { game: 'lecture-note', level: 'intermediaire', questions: 10 } })
+    expect(levelMedalWon('lecture-note', 'normal')).toBe(true)
   })
 
   it('donne Premiers pas, Sans faute et Virtuose à un premier questionnaire parfait, une seule fois', () => {
     game()
-    expect(ids()).toEqual(['premiers-pas', 'sans-faute', 'virtuose'])
+    expect(ids()).toEqual(['premiers-pas', 'sans-faute', 'virtuose', 'medal-grave-ou-aigu'])
     game()
     expect(ids()).toEqual([])
   })

@@ -1,7 +1,7 @@
 <template>
   <!-- Pas de barre d'en-tête : une flèche de retour et le titre, en haut du contenu ; pour un jeu, son icône à droite du titre. -->
   <div class="page-nav">
-    <ion-back-button :default-href="backHref" text="" />
+    <ion-back-button v-if="backHref" :default-href="backHref" text="" />
     <h1>{{ title }}</h1>
     <ion-icon v-if="game" class="icon" :icon="GAME_ICONS[game]" aria-hidden="true" />
   </div>
@@ -14,8 +14,8 @@ import { GAME_ICONS } from '@/games/icons'
 
 defineProps<{
   title: string
-  /** Écran affiché par la flèche si l'historique est vide. */
-  backHref: string
+  /** Écran affiché par la flèche si l'historique est vide ; sans lui, pas de flèche (écrans de la barre du bas). */
+  backHref?: string
   /** Jeu dont c'est l'écran, pour afficher son icône. */
   game?: GameId
 }>()

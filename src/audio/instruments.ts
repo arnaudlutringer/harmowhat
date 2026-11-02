@@ -104,6 +104,12 @@ function loadSaved(): InstrumentId {
 /** Instrument choisi par le joueur (réglage global, mémorisé sur l'appareil). */
 export const selectedInstrument = ref<InstrumentId>(loadSaved())
 
+/** Niveaux Impossible : un instrument au hasard (qui peut jouer `midi`, s'il est donné), différent à chaque question. */
+export function randomInstrument(midi?: number): Instrument {
+  const list = Object.values(INSTRUMENTS).filter((i) => midi === undefined || (i.low <= midi && midi <= i.high))
+  return list[randomInt(0, list.length - 1)]
+}
+
 export function currentInstrument(): Instrument {
   return INSTRUMENTS[selectedInstrument.value]
 }

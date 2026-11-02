@@ -46,6 +46,8 @@
       </button>
     </div>
 
+    <!-- Valider reste fixé en bas de l'écran, avec le message de la réponse. -->
+    <template #bottom>
     <ion-button
       v-if="!revealed"
       expand="block"
@@ -56,6 +58,7 @@
     >
       Valider ({{ selected.length }}/{{ BEATS }})
     </ion-button>
+    </template>
   </game-shell>
 </template>
 
@@ -67,20 +70,22 @@ import GameShell from '@/components/GameShell.vue'
 import FlipPlayer from '@/components/FlipPlayer.vue'
 import RhythmStaff from '@/components/RhythmStaff.vue'
 import { useQuiz } from '@/composables/useQuiz'
-import { BEATS, CELLS, createRhythmQuestion, LEVELS, parseSettings, shuffledChoices, type CellId } from '@/games/rhythm'
+import { BEATS, CELLS, createRhythmQuestion, parseSettings, shuffledChoices, type CellId, type RhythmQuestion } from '@/games/rhythm'
 import { COUNT_IN, playRhythm } from '@/games/rhythmAudio'
 
 const settings = parseSettings(useRoute().query)
-const tempo = LEVELS[settings.level].tempo
-const beatMs = (60 / tempo) * 1000
+// Le tempo vient de la question (au hasard en impossible).
+const beatMs = (q: RhythmQuestion) => (60 / q.tempo) * 1000
 
 const quiz = useQuiz({
   total: settings.questions,
   createQuestion: () => createRhythmQuestion(settings.level),
-  play: (q) => playRhythm(q.cells, tempo).then((p) => p.duration),
+  play: (q) => playRhythm(q.cells, q.tempo, { pitches: q.pitches }).then((p) => p.duration),
   // On peut répondre dès le début de la mesure ; les points baissent à partir de sa fin.
-  answersOpen: () => COUNT_IN * beatMs,
-  countdownStart: () => (COUNT_IN + BEATS) * beatMs,
+  answersOpen: (q) => COUNT_IN * beatMs(q),
+  countdownStart: (q) => (COUNT_IN + BEATS) * beatMs(q),
+  // Pendant une réécoute, le score est en pause jusqu'à 50 ms de la fin du son.
+  pauseOnReplay: true,
   // Pas de passage automatique : le joueur glisse vers la gauche quand il a fini de regarder la portée.
   advanceDelay: null,
 })
