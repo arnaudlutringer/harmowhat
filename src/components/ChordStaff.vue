@@ -93,6 +93,16 @@ async function draw() {
     text.setAttribute('class', 'annotation')
     text.textContent = props.annotation
     svg.appendChild(text)
+    // Un fond blanc arrondi derrière le texte : les lignes de la portée ne le traversent pas.
+    const box = text.getBBox()
+    const back = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+    back.setAttribute('x', String(box.x - 5))
+    back.setAttribute('y', String(box.y - 2))
+    back.setAttribute('width', String(box.width + 10))
+    back.setAttribute('height', String(box.height + 4))
+    back.setAttribute('rx', '6')
+    back.setAttribute('class', 'annotation-back')
+    svg.insertBefore(back, text)
   }
   if (svg) {
     svg.setAttribute('viewBox', `0 0 ${width} 150`)
@@ -130,13 +140,15 @@ watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together
 /* Annotation de l'intervalle cherché : violet, en gras. */
 .staff :deep(svg text.annotation) {
   fill: var(--ion-color-primary);
-  /* Un contour couleur papier : le texte se détache des lignes de la portée. */
-  stroke: #fffdf3;
-  stroke-width: 6px;
-  paint-order: stroke;
+  stroke: none;
   font-family: var(--ion-font-family);
   font-size: 20px;
   font-weight: 700;
+}
+.staff :deep(svg rect.annotation-back) {
+  fill: #fff;
+  stroke: rgba(108, 92, 231, 0.35);
+  stroke-width: 1px;
 }
 /* Note chantée par erreur : en rouge. */
 .staff :deep(svg .wrong),
