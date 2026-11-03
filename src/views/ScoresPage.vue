@@ -33,7 +33,7 @@
           <!-- Podium : le deuxième à gauche, le premier au centre (plus haut), le troisième à droite. -->
           <div class="podium">
             <div v-for="i in [1, 0, 2]" :key="i" class="step" :class="[`place-${i + 1}`, { me: i === highlight, mine: isMine(entries[i]), vacant: !entries[i] }]">
-              <span class="medal" aria-hidden="true">{{ MEDALS[i] }}</span>
+              <rank-badge class="medal" :rank="i + 1" />
               <span class="name">{{ entries[i] ? withFlag(entries[i]) : '—' }}</span>
               <strong v-if="entries[i]" class="points">{{ entries[i].points.toLocaleString('fr-FR') }}</strong>
               <div class="block">{{ i + 1 }}</div>
@@ -43,7 +43,7 @@
           <!-- À partir du quatrième : des cartes, la mienne mise en avant. -->
           <ol v-if="entries.length > 3" class="table" start="4">
             <li v-for="(e, i) in entries.slice(3)" :key="i" :class="{ me: i + 3 === highlight, mine: isMine(e) }">
-              <span class="rank">{{ i + 4 }}</span>
+              <rank-badge :rank="i + 4" />
               <span class="name">{{ withFlag(e) }}</span>
               <strong class="points">{{ e.points.toLocaleString('fr-FR') }} <span class="pts">pts</span></strong>
             </li>
@@ -73,6 +73,7 @@ import { IonContent, IonFooter, IonIcon, IonPage, onIonViewWillEnter, useIonRout
 import { homeOutline } from 'ionicons/icons'
 import { GAME_ICONS } from '@/games/icons'
 import GameHero from '@/components/GameHero.vue'
+import RankBadge from '@/components/RankBadge.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
 import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref, shownLevels } from '@/games/highScores'
 import { cachedBoard, fetchBoard, parseScope, scope, updateCachedBoard, worldVersion, type WorldScore } from '@/games/worldScores'
@@ -151,7 +152,6 @@ watch([board, scope, worldVersion], () => void load())
 onIonViewWillEnter(() => void load())
 void load()
 
-const MEDALS = ['🥇', '🥈', '🥉']
 
 function replay() {
   router.push(playHref(board))
@@ -230,7 +230,10 @@ h2 {
   text-align: center;
 }
 .step .medal {
-  font-size: 30px;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  font-size: 16px;
 }
 .step .name {
   max-width: 100%;

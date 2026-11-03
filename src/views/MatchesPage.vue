@@ -62,7 +62,7 @@
           <p v-else-if="!ranking.length" class="empty">Pas encore de match terminé.</p>
           <ol class="ranking">
             <li v-for="(r, i) in ranking" :key="r.player_id" :class="{ me: r.player_id === profile.id }">
-              <span class="rank">{{ ['🥇', '🥈', '🥉'][i] ?? `${i + 1}.` }}</span>
+              <rank-badge :rank="i + 1" />
               <span class="name">{{ flagOf(r.country) }} {{ r.name }} <small>{{ r.wins }} V · {{ r.played }} matchs</small></span>
               <strong>{{ r.rating }}</strong>
             </li>
@@ -81,6 +81,7 @@ import { IonButton, IonContent, IonIcon, IonInput, IonPage, onIonViewWillEnter, 
 import { shareSocialOutline } from 'ionicons/icons'
 import PageNav from '@/components/PageNav.vue'
 import BottomNav from '@/components/BottomNav.vue'
+import RankBadge from '@/components/RankBadge.vue'
 import { GAMES, levelLabel } from '@/games/highScores'
 import { GAME_ICONS } from '@/games/icons'
 import { countryByCode } from '@/player/countries'

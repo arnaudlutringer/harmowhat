@@ -63,7 +63,7 @@
           <p class="board">{{ boardLabel }}</p>
           <ol v-if="records.length">
             <li v-for="(r, i) in records" :key="i">
-              <span class="rank">{{ ['🥇', '🥈', '🥉'][i] ?? `${i + 1}.` }}</span>
+              <rank-badge :rank="i + 1" />
               <span class="name">{{ r.name }}</span>
               <strong>{{ r.points.toLocaleString('fr-FR') }} <span class="pts">pts</span></strong>
             </li>
@@ -95,6 +95,7 @@ import { bestScore, getScores, hasLocalScores, levelLabel, scoresHref, type Boar
 import { INTROS, SUMMARIES } from '@/games/intros'
 import GameHero from './GameHero.vue'
 import PillTabs from './PillTabs.vue'
+import RankBadge from './RankBadge.vue'
 import { featureEnabled } from '@/config/features'
 import { matchesAvailable } from '@/games/matches'
 import { newSeed } from '@/games/seed'

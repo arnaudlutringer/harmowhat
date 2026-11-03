@@ -14,7 +14,7 @@
               <!-- Record du jeu : médaille d'or, (drapeau,) nom du premier et ses points. -->
               <p v-if="loading">…</p>
               <p v-else-if="g.best" class="record">
-                <span aria-hidden="true">🥇</span> {{ g.best.country ? `${flag(g.best.country)} ` : '' }}{{ g.best.name }} : {{ g.best.points }} <span class="pts">pts</span>
+                <rank-badge class="first" :rank="1" /> {{ g.best.country ? `${flag(g.best.country)} ` : '' }}{{ g.best.name }} : {{ g.best.points }} <span class="pts">pts</span>
               </p>
               <p v-else>Pas encore de score</p>
             </ion-label>
@@ -32,6 +32,7 @@ import { IonContent, IonItem, IonLabel, IonList, IonPage, onIonViewWillEnter } f
 import PageNav from '@/components/PageNav.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
+import RankBadge from '@/components/RankBadge.vue'
 import { GAMES, getScores, parseBoard, scoresHref, shownLevels, type Board, type GameId } from '@/games/highScores'
 import { cachedRecord, fetchRecord, scope, worldVersion, type WorldRecord } from '@/games/worldScores'
 import { flag } from '@/player/countries'
@@ -134,5 +135,12 @@ void load()
 .hint,
 ion-label p {
   color: var(--ion-color-medium);
+}
+/* Pastille « 1 » or devant le record (le rang, pas une médaille de niveau). */
+.first {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  vertical-align: text-bottom;
 }
 </style>
