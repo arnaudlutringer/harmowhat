@@ -7,6 +7,7 @@
       <line v-for="y in lines" :key="y" :x1="CLEF_W" :x2="WIDTH" :y1="y" :y2="y" class="line" />
       <g v-for="n in shown" :key="n.index" :transform="`translate(${n.x}, 0)`" :class="n.state" v-html="n.svg" />
       <rect x="0" y="0" :width="CLEF_W" :height="HEIGHT" class="paper" />
+      <line v-for="y in lines" :key="`c${y}`" x1="0" :x2="CLEF_W" :y1="y" :y2="y" class="line" />
       <rect :x="CLEF_W" y="0" :width="LINE_X - CLEF_W" :height="HEIGHT" class="shade" />
       <rect :x="END_X" y="0" :width="WIDTH - END_X" :height="HEIGHT" class="shade" />
       <g v-html="clefSvg" />
@@ -165,6 +166,11 @@ svg :deep(*) {
 }
 .line {
   stroke-width: 1;
+}
+/* Les lignes de la portée sont dessinées une seule fois, d'un bout à l'autre : celles de chaque bloc VexFlow,
+   qui se superposeraient (et paraîtraient plus épaisses), sont masquées. */
+svg :deep(.vf-stave) {
+  display: none;
 }
 svg :deep(rect) {
   stroke: none;
