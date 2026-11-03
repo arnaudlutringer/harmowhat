@@ -30,6 +30,23 @@ describe('Lecture en défilement', () => {
       expect(['sol', 'fa']).toContain(n.clef)
       last = n.pc
     }
+    // La clé change toutes les 8 à 10 notes, pour une autre.
+    for (const level of ['normal', 'expert'] as const) {
+      const s = new NoteStream(level)
+      const clefs = Array.from({ length: 300 }, () => s.next().clef)
+      const runs: number[] = []
+      let run = 1
+      for (let i = 1; i < clefs.length; i++) {
+        if (clefs[i] === clefs[i - 1]) run++
+        else {
+          runs.push(run)
+          run = 1
+        }
+      }
+      expect(runs.length).toBeGreaterThan(20)
+      for (const r of runs) expect(r).toBeGreaterThanOrEqual(8)
+      for (const r of runs) expect(r).toBeLessThanOrEqual(10)
+    }
     const easy = new NoteStream('debutant')
     for (let i = 0; i < 50; i++) expect(easy.next().note.alter).toBe(0)
   })

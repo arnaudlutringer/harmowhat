@@ -99,8 +99,8 @@ export interface SightNote {
   fullName: string
 }
 
-/** Nombre de notes écrites avec la même clé avant qu'elle puisse changer. */
-const CLEF_RUN = [6, 10] as const
+/** Nombre de notes écrites avec la même clé avant de passer à une autre. */
+const CLEF_RUN = [8, 10] as const
 
 /**
  * Suite de notes de la partie, tirée au fur et à mesure : la clé change de temps en temps (pas à chaque note),
@@ -109,6 +109,7 @@ const CLEF_RUN = [6, 10] as const
 export class NoteStream {
   private clef: ClefId
   private left = 0
+  private started = false
   private lastPc = -1
 
   constructor(private level: Level) {
@@ -118,7 +119,10 @@ export class NoteStream {
   next(): SightNote {
     const cfg = SIGHT_LEVELS[this.level]
     if (this.left <= 0) {
-      this.clef = cfg.clefs[randomInt(0, cfg.clefs.length - 1)]
+      // Toutes les 8 à 10 notes, la clé change (pour une autre des clés du niveau) ; la première est tirée au hasard.
+      const others = this.started ? cfg.clefs.filter((c) => c !== this.clef) : cfg.clefs
+      if (others.length) this.clef = others[randomInt(0, others.length - 1)]
+      this.started = true
       this.left = randomInt(CLEF_RUN[0], CLEF_RUN[1])
     }
     this.left--
