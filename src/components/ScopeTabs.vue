@@ -1,33 +1,27 @@
 <template>
   <!-- Classement affiché : le monde, le pays du joueur ou cet appareil (le monde et le pays seulement si la base est configurée). -->
-  <ion-segment v-if="worldEnabled" :value="scope" class="scope" @ion-change="scope = $event.detail.value as Scope">
-    <ion-segment-button value="monde">
-      <ion-label>🌍 Monde</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="pays">
-      <ion-label>{{ flag(profile.country) }} {{ countryByCode(profile.country)?.name }}</ion-label>
-    </ion-segment-button>
-    <ion-segment-button value="appareil">
-      <ion-label>📱 Appareil</ion-label>
-    </ion-segment-button>
-  </ion-segment>
+  <pill-tabs v-if="worldEnabled" v-model="scope" :items="items" :overlap="overlap" class="scope" />
 </template>
 
 <script setup lang="ts">
-import { IonLabel, IonSegment, IonSegmentButton } from '@ionic/vue'
+import { computed } from 'vue'
+import PillTabs from './PillTabs.vue'
 import { scope, worldEnabled, type Scope } from '@/games/worldScores'
 import { countryByCode, flag } from '@/player/countries'
 import { profile } from '@/player/profile'
+
+/** `overlap` : à cheval sur le bas d'un bandeau (écran des meilleurs scores). */
+defineProps<{ overlap?: boolean }>()
+
+const items = computed<{ id: Scope; label: string }[]>(() => [
+  { id: 'monde', label: '🌍 Monde' },
+  { id: 'pays', label: `${flag(profile.value.country)} ${countryByCode(profile.value.country)?.name ?? 'Pays'}` },
+  { id: 'appareil', label: '📱 Appareil' },
+])
 </script>
 
 <style scoped>
 .scope {
-  margin: 0 0 16px;
-}
-.scope ion-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-transform: none;
+  margin-bottom: 16px;
 }
 </style>
