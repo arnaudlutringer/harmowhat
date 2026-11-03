@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from '@ionic/vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import HomePage from '@/views/HomePage.vue'
 import { isTutorialDone } from '@/tutorial'
-import { gameEnabled } from '@/config/features'
+import { featureEnabled, gameEnabled } from '@/config/features'
 import type { GameId } from '@/games/highScores'
 
 const routes: RouteRecordRaw[] = [
@@ -53,6 +53,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/lis-chante/jouer', component: () => import('@/views/SightSingGame.vue') },
   { path: '/games/lis-dis', component: () => import('@/views/SightSaySettings.vue') },
   { path: '/games/lis-dis/jouer', component: () => import('@/views/SightSayGame.vue') },
+  // Test du micro (interrupteur testMicro).
+  { path: '/debug/micro', component: () => import('@/views/MicTestPage.vue') },
 ]
 
 const router = createRouter({
@@ -66,6 +68,7 @@ router.beforeEach((to) => {
   if (to.path === '/home' && !isTutorialDone()) return '/tutoriel'
   const game = /^\/(?:games|scores)\/([^/]+)/.exec(to.path)?.[1]
   if (game && !gameEnabled(game as GameId)) return '/home'
+  if (to.path.startsWith('/debug/') && !featureEnabled('testMicro')) return '/home'
   return true
 })
 

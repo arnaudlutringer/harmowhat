@@ -37,7 +37,7 @@
             <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
             <strong>{{ game.title }}</strong>
             <!-- Médailles GOAT déjà gagnées sur ce jeu (bronze, argent, or, puis diamant en impossible). -->
-            <span class="medals" :aria-label="medalLabel(game.path)">
+            <span v-if="!category.tests" class="medals" :aria-label="medalLabel(game.path)">
               <span v-for="m in medalsFor(game.path)" :key="m.medal" :class="{ off: !m.won }">{{ m.medal }}</span>
             </span>
           </router-link>
@@ -57,7 +57,7 @@ import { GAME_ICONS } from '@/games/icons'
 import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
-import { gameEnabled } from '@/config/features'
+import { featureEnabled, gameEnabled } from '@/config/features'
 import { challengeDays, challengeScores, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
@@ -188,6 +188,10 @@ const categories = [
   { title: 'Le solfège', color: 'var(--hw-category-theory)', games: theoryGames },
   { title: 'Le rythme', color: 'var(--hw-category-rhythm)', games: rhythmGames },
   { title: 'Le tempo', color: 'var(--hw-category-tempo)', games: tempoGames },
+  // Écrans de mise au point, derrière un interrupteur (pas de médailles).
+  ...(featureEnabled('testMicro')
+    ? [{ title: 'Tests', color: 'var(--hw-category-theory)', tests: true, games: [{ path: '/debug/micro', icon: GAME_ICONS['lis-dis'], title: 'Test du micro' }] }]
+    : []),
 ]
 </script>
 

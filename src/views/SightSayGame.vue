@@ -90,7 +90,7 @@ function judge(pc: number) {
   sight.submit(pc, `Tu as dit ${pitchClassName(pc)}`)
 }
 
-function onSpeech(text: string, s: number, final: boolean) {
+function onSpeech(text: string, s: number, final: boolean, alternatives: string[] = [text]) {
   if (sight.phase.value !== 'running') return
   if (s !== session) {
     session = s
@@ -99,7 +99,8 @@ function onSpeech(text: string, s: number, final: boolean) {
   }
   heard.value = text
   clearTimeout(pending)
-  const said = parseSpokenNotes(text)
+  // Parmi les transcriptions possibles, celle où l'on trouve le plus de noms de notes (la plus probable à égalité).
+  const said = alternatives.map(parseSpokenNotes).reduce((best, notes) => (notes.length > best.length ? notes : best), parseSpokenNotes(text))
   for (let i = consumed; i < said.length && sight.phase.value === 'running'; i++) {
     const n = said[i]
     if (accidentals && !n.altered && !final && i === said.length - 1) {

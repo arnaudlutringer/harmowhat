@@ -1,10 +1,10 @@
-import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
+import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor/core'
 import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 
 /**
  * Reconnaissance vocale en continu (jeu « Lecture continue ») : le texte reconnu arrive au fil de la parole,
- * en français. Sur le téléphone, le module natif d'Android ou d'iOS ; dans le navigateur, la reconnaissance
- * du navigateur (Chrome). La reconnaissance s'arrête d'elle-même après un silence : on la relance aussitôt,
+ * en français. Sur Android, le petit module natif de l'appli (plugins/speech), qui préfère le service de Google et
+ * se relance de lui-même ; sur iOS, le module communautaire ; dans le navigateur, la reconnaissance du navigateur (Chrome). La reconnaissance s'arrête d'elle-même après un silence : on la relance aussitôt,
  * et chaque relance ouvre une nouvelle « séance » (le texte repart de zéro).
  */
 
@@ -12,8 +12,32 @@ export interface SpeechListening {
   stop: () => void
 }
 
-/** Texte reconnu depuis le début de la séance `session` ; `final` : la phrase est terminée. */
-export type OnSpeech = (text: string, session: number, final: boolean) => void
+/**
+ * Texte reconnu depuis le début de la séance `session` ; `final` : la phrase est terminée ;
+ * `alternatives` : les autres transcriptions possibles, de la plus à la moins probable (la première est `text`).
+ */
+export type OnSpeech = (text: string, session: number, final: boolean, alternatives: string[]) => void
+
+/** Étape de la reconnaissance, pour le test du micro (prêt, début et fin de parole, niveau du micro, erreur…). */
+export interface SpeechEvent {
+  type: 'info' | 'ready' | 'begin' | 'end' | 'level' | 'partial' | 'final' | 'error'
+  texts?: string[]
+  db?: number
+  code?: number
+  message?: string
+  service?: string
+  at: number
+}
+
+interface LoreilleSpeechPlugin {
+  available(): Promise<{ available: boolean; services: string[] }>
+  start(options: { language: string }): Promise<{ service: string }>
+  stop(): Promise<void>
+  addListener(event: 'speech', listener: (e: SpeechEvent) => void): Promise<PluginListenerHandle>
+}
+
+const AndroidSpeech = registerPlugin<LoreilleSpeechPlugin>('LoreilleSpeech')
+const isAndroid = () => Capacitor.getPlatform() === 'android'
 
 const LANGUAGE = 'fr-FR'
 
@@ -38,14 +62,55 @@ function webRecognition(): (new () => WebRecognition) | undefined {
 export async function speechAvailable(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return !!webRecognition()
   try {
+    if (isAndroid()) return (await AndroidSpeech.available()).available
     return (await SpeechRecognition.available()).available
   } catch {
     return false
   }
 }
 
-export async function listenToSpeech(onSpeech: OnSpeech): Promise<SpeechListening> {
-  return Capacitor.isNativePlatform() ? listenNative(onSpeech) : listenWeb(onSpeech)
+/** Services de reconnaissance installés sur le téléphone (test du micro). */
+export async function speechServices(): Promise<string[]> {
+  if (!isAndroid()) return []
+  try {
+    return (await AndroidSpeech.available()).services
+  } catch {
+    return []
+  }
+}
+
+/** Écoute en continu ; `onEvent` reçoit chaque étape de la reconnaissance (test du micro). */
+export async function listenToSpeech(onSpeech: OnSpeech, onEvent?: (e: SpeechEvent) => void): Promise<SpeechListening> {
+  if (isAndroid()) return listenAndroid(onSpeech, onEvent)
+  return Capacitor.isNativePlatform() ? listenNative(onSpeech) : listenWeb(onSpeech, onEvent)
+}
+
+async function listenAndroid(onSpeech: OnSpeech, onEvent?: (e: SpeechEvent) => void): Promise<SpeechListening> {
+  let session = 1
+  const handle = await AndroidSpeech.addListener('speech', (e) => {
+    onEvent?.(e)
+    const texts = (e.texts ?? []).filter(Boolean)
+    if (e.type === 'partial' && texts.length) onSpeech(texts[0], session, false, texts)
+    if (e.type === 'final') {
+      if (texts.length) onSpeech(texts[0], session, true, texts)
+      // Le module se relance de lui-même après chaque phrase : la suivante repart de zéro.
+      session++
+    }
+    if (e.type === 'error') session++
+  })
+  try {
+    const { service } = await AndroidSpeech.start({ language: LANGUAGE })
+    onEvent?.({ type: 'info', service, at: Date.now() })
+  } catch (error) {
+    void handle.remove()
+    throw error
+  }
+  return {
+    stop() {
+      void handle.remove()
+      void AndroidSpeech.stop().catch(() => {})
+    },
+  }
 }
 
 async function listenNative(onSpeech: OnSpeech): Promise<SpeechListening> {
@@ -61,12 +126,12 @@ async function listenNative(onSpeech: OnSpeech): Promise<SpeechListening> {
   const handles: PluginListenerHandle[] = []
   handles.push(await SpeechRecognition.addListener('partialResults', ({ matches }) => {
     if (stopped || !matches?.[0]) return
-    if (!awaitingFinal) return onSpeech(matches[0], session, false)
+    if (!awaitingFinal) return onSpeech(matches[0], session, false, matches)
     // Résultat final de la phrase (pour un mot court comme « do », souvent le seul résultat) : on le transmet,
     // puis seulement on relance l'écoute. Relancer avant l'annulerait.
     awaitingFinal = false
     clearTimeout(fallback)
-    onSpeech(matches[0], session, true)
+    onSpeech(matches[0], session, true, matches)
     void start()
   }))
   handles.push(await SpeechRecognition.addListener('listeningState', ({ status }) => {
@@ -114,7 +179,7 @@ async function listenNative(onSpeech: OnSpeech): Promise<SpeechListening> {
   }
 }
 
-async function listenWeb(onSpeech: OnSpeech): Promise<SpeechListening> {
+async function listenWeb(onSpeech: OnSpeech, onEvent?: (e: SpeechEvent) => void): Promise<SpeechListening> {
   const Found = webRecognition()
   if (!Found) throw new Error('Reconnaissance vocale indisponible')
   const Recognition = Found
@@ -138,9 +203,11 @@ async function listenWeb(onSpeech: OnSpeech): Promise<SpeechListening> {
         text += ` ${e.results[i][0].transcript}`
         final = e.results[i].isFinal
       }
-      onSpeech(text.trim(), current, final)
+      onEvent?.({ type: final ? 'final' : 'partial', texts: [text.trim()], at: Date.now() })
+      onSpeech(text.trim(), current, final, [text.trim()])
     }
     r.onerror = (e) => {
+      onEvent?.({ type: 'error', message: e.error, at: Date.now() })
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') failed = true
     }
     r.onend = () => {
