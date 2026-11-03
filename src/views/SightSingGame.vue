@@ -1,7 +1,7 @@
 <template>
   <game-shell
     title="Chante en continu"
-    prompt="Chante chaque note avant qu'elle ne passe la barre violette."
+    prompt="Chante les notes qui sont entre les deux barres violettes."
     :quiz="quiz"
     :board="{ game: 'lis-chante', level: settings.level, questions: 1 }"
     settings-href="/games/lis-chante"
@@ -57,8 +57,8 @@ const quiz = useQuiz({
   untimed: true,
   advanceDelay: null,
 })
-// Une voix met un peu de temps à se poser sur la note : 0,3 s de marge après la barre.
-const sight = useSightReading(quiz, settings.level, 0.3)
+// Une voix met un peu de temps à se poser sur la note : 0,5 s de marge après la barre.
+const sight = useSightReading(quiz, settings.level, 0.5)
 
 const sung = new SungNotes()
 const hold = ref(0)
@@ -107,7 +107,7 @@ const summary = computed(() => `${readLabel.value}, jusqu'à ♩ = ${sight.topTe
 const status = computed(() => {
   if (sight.phase.value === 'over') return sight.reason.value
   if (sight.position.value < 0) return 'Les notes arrivent… prépare ta voix.'
-  return 'Chante la note qui arrive sur la barre.'
+  return 'Chante la note qui est entre les deux barres.'
 })
 </script>
 

@@ -54,14 +54,26 @@ async function listenNative(onSpeech: OnSpeech): Promise<SpeechListening> {
   let stopped = false
   let session = 0
   let starting = false
+  let restart: ReturnType<typeof setTimeout> | undefined
   const handles: PluginListenerHandle[] = []
   handles.push(await SpeechRecognition.addListener('partialResults', ({ matches }) => {
     if (!stopped && matches?.[0]) onSpeech(matches[0], session, false)
   }))
+  // Une nouvelle séance commence quand le joueur se remet à parler, pas à la relance : le résultat final de la
+  // séance précédente, qui arrive après la relance, reste ainsi rattaché à elle (sans quoi ses notes, déjà jugées,
+  // seraient comptées une deuxième fois comme réponse à la note suivante).
+  handles.push(await SpeechRecognition.addListener('listeningState', ({ status }) => {
+    if (stopped) return
+    if (status === 'started') session++
+    else {
+      // Fin de phrase : on relance tout de suite (le temps de recevoir le résultat final), sans attendre la surveillance.
+      clearTimeout(restart)
+      restart = setTimeout(() => void start(), 250)
+    }
+  }))
   async function start() {
     if (stopped || starting) return
     starting = true
-    session++
     try {
       await SpeechRecognition.start({ language: LANGUAGE, maxResults: 1, partialResults: true, popup: false })
     } catch {
@@ -78,12 +90,13 @@ async function listenNative(onSpeech: OnSpeech): Promise<SpeechListening> {
     } catch {
       /* rien */
     }
-  }, 400)
+  }, 300)
   await start()
   return {
     stop() {
       stopped = true
       clearInterval(watchdog)
+      clearTimeout(restart)
       handles.forEach((h) => void h.remove())
       void SpeechRecognition.stop().catch(() => {})
     },

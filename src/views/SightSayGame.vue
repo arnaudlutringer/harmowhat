@@ -1,7 +1,7 @@
 <template>
   <game-shell
     title="Lecture continue"
-    prompt="Dis le nom de chaque note avant qu'elle ne passe la barre violette."
+    prompt="Dis les notes qui sont entre les deux barres violettes."
     :quiz="quiz"
     :board="{ game: 'lis-dis', level: settings.level, questions: 1 }"
     settings-href="/games/lis-dis"
@@ -55,8 +55,8 @@ const quiz = useQuiz({
   untimed: true,
   advanceDelay: null,
 })
-// La reconnaissance vocale rend le mot avec un peu de retard : 0,9 s de marge après la barre.
-const sight = useSightReading(quiz, settings.level, 0.9)
+// La reconnaissance vocale rend le mot avec un peu de retard : 1,1 s de marge après la barre.
+const sight = useSightReading(quiz, settings.level, 1.1)
 
 const heard = ref('')
 const micError = ref('')
@@ -75,8 +75,18 @@ function stopSpeech() {
 }
 onBeforeUnmount(stopSpeech)
 
+/** Dernière note jugée ; `fresh` : rien n'a encore été jugé dans la séance en cours. */
+let last = { pc: -1, at: 0 }
+let fresh = false
+
 function judge(pc: number) {
   consumed++
+  // Deux notes de suite n'ont jamais le même nom : la même note juste après une relance de la reconnaissance,
+  // c'est la phrase précédente qui revient (résultat final en retard), pas une nouvelle réponse.
+  const repeat = fresh && pc === last.pc && performance.now() - last.at < 2000
+  fresh = false
+  if (repeat) return
+  last = { pc, at: performance.now() }
   sight.submit(pc, `Tu as dit ${pitchClassName(pc)}`)
 }
 
@@ -85,6 +95,7 @@ function onSpeech(text: string, s: number, final: boolean) {
   if (s !== session) {
     session = s
     consumed = 0
+    fresh = true
   }
   heard.value = text
   clearTimeout(pending)
@@ -126,7 +137,7 @@ const summary = computed(() => `${readLabel.value}, jusqu'à ♩ = ${sight.topTe
 const status = computed(() => {
   if (sight.phase.value === 'over') return sight.reason.value
   if (sight.position.value < 0) return 'Les notes arrivent… prépare-toi à les nommer.'
-  return 'Dis « do », « fa dièse », « si bémol »…'
+  return 'Dis la note entre les deux barres : « do », « fa dièse », « si bémol »…'
 })
 </script>
 

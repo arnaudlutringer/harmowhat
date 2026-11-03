@@ -56,6 +56,12 @@ export const SIGHT_LEVELS: Record<Level, SightLevel> = {
   },
 }
 
+/**
+ * Fenêtre de lecture, en temps : la note à lire se dit pendant qu'elle est entre les deux barres violettes,
+ * c'est-à-dire de ce nombre de temps avant la barre de gauche jusqu'à elle.
+ */
+export const WINDOW_BEATS = 1.6
+
 /** Pas de nombre de questions : la partie dure tant que le joueur lit juste. */
 export const SIGHT_QUESTION_COUNTS = [1] as const
 /** Tempo le plus rapide. */
@@ -167,10 +173,25 @@ function words(text: string): string[] {
     .filter(Boolean)
 }
 
+/** Syllabes qu'on peut trouver collées en un seul mot par la reconnaissance vocale (« doré », « solla », « fadièse »). */
+const GLUED = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si', 'diese', 'bemol']
+
+/** Découpe un mot en noms de notes collés (« dore » → do, re), ou null s'il n'en est pas fait. */
+function unglue(word: string): string[] | null {
+  if (!word) return []
+  for (const syllable of GLUED) {
+    if (!word.startsWith(syllable)) continue
+    const rest = unglue(word.slice(syllable.length))
+    if (rest) return [syllable, ...rest]
+  }
+  return null
+}
+
 /** Les noms de notes reconnus dans une phrase, dans l'ordre (« do dièse ré » → Do♯, Ré). */
 export function parseSpokenNotes(text: string): SpokenNote[] {
   const out: SpokenNote[] = []
-  for (const w of words(text)) {
+  const all = words(text).flatMap((w) => (LETTER_OF.has(w) || SHARP.has(w) || FLAT.has(w) ? [w] : (unglue(w) ?? [w])))
+  for (const w of all) {
     const pc = LETTER_OF.get(w)
     if (pc !== undefined) {
       out.push({ pc, altered: false })

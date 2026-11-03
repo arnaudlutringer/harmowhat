@@ -1,20 +1,18 @@
 import { computed, onBeforeUnmount, ref, shallowRef } from 'vue'
 import type { StaffNote } from '@/components/ScrollingStaff.vue'
-import { NoteStream, notePoints, noteName, tempoAfter, type Level } from '@/games/sightReading'
+import { NoteStream, notePoints, noteName, tempoAfter, WINDOW_BEATS, type Level } from '@/games/sightReading'
 import type { useQuiz } from './useQuiz'
 
 /** Temps d'approche avant que la première note n'atteigne la barre de lecture. */
 const LEAD_IN_BEATS = 3
 /** Notes tirées d'avance, après la note à lire (celles qu'on voit arriver). */
 const AHEAD = 6
-/** On peut répondre à une note dès qu'elle est à moins de ce nombre de temps de la barre (elle est alors à l'écran). */
-const VISIBLE_BEATS = 3.2
 /** Temps laissé pour lire le message de fin avant le bilan. */
 const END_DELAY_MS = 2000
 
 /**
  * Moteur commun des jeux de lecture en défilement : les notes avancent d'un temps par battement du tempo ;
- * la note à lire doit recevoir sa réponse avant d'avoir dépassé la barre de lecture d'une demi-pulsation
+ * la note à lire se dit pendant qu'elle est entre les deux barres violettes, avant d'atteindre celle de gauche
  * (plus `latency` secondes, le temps que le micro reconnaisse la réponse). Chaque bonne réponse accélère le tempo.
  */
 export function useSightReading(
@@ -61,7 +59,8 @@ export function useSightReading(
     const dt = Math.min(0.1, (now - last) / 1000)
     last = now
     position.value += (dt * tempo.value) / 60
-    const grace = 0.5 + (latency * tempo.value) / 60
+    // La note doit être lue avant d'atteindre la barre de gauche ; on laisse en plus au micro le temps de reconnaître la réponse.
+    const grace = (latency * tempo.value) / 60
     if (position.value > target + grace) {
       mark(target, 'ko')
       const n = current.value
@@ -97,7 +96,7 @@ export function useSightReading(
   function submit(pc: number, said: string): boolean {
     if (phase.value !== 'running') return false
     const n = current.value
-    if (!n || target - position.value > VISIBLE_BEATS) return false
+    if (!n || target - position.value > WINDOW_BEATS + 0.1) return false
     if (pc !== n.pc) {
       mark(target, 'ko')
       end(`${said}, mais c'était ${noteName(n)}.`)
