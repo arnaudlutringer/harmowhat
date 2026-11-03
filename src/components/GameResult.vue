@@ -83,7 +83,7 @@
     <ion-button v-if="settingsHref" expand="block" fill="outline" :router-link="settingsHref" router-direction="back">
       Changer les réglages
     </ion-button>
-    <ion-button expand="block" fill="outline" router-link="/home" router-direction="back">Autres jeux</ion-button>
+    <ion-button expand="block" fill="outline" router-link="/home" router-direction="back">Autre jeu</ion-button>
   </div>
 </template>
 
