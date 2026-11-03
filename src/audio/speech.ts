@@ -54,26 +54,36 @@ async function listenNative(onSpeech: OnSpeech): Promise<SpeechListening> {
   let stopped = false
   let session = 0
   let starting = false
-  let restart: ReturnType<typeof setTimeout> | undefined
+  let lastStart = 0
+  /** Le joueur a fini sa phrase : Android n'écoute plus, et le résultat final de la phrase va arriver. */
+  let awaitingFinal = false
+  let fallback: ReturnType<typeof setTimeout> | undefined
   const handles: PluginListenerHandle[] = []
   handles.push(await SpeechRecognition.addListener('partialResults', ({ matches }) => {
-    if (!stopped && matches?.[0]) onSpeech(matches[0], session, false)
+    if (stopped || !matches?.[0]) return
+    if (!awaitingFinal) return onSpeech(matches[0], session, false)
+    // Résultat final de la phrase (pour un mot court comme « do », souvent le seul résultat) : on le transmet,
+    // puis seulement on relance l'écoute. Relancer avant l'annulerait.
+    awaitingFinal = false
+    clearTimeout(fallback)
+    onSpeech(matches[0], session, true)
+    void start()
   }))
-  // Une nouvelle séance commence quand le joueur se remet à parler, pas à la relance : le résultat final de la
-  // séance précédente, qui arrive après la relance, reste ainsi rattaché à elle (sans quoi ses notes, déjà jugées,
-  // seraient comptées une deuxième fois comme réponse à la note suivante).
   handles.push(await SpeechRecognition.addListener('listeningState', ({ status }) => {
-    if (stopped) return
-    if (status === 'started') session++
-    else {
-      // Fin de phrase : on relance tout de suite (le temps de recevoir le résultat final), sans attendre la surveillance.
-      clearTimeout(restart)
-      restart = setTimeout(() => void start(), 250)
-    }
+    if (stopped || status !== 'stopped') return
+    awaitingFinal = true
+    // Pas de résultat final (rien de compris) : on relance quand même au bout d'un moment.
+    clearTimeout(fallback)
+    fallback = setTimeout(() => {
+      awaitingFinal = false
+      void start()
+    }, 2000)
   }))
   async function start() {
     if (stopped || starting) return
     starting = true
+    lastStart = performance.now()
+    session++
     try {
       await SpeechRecognition.start({ language: LANGUAGE, maxResults: 1, partialResults: true, popup: false })
     } catch {
@@ -82,21 +92,22 @@ async function listenNative(onSpeech: OnSpeech): Promise<SpeechListening> {
       starting = false
     }
   }
-  // Après un silence (ou une erreur « rien entendu »), Android s'arrête sans prévenir : on vérifie et on relance.
+  // Sans parole (délai dépassé, rien entendu), Android s'arrête sans prévenir : on vérifie et on relance,
+  // sauf quand une phrase vient de finir (son résultat final est attendu).
   const watchdog = setInterval(async () => {
-    if (stopped || starting) return
+    if (stopped || starting || awaitingFinal || performance.now() - lastStart < 1000) return
     try {
-      if (!(await SpeechRecognition.isListening()).listening) void start()
+      if (!(await SpeechRecognition.isListening()).listening && !awaitingFinal) void start()
     } catch {
       /* rien */
     }
-  }, 300)
+  }, 500)
   await start()
   return {
     stop() {
       stopped = true
       clearInterval(watchdog)
-      clearTimeout(restart)
+      clearTimeout(fallback)
       handles.forEach((h) => void h.remove())
       void SpeechRecognition.stop().catch(() => {})
     },
