@@ -16,6 +16,9 @@ const buffers = new Map<string, Promise<AudioBuffer>>()
 
 function audio(): { ctx: AudioContext; out: GainNode } {
   if (!ctx) {
+    // iPhone : jouer le son comme un lecteur de musique, même avec l'interrupteur silencieux (Safari 16.4 et plus).
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession
+    if (session) session.type = 'playback'
     ctx = new AudioContext()
     master = ctx.createGain()
     master.gain.value = 0.9

@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from '@ionic/vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import HomePage from '@/views/HomePage.vue'
 import { isTutorialDone } from '@/tutorial'
+import { gameEnabled } from '@/config/features'
+import type { GameId } from '@/games/highScores'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/home' },
@@ -46,6 +48,11 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/garde-tempo/jouer', component: () => import('@/views/KeepTempoGame.vue') },
   { path: '/games/trouve-tempo', component: () => import('@/views/FindTempoSettings.vue') },
   { path: '/games/trouve-tempo/jouer', component: () => import('@/views/FindTempoGame.vue') },
+  // Lecture en défilement (interrupteurs lectureChantee et lectureParlee, voir config/features.ts).
+  { path: '/games/lis-chante', component: () => import('@/views/SightSingSettings.vue') },
+  { path: '/games/lis-chante/jouer', component: () => import('@/views/SightSingGame.vue') },
+  { path: '/games/lis-dis', component: () => import('@/views/SightSaySettings.vue') },
+  { path: '/games/lis-dis/jouer', component: () => import('@/views/SightSayGame.vue') },
 ]
 
 const router = createRouter({
@@ -54,6 +61,12 @@ const router = createRouter({
 })
 
 // Première ouverture : le tutoriel passe avant l'accueil.
-router.beforeEach((to) => (to.path === '/home' && !isTutorialDone() ? '/tutoriel' : true))
+// Un jeu dont l'interrupteur est coupé n'existe pas : retour à l'accueil.
+router.beforeEach((to) => {
+  if (to.path === '/home' && !isTutorialDone()) return '/tutoriel'
+  const game = /^\/(?:games|scores)\/([^/]+)/.exec(to.path)?.[1]
+  if (game && !gameEnabled(game as GameId)) return '/home'
+  return true
+})
 
 export default router

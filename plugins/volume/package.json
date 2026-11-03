@@ -1,0 +1,17 @@
+{
+  "name": "loreille-volume",
+  "version": "1.0.0",
+  "description": "Volume média du téléphone (Android, iOS), pour prévenir le joueur quand le son est coupé.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "UNLICENSED",
+  "private": true,
+  "files": ["android/src", "android/build.gradle", "ios/Sources", "Package.swift", "LoreilleVolume.podspec", "index.js", "index.d.ts"],
+  "capacitor": {
+    "ios": { "src": "ios" },
+    "android": { "src": "android" }
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  }
+}

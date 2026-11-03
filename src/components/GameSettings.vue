@@ -1,11 +1,8 @@
 <template>
   <ion-page>
     <ion-content>
-      <!-- Bandeau aux couleurs de la catégorie : la grande icône du jeu, penchée, et son nom. -->
-      <header class="hero" :style="{ '--cat': `var(${CATEGORY_VARS[gameCategory(game)] ?? CATEGORY_VARS[0]})` }">
-        <ion-back-button class="back" default-href="/home" text="" />
-        <span class="big"><ion-icon :icon="GAME_ICONS[game]" aria-hidden="true" /></span>
-        <h1>{{ title }}</h1>
+      <!-- Bandeau aux couleurs de la catégorie. Retour : toujours l'accueil (comme le bouton retour du téléphone). -->
+      <game-hero :game="game" :title="title" back-label="Retour à l'accueil" @back="router.navigate('/home', 'back', 'replace')">
         <p class="summary">{{ SUMMARIES[game] }}</p>
         <!-- Ton parcours sur ce jeu : record du téléphone, parties terminées, meilleure médaille GOAT. -->
         <div class="stats">
@@ -13,13 +10,9 @@
           <span>🎮 <b>{{ plays }}</b> partie{{ plays > 1 ? 's' : '' }}</span>
           <span :class="{ off: !goat }">{{ goat ? `💎 GOAT (${TIER_LABELS[goat].label.toLowerCase()})` : '💎 GOAT à gagner' }}</span>
         </div>
-      </header>
+      </game-hero>
 
-      <div class="tabs" role="tablist">
-        <button v-for="t in TABS" :key="t.id" role="tab" :aria-selected="tab === t.id" :class="{ on: tab === t.id }" @click="tab = t.id">
-          {{ t.label }}
-        </button>
-      </div>
+      <pill-tabs v-model="tab" :items="TABS" overlap />
 
       <div class="body">
         <!-- Jouer : le nombre de questions en pastilles, les niveaux en tuiles. -->
@@ -59,7 +52,8 @@
         <!-- Règles : la présentation du jeu et le barème. -->
         <div v-else-if="tab === 'regles'" class="rules">
           <p v-for="line in INTROS[game]" :key="line">{{ line }}</p>
-          <p>
+          <!-- Jeux sans questions (jusqu'à la première erreur) : leur barème est dans leur présentation. -->
+          <p v-if="!['garde-tempo', 'lis-chante', 'lis-dis'].includes(game)">
             Chaque question démarre à 10&nbsp;000 points, qui baissent jusqu'à 100 : plus tu réponds vite, plus tu en gagnes.
             Réécouter ou utiliser le diapason coûte 200 points, et une mauvaise réponse n'en rapporte aucun.
           </p>
@@ -70,9 +64,9 @@
           <p class="board">{{ boardLabel }}</p>
           <ol v-if="records.length">
             <li v-for="(r, i) in records" :key="i">
-              <span class="rank">{{ ['🥇', '🥈', '🥉'][i] ?? `${i + 1}.` }}</span>
+              <rank-badge :rank="i + 1" />
               <span class="name">{{ r.name }}</span>
-              <strong>{{ r.points.toLocaleString('fr-FR') }} pts</strong>
+              <strong>{{ r.points.toLocaleString('fr-FR') }} <span class="pts">pts</span></strong>
             </li>
           </ol>
           <p v-else class="empty">Pas encore de score pour ces réglages : à toi de jouer !</p>
@@ -96,15 +90,18 @@
 <script setup lang="ts">
 import { withTrial } from '@/games/ready'
 import { computed, ref, watch } from 'vue'
-import { IonBackButton, IonButton, IonContent, IonFooter, IonIcon, IonPage, useIonRouter } from '@ionic/vue'
+import { IonButton, IonContent, IonFooter, IonPage, useIonRouter } from '@ionic/vue'
 import { useRoute } from 'vue-router'
 import { bestScore, getScores, hasLocalScores, levelLabel, scoresHref, type Board, type GameId } from '@/games/highScores'
-import { GAME_ICONS } from '@/games/icons'
 import { INTROS, SUMMARIES } from '@/games/intros'
+import GameHero from './GameHero.vue'
+import PillTabs from './PillTabs.vue'
+import RankBadge from './RankBadge.vue'
 import { featureEnabled } from '@/config/features'
 import { matchesAvailable } from '@/games/matches'
 import { newSeed } from '@/games/seed'
-import { earnedTrophies, gameCategory, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
+import { confirmSoundOn } from '@/audio/volume'
+import { earnedTrophies, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
 
 /**
  * Écran de réglages d'un jeu : un bandeau à ses couleurs, trois onglets (Jouer, Règles, Records) et,
@@ -129,7 +126,6 @@ const props = defineProps<{
   boardLevel?: (level: string) => string
 }>()
 
-const CATEGORY_VARS = ['--hw-category-ear', '--hw-category-voice', '--hw-category-theory', '--hw-category-rhythm', '--hw-category-tempo']
 const TABS = [
   { id: 'jouer', label: 'Jouer' },
   { id: 'regles', label: 'Règles' },
@@ -185,7 +181,9 @@ const records = computed(() => getScores(board.value).slice(0, 5))
 
 const matchs = featureEnabled('matchs') && matchesAvailable
 
-function start(trial = false, challenge = false) {
+async function start(trial = false, challenge = false) {
+  // Son du téléphone coupé : on prévient avant de lancer la partie.
+  if (!(await confirmSoundOn())) return
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(props.storageKey, JSON.stringify({ ...settings, ...props.extra }))
@@ -199,49 +197,6 @@ function start(trial = false, challenge = false) {
 </script>
 
 <style scoped>
-.hero {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding: calc(56px + var(--ion-safe-area-top, 0px)) 16px 34px;
-  background:
-    radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.45), transparent 55%),
-    var(--cat);
-  color: var(--hw-card-ink);
-}
-.back {
-  position: absolute;
-  top: calc(12px + var(--ion-safe-area-top, 0px));
-  left: 12px;
-  --color: var(--ion-color-primary);
-  --background: var(--hw-surface, #fff);
-  --border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  box-shadow: 0 2px 8px rgba(45, 48, 71, 0.15);
-  border-radius: 50%;
-}
-.big {
-  display: grid;
-  place-items: center;
-  width: 104px;
-  height: 104px;
-  border-radius: 30px;
-  background: var(--hw-surface, #fff);
-  transform: rotate(-6deg);
-  box-shadow: 0 12px 28px rgba(45, 48, 71, 0.18);
-}
-.big ion-icon {
-  font-size: 68px;
-  color: var(--hw-card-ink);
-}
-h1 {
-  margin: 14px 0 0;
-  font-size: 26px;
-  font-weight: 700;
-}
 .summary {
   max-width: 400px;
   margin: 4px 0 0;
@@ -271,37 +226,6 @@ h1 {
 }
 .stats .off {
   opacity: 0.7;
-}
-.tabs {
-  position: relative;
-  display: flex;
-  max-width: 448px;
-  margin: -20px 16px 0;
-  padding: 4px;
-  border-radius: 16px;
-  background: var(--hw-surface, #fff);
-  box-shadow: 0 6px 16px rgba(45, 48, 71, 0.1);
-}
-@media (min-width: 480px) {
-  .tabs {
-    margin: -20px auto 0;
-  }
-}
-.tabs button {
-  flex: 1;
-  padding: 9px 0;
-  border: none;
-  border-radius: 12px;
-  background: none;
-  color: var(--ion-color-medium);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.tabs .on {
-  background: var(--hw-button-active);
-  color: var(--ion-color-primary);
 }
 .body {
   max-width: 480px;

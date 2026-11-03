@@ -18,7 +18,7 @@
         </p>
         <!-- Avancée du palier de 30 secondes. -->
         <div class="stage" aria-hidden="true"><span :style="{ width: `${progress * 100}%` }" /></div>
-        <p class="stage-points">{{ stageScore.toLocaleString('fr-FR') }} / 10 000 pts</p>
+        <p class="stage-points">{{ stageScore.toLocaleString('fr-FR') }} / 10 000 <span class="pts">pts</span></p>
         <p class="last" :class="last?.ok ? 'ok' : last ? 'ko' : ''" aria-live="polite">{{ last?.text ?? ' ' }}</p>
       </div>
     </template>

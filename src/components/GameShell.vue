@@ -5,20 +5,20 @@
     <ion-header v-if="playing" class="ion-no-border game-header">
         <div class="meta">
           <div class="points" :class="{ frozen: quiz.feedback.value }" aria-label="Points de la question">
-            <strong>{{ quiz.points.value }}</strong>
-            <span>pts</span>
+            <strong>{{ livePoints ?? quiz.points.value }} <span class="pts">pts</span></strong>
           </div>
           <!-- Le diapason n'est disponible que pendant les questions (et jamais en mode expert). -->
           <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
           <div class="progress">
             <!-- Essai : une seule question, sans total ; « Essai » en grand à la place. -->
             <span v-if="quiz.trial" class="trial">Essai</span>
-            <span v-if="!quiz.trial && endless">Palier {{ quiz.number.value }}</span>
+            <span v-if="!quiz.trial && progressLabel">{{ progressLabel }}</span>
+            <span v-else-if="!quiz.trial && endless">Palier {{ quiz.number.value }}</span>
             <span v-else-if="!quiz.trial">Question {{ quiz.number.value }} / {{ quiz.total }}</span>
-            <span v-if="!quiz.trial" class="total" :class="{ bump: landed }">Total : {{ shownTotal }} pts</span>
+            <span v-if="!quiz.trial && !progressLabel" class="total" :class="{ bump: landed }">Total : {{ shownTotal }} <span class="pts">pts</span></span>
           </div>
           <!-- Points gagnés à la question : « +350pts » en biais, qui s'envole des points de la question vers le total (1,5 s). -->
-          <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}pts</strong>
+          <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}<span class="pts">pts</span></strong>
         </div>
     </ion-header>
     <ion-content class="ion-padding">
@@ -111,6 +111,10 @@ const props = defineProps<{
   scoreRatio?: number
   /** Écran serré (« Trouve le tempo » au curseur) : moins d'espace autour de la consigne et du message. */
   compact?: boolean
+  /** Points de la partie en cours, à la place de ceux de la question (lecture en défilement : une partie d'un seul tenant). */
+  livePoints?: number
+  /** Avancée de la partie, à la place de « Question n / total » et du total (« 12 notes lues »). */
+  progressLabel?: string
 }>()
 
 /** Pendant les questions (ni compte à rebours ni écran de fin) : en-tête et pied fixes. */

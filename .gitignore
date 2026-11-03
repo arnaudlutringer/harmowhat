@@ -1,7 +1,8 @@
 node_modules
 dist
-android
-ios
+# Projets natifs générés par Capacitor (à la racine seulement : le module plugins/volume a ses sources natives).
+/android
+/ios
 .DS_Store
 
 # Configuration locale (Supabase) : voir .env.example

@@ -8,6 +8,10 @@
     swipe-to-next
     no-tuning-fork
   >
+    <!-- Consigne : l'intervalle à chanter en violet gras. -->
+    <template #prompt>
+      Chante {{ article }}<strong class="hl">{{ intervalText }}</strong> !
+    </template>
     <template #player>
       <!-- Après la réponse : la portée remplace les boutons, avec la note jouée, puis sur la même pulsation la note attendue (vert) et la note chantée (rouge). -->
       <div v-if="quiz.feedback.value && result" class="staff">
@@ -42,6 +46,8 @@
           </div>
         </div>
         <p class="hint">{{ hint }}</p>
+        <!-- L'intervalle demandé en abrégé, comme sur la portée de « Fais l'harmonie » (« 3M↑ »). -->
+        <p class="annotation" aria-hidden="true">{{ intervalShort(q.interval, q.ascending) }}</p>
         <p v-if="micError" class="error">{{ micError }}</p>
         <!-- Accordeur : la note chantée et sa justesse propre (écart au demi-ton le plus proche), sans dévoiler la note attendue. -->
         <tuner-gauge
@@ -74,6 +80,7 @@ import { pitchClassName } from '@/music/notes'
 import { spelledName, spelledPitchName } from '@/music/spelling'
 import { createQuestion, judge, LEVELS, parseSettings, type Question, type Verdict } from '@/games/singHarmony'
 import { currentInstrument, randomInstrument, type Instrument } from '@/audio/instruments'
+import { intervalShort } from '@/games/makeHarmony'
 
 const settings = parseSettings(useRoute().query)
 // Impossible : la note de départ ne s'entend qu'une fois (pas de réécoute), jouée par un instrument au hasard.
@@ -96,6 +103,9 @@ const quiz = useQuiz<Question>({
   advanceDelay: null,
 })
 const q = computed(() => quiz.question.value)
+// « la quarte augmentée ascendante » : l'article à part, le reste en violet gras.
+const article = computed(() => (q.value.label.startsWith("l'") ? "l'" : 'la '))
+const intervalText = computed(() => q.value.label.slice(article.value.length))
 
 /** La note retenue, après la réponse. */
 const result = shallowRef<Verdict | null>(null)
@@ -189,9 +199,30 @@ function onNote(frequency: number) {
   text-align: center;
   color: var(--ion-color-danger);
 }
+/* Portée de la réponse : centrée, sur fond papier, comme dans les autres jeux. */
 .staff {
   width: 100%;
   max-width: 320px;
+  margin: 0 auto;
+  padding: 6px;
+  background: #fffdf3;
+  color: #222;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+.hl {
+  color: var(--ion-color-primary);
+  font-weight: 800;
+}
+.annotation {
+  width: fit-content;
+  margin: 4px auto 8px;
+  padding: 4px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(108, 92, 231, 0.35);
+  color: var(--ion-color-primary);
+  font-size: 22px;
+  font-weight: 800;
 }
 /* Note tenue : la barre se remplit pendant le chant ; pleine, la note est jugée. */
 .hold {

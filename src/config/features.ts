@@ -1,3 +1,5 @@
+import type { GameId } from '@/games/highScores'
+
 /**
  * Fonctionnalités en préparation, désactivées tant qu'elles ne sont pas prêtes.
  * Pour en activer une pour tout le monde : passer sa valeur à true ici, puis refaire l'APK.
@@ -8,6 +10,10 @@
 export const FEATURES = {
   /** Matchs à distance : défier un autre joueur sur le même jeu, avec les mêmes questions. */
   matchs: false,
+  /** « Chante en continu » : lire les notes d'une portée qui défile et les chanter au micro. */
+  lectureChantee: true,
+  /** « Lecture continue » : lire les notes d'une portée qui défile et dire leur nom au micro. */
+  lectureParlee: true,
 }
 
 export type Feature = keyof typeof FEATURES
@@ -28,6 +34,18 @@ function devOverrides(): Partial<Record<Feature, boolean>> {
   } catch {
     return {}
   }
+}
+
+/** Jeux derrière un interrupteur : absents de l'accueil, des classements et des trophées tant qu'il est coupé. */
+export const GAME_FEATURES: Partial<Record<GameId, Feature>> = {
+  'lis-chante': 'lectureChantee',
+  'lis-dis': 'lectureParlee',
+}
+
+/** Le jeu est-il proposé (pas d'interrupteur, ou interrupteur actif) ? */
+export function gameEnabled(game: GameId): boolean {
+  const feature = GAME_FEATURES[game]
+  return !feature || featureEnabled(feature)
 }
 
 /** La fonctionnalité est-elle active (valeur du fichier, ou interrupteur de test en local) ? */
