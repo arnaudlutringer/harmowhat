@@ -1,6 +1,6 @@
 <template>
   <game-shell
-    title="Lis et chante"
+    title="Chante en continu"
     prompt="Chante chaque note avant qu'elle ne passe la barre violette."
     :quiz="quiz"
     :board="{ game: 'lis-chante', level: settings.level, questions: 1 }"

@@ -58,7 +58,7 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 | Joue le rythme | Batteur de génie |
 | Garde le tempo | Horloge atomique |
 | Trouve le tempo | Métronome dans la tête |
-| Lis et chante | Chanteur à vue (30 000 points en une partie) |
+| Chante en continu | Chanteur à vue (30 000 points en une partie) |
 | Lecture continue | Lecteur éclair (30 000 points en une partie) |
 
 ## 5. Persévérance (7)
@@ -120,12 +120,12 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 
 ## La lecture en défilement
 
-« Lis et chante » et « Lecture continue » (interrupteurs lectureChantee et lectureParlee dans src/config/features.ts) : une partie dure jusqu'à la première erreur. Leur médaille de niveau (et leur « sans faute ») vient d'une partie à 10 000 points, leur GOAT d'une partie à 30 000 points.
+« Chante en continu » et « Lecture continue » (interrupteurs lectureChantee et lectureParlee dans src/config/features.ts) : une partie dure jusqu'à la première erreur. Leur médaille de niveau (et leur « sans faute ») vient d'une partie à 10 000 points, leur GOAT d'une partie à 30 000 points.
 
 | Trophée | Condition |
 |---|---|
-| Lecture à vue | Lis 20 notes d'affilée dans « Lis et chante » ou « Lecture continue » |
-| Prima vista | Lis une note à 100 à la noire ou plus dans « Lis et chante » ou « Lecture continue » |
+| Lecture à vue | Lis 20 notes d'affilée dans « Chante en continu » ou « Lecture continue » |
+| Prima vista | Lis une note à 100 à la noire ou plus dans « Chante en continu » ou « Lecture continue » |
 
 ## Défi du jour
 

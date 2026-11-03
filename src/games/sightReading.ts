@@ -5,7 +5,7 @@ import { CLEFS, noteAt, randomAlter, stepRange, type ClefId } from './readNote'
 /**
  * Lecture en défilement : les notes passent sur une portée, de droite à gauche, au rythme du tempo
  * (une note par temps). Le joueur lit chaque note avant qu'elle ne franchisse la barre de lecture :
- * - « Lis et chante » : il la chante (à n'importe quelle octave) ;
+ * - « Chante en continu » : il la chante (à n'importe quelle octave) ;
  * - « Lecture continue » : il dit son nom au micro (« do », « fa dièse », « si bémol »…).
  * Chaque bonne réponse accélère le tempo ; la partie s'arrête à la première erreur ou à la première note oubliée.
  */

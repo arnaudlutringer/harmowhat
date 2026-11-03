@@ -10,7 +10,7 @@ import type { GameId } from '@/games/highScores'
 export const FEATURES = {
   /** Matchs à distance : défier un autre joueur sur le même jeu, avec les mêmes questions. */
   matchs: false,
-  /** « Lis et chante » : lire les notes d'une portée qui défile et les chanter au micro. */
+  /** « Chante en continu » : lire les notes d'une portée qui défile et les chanter au micro. */
   lectureChantee: true,
   /** « Lecture continue » : lire les notes d'une portée qui défile et dire leur nom au micro. */
   lectureParlee: true,

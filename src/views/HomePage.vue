@@ -125,7 +125,12 @@ const voiceGames = [
     icon: GAME_ICONS['chante-harmonie'],
     title: "Chante l'harmonie",
   },
-]
+  {
+    path: '/games/lis-chante',
+    icon: GAME_ICONS['lis-chante'],
+    title: 'Chante en continu',
+  },
+].filter((g) => gameEnabled(idOf(g.path)))
 
 const theoryGames = [
   {
@@ -142,11 +147,6 @@ const theoryGames = [
     path: '/games/tonalite',
     icon: GAME_ICONS.tonalite,
     title: 'La tonalité',
-  },
-  {
-    path: '/games/lis-chante',
-    icon: GAME_ICONS['lis-chante'],
-    title: 'Lis et chante',
   },
   {
     path: '/games/lis-dis',

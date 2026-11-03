@@ -1,7 +1,7 @@
 <template>
   <game-settings
     game="lis-chante"
-    title="Lis et chante"
+    title="Chante en continu"
     :levels="SIGHT_LEVELS"
     :question-counts="SIGHT_QUESTION_COUNTS"
     storage-key="harmowhat.lis-chante.settings"

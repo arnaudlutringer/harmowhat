@@ -142,7 +142,7 @@ export const GAMES: Record<GameId, GameInfo> = {
     questionCounts: FIND_QUESTION_COUNTS,
   },
   'lis-chante': {
-    title: 'Lis et chante',
+    title: 'Chante en continu',
     emoji: '🎙️',
     levels: Object.entries(SIGHT_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: SIGHT_QUESTION_COUNTS,

@@ -73,8 +73,10 @@ const SVGS: Record<GameId, string> = {
     `<path d="M60 384h232" ${S}/>` +
     `<path d="M176 384L236 200" ${S}/>` +
     `<path d="M340 92a54 54 0 1 1 80 48c-24 14-34 30-34 58" ${S}/><circle cx="386" cy="262" r="18"/>`,
-  // Un micro, et des notes qui défilent vers la gauche : lis et chante.
-  'lis-chante': MIC + `<path d="M488 96H336m44-40l-44 40 44 40" ${S}/>` + `<ellipse cx="380" cy="236" rx="38" ry="26" transform="rotate(-20 380 236)" ${S}/>` + `<ellipse cx="452" cy="320" rx="38" ry="26" transform="rotate(-20 452 320)" ${S}/>` + `<ellipse cx="388" cy="410" rx="38" ry="26" transform="rotate(-20 388 410)" ${S}/>`,
+  // Comme « Chante la note », avec des pointillés au niveau du socle du micro et une deuxième note : chante en continu.
+  'lis-chante':
+    MIC + head(392, 196, 42, 30) + `<path d="M432 184V48" ${S}/>` + head(468, 270, 34, 24) + `<path d="M500 262V140" ${S}/>` +
+    `<path d="M290 460H490" ${S} stroke-dasharray="20 28"/>`,
   // Comme « Lecture de note », mais la portée continue en pointillés, et une note y arrive, coupée en deux par le bord : lecture continue.
   'lis-dis':
     [136, 196, 256, 316, 376].map((y) => `<line x1="32" y1="${y}" x2="330" y2="${y}" class="ionicon-fill-none" stroke-width="12"/><line x1="352" y1="${y}" x2="480" y2="${y}" class="ionicon-fill-none" stroke-width="12" stroke-dasharray="22 18"/>`).join('') +
