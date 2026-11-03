@@ -36,6 +36,7 @@ import RankBadge from '@/components/RankBadge.vue'
 import { GAMES, getScores, parseBoard, scoresHref, shownLevels, type Board, type GameId } from '@/games/highScores'
 import { cachedRecord, fetchRecord, scope, worldVersion, type WorldRecord } from '@/games/worldScores'
 import { flag } from '@/player/countries'
+import { gameEnabled } from '@/config/features'
 import { profile } from '@/player/profile'
 
 interface Best {
@@ -53,7 +54,7 @@ interface GameRow {
   best?: Best
 }
 
-const ids = Object.keys(GAMES) as GameId[]
+const ids = (Object.keys(GAMES) as GameId[]).filter(gameEnabled)
 
 /** Records de l'appareil. */
 function deviceRows(): GameRow[] {

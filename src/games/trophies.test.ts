@@ -29,7 +29,7 @@ describe('Trophées', () => {
   beforeEach(() => store.clear())
 
   it('propose une cinquantaine de trophées, sans doublon', () => {
-    expect(TROPHIES.length).toBe(59)
+    expect(TROPHIES.length).toBe(63)
     expect(new Set(TROPHIES.map((t) => t.id)).size).toBe(TROPHIES.length)
   })
 
@@ -120,6 +120,23 @@ describe('Trophées', () => {
     expect(ids().sort()).toEqual(['diapason-humain', 'juste'])
     for (const clef of ['sol', 'fa', 'ut3']) trophyEvent({ type: 'clef', clef })
     expect(ids()).toEqual(['toutes-les-cles'])
+  })
+
+  it('lecture en défilement : médaille à 10 000 points, GOAT à 30 000, catastrophe sans aucune note', async () => {
+    const { levelMedalWon } = await import('./trophies')
+    const board = { game: 'lis-dis' as const, level: 'normal', questions: 1 }
+    game({ board, results: [{ correct: false, points: 9000 }] })
+    expect(levelMedalWon('lis-dis', 'normal')).toBe(false)
+    expect(ids()).not.toContain('catastrophe')
+    game({ board, results: [{ correct: false, points: 12000 }] })
+    expect(levelMedalWon('lis-dis', 'normal')).toBe(true)
+    expect(ids()).not.toContain('goat-lis-dis')
+    game({ board, results: [{ correct: false, points: 31000 }] })
+    expect(ids()).toContain('goat-lis-dis')
+    game({ board, results: [{ correct: false, points: 0 }] })
+    expect(ids()).toContain('catastrophe')
+    trophyEvent({ type: 'sight-run', game: 'lis-dis', notes: 20, tempo: 104 })
+    expect(ids().sort()).toEqual(['lecture-a-vue', 'prima-vista'])
   })
 
   it('La catastrophe : aucune bonne réponse', () => {

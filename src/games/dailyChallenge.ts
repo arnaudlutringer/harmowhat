@@ -9,7 +9,9 @@ import { bestResults } from './trophies'
  */
 
 /** « Garde le tempo » n'a pas de nombre de questions : il n'entre pas dans les défis. */
-const POOL = (Object.keys(GAMES) as GameId[]).filter((g) => g !== 'garde-tempo')
+/** Jeux sans nombre de questions (jusqu'à la première erreur) : pas de défi du jour, qui se compte en bonnes réponses. */
+const NO_CHALLENGE: GameId[] = ['garde-tempo', 'lis-chante', 'lis-dis']
+const POOL = (Object.keys(GAMES) as GameId[]).filter((g) => !NO_CHALLENGE.includes(g))
 
 /** Part de bonnes réponses pour relever le défi. */
 export const CHALLENGE_SUCCESS = 0.8

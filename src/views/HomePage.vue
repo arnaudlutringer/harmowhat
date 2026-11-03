@@ -57,6 +57,7 @@ import { GAME_ICONS } from '@/games/icons'
 import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
+import { gameEnabled } from '@/config/features'
 import { challengeDays, challengeScores, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
@@ -142,7 +143,17 @@ const theoryGames = [
     icon: GAME_ICONS.tonalite,
     title: 'La tonalité',
   },
-]
+  {
+    path: '/games/lis-chante',
+    icon: GAME_ICONS['lis-chante'],
+    title: 'Lis et chante',
+  },
+  {
+    path: '/games/lis-dis',
+    icon: GAME_ICONS['lis-dis'],
+    title: 'Lis et dis',
+  },
+].filter((g) => gameEnabled(idOf(g.path)))
 
 const rhythmGames = [
   {

@@ -11,6 +11,7 @@ import { LEVELS as SING_LEVELS, QUESTION_COUNTS as SING_COUNTS } from './singThe
 import { LEVELS as SING_HARMONY_LEVELS, QUESTION_COUNTS as SING_HARMONY_COUNTS } from './singHarmony'
 import { LEVELS as RHYTHM_LEVELS, QUESTION_COUNTS as RHYTHM_COUNTS } from './rhythm'
 import { FIND_LEVELS, FIND_QUESTION_COUNTS, KEEP_LEVELS, KEEP_QUESTION_COUNTS } from './tempo'
+import { SIGHT_LEVELS, SIGHT_QUESTION_COUNTS } from './sightReading'
 import { impossibleShown } from './trophies'
 import { profile, saveProfile } from '@/player/profile'
 import { SCORING_VERSION } from './scoring'
@@ -21,7 +22,7 @@ import { SCORING_VERSION } from './scoring'
  * Les scores sont aussi envoyés au classement mondial (voir worldScores.ts).
  */
 
-export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note' | 'fais-harmonie' | 'tonalite' | 'modalite' | 'chante-note' | 'chante-harmonie' | 'quel-rythme' | 'joue-rythme' | 'garde-tempo' | 'trouve-tempo'
+export type GameId = 'grave-ou-aigu' | 'quelle-note' | 'accords' | 'harmonies' | 'lecture-note' | 'fais-harmonie' | 'tonalite' | 'modalite' | 'chante-note' | 'chante-harmonie' | 'quel-rythme' | 'joue-rythme' | 'garde-tempo' | 'trouve-tempo' | 'lis-chante' | 'lis-dis'
 
 /** Un classement : le jeu, le niveau (identifiant) et le nombre de questions. */
 export interface Board {
@@ -139,6 +140,18 @@ export const GAMES: Record<GameId, GameInfo> = {
     emoji: '🎚️',
     levels: Object.entries(FIND_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: FIND_QUESTION_COUNTS,
+  },
+  'lis-chante': {
+    title: 'Lis et chante',
+    emoji: '🎙️',
+    levels: Object.entries(SIGHT_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: SIGHT_QUESTION_COUNTS,
+  },
+  'lis-dis': {
+    title: 'Lis et dis',
+    emoji: '🗣️',
+    levels: Object.entries(SIGHT_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
+    questionCounts: SIGHT_QUESTION_COUNTS,
   },
 }
 

@@ -19,7 +19,7 @@ describe('Défi du jour', () => {
       expect(GAMES[c.board.game].questionCounts).toContain(c.board.questions)
       expect(c.href).toMatch(/^\/games\//)
     }
-    expect(games.size).toBe(Object.keys(GAMES).length - 1)
+    expect(games.size).toBe(Object.keys(GAMES).length - 3)
     expect(games.has('garde-tempo')).toBe(false)
   })
 

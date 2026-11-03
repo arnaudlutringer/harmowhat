@@ -52,7 +52,8 @@
         <!-- Règles : la présentation du jeu et le barème. -->
         <div v-else-if="tab === 'regles'" class="rules">
           <p v-for="line in INTROS[game]" :key="line">{{ line }}</p>
-          <p>
+          <!-- Jeux sans questions (jusqu'à la première erreur) : leur barème est dans leur présentation. -->
+          <p v-if="!['garde-tempo', 'lis-chante', 'lis-dis'].includes(game)">
             Chaque question démarre à 10&nbsp;000 points, qui baissent jusqu'à 100 : plus tu réponds vite, plus tu en gagnes.
             Réécouter ou utiliser le diapason coûte 200 points, et une mauvaise réponse n'en rapporte aucun.
           </p>

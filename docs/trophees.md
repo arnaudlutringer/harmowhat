@@ -12,7 +12,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Bien préparé | Terminer le tutoriel |
 | Curieux | Essaie une question dans le mode essai |
 | Touche-à-tout | Termine un questionnaire dans chacune des 5 catégories (L'oreille, La voix, Le solfège, Le rythme, Le tempo) |
-| Explorateur | Termine un questionnaire dans les 14 jeux |
+| Explorateur | Termine un questionnaire dans les 16 jeux |
 | Homme-orchestre | Joue un questionnaire avec 5 instruments différents |
 
 ## 2. Sans faute (5)
@@ -24,7 +24,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Sans filet | Un questionnaire sans faute sans toucher au diapason |
 | Marathonien | Un questionnaire de 50 questions sans faute |
 | L'impossible n'existe pas | Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question |
-| Grand chelem | Au moins un sans faute dans chacun des 14 jeux |
+| Grand chelem | Au moins un sans faute dans chacun des 16 jeux |
 
 ## 3. Rapidité (5)
 
@@ -36,7 +36,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Éclair | Une bonne réponse à 10 000 points |
 | Réflexe | 10 bonnes réponses de suite à 9 000 points ou plus |
 
-## 4. GOAT, 10 000 points à chaque question d'un questionnaire (14 jeux, 💎 en impossible quand le jeu en a un)
+## 4. GOAT, 10 000 points à chaque question d'un questionnaire (16 jeux, 💎 en impossible quand le jeu en a un)
 
 Les 10 000 points s'obtiennent en répondant pendant la marge de 0,3 s qui précède le décompte des points (GRACE_MS dans src/games/scoring.ts).
 
@@ -58,6 +58,8 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 | Joue le rythme | Batteur de génie |
 | Garde le tempo | Horloge atomique |
 | Trouve le tempo | Métronome dans la tête |
+| Lis et chante | Chanteur à vue (30 000 points en une partie) |
+| Lis et dis | Lecteur éclair (30 000 points en une partie) |
 
 ## 5. Persévérance (7)
 
@@ -115,6 +117,15 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 | Grand huit | Dans une même partie de « Garde le tempo », tiens un palier sous 60 et un autre au-dessus de 140 |
 | Tempo giusto | Trouve un tempo pile, sans un battement d'écart, au curseur de « Trouve le tempo » |
 | Chef d'orchestre | Trouve 20 tempos au total dans « Trouve le tempo » |
+
+## La lecture en défilement
+
+« Lis et chante » et « Lis et dis » (interrupteurs lectureChantee et lectureParlee dans src/config/features.ts) : une partie dure jusqu'à la première erreur. Leur médaille de niveau (et leur « sans faute ») vient d'une partie à 10 000 points, leur GOAT d'une partie à 30 000 points.
+
+| Trophée | Condition |
+|---|---|
+| Lecture à vue | Lis 20 notes d'affilée dans « Lis et chante » ou « Lis et dis » |
+| Prima vista | Lis une note à 100 à la noire ou plus dans « Lis et chante » ou « Lis et dis » |
 
 ## Défi du jour
 

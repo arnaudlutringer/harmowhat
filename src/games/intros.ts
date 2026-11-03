@@ -61,6 +61,14 @@ export const INTROS: Record<GameId, string[]> = {
     'Le métronome donne 3 temps, puis une mélodie de 3 temps est jouée au même tempo : retrouve ce tempo, en battements par minute.',
     'En débutant, choisis parmi 4 tempos ronds ; ensuite, règle le métronome (de 40 à 200) : il faut tomber à 10 près en normal, à 4 près en expert.',
   ],
+  'lis-chante': [
+    'Des notes défilent sur une portée, une par temps : chante chacune, à n’importe quelle octave, avant qu’elle ne dépasse la barre violette.',
+    'Chaque note lue accélère le tempo et rapporte dix fois le tempo en points. La partie s’arrête à la première note fausse ou oubliée. Le micro écoute pendant toute la partie : chante, puis change de note ou reprends ton souffle.',
+  ],
+  'lis-dis': [
+    'Des notes défilent sur une portée, une par temps : dis le nom de chacune au micro (« sol », « fa dièse », « si bémol »…) avant qu’elle ne dépasse la barre violette.',
+    'Chaque note lue accélère le tempo et rapporte dix fois le tempo en points. La partie s’arrête à la première note fausse ou oubliée. Parle distinctement, une note après l’autre.',
+  ],
 }
 
 /** Description courte de chaque jeu, en une phrase (titre des cartes de l'accueil, bandeau des réglages). */
@@ -79,4 +87,6 @@ export const SUMMARIES: Record<GameId, string> = {
   'joue-rythme': 'Lis le rythme écrit et tape-le en mesure, au plus juste.',
   'garde-tempo': 'Après 3 temps de métronome, tape chaque temps le plus longtemps possible, sans t’écarter.',
   'trouve-tempo': 'Écoute une mélodie et retrouve son tempo, en battements par minute.',
+  'lis-chante': 'Des notes défilent sur une portée : chante-les au fil du tempo, qui accélère, jusqu’à la première erreur.',
+  'lis-dis': 'Des notes défilent sur une portée : dis leur nom au micro au fil du tempo, qui accélère, jusqu’à la première erreur.',
 }
