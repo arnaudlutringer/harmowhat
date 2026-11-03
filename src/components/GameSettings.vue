@@ -3,7 +3,7 @@
     <ion-content>
       <!-- Bandeau aux couleurs de la catégorie : la grande icône du jeu, penchée, et son nom. -->
       <header class="hero" :style="{ '--cat': `var(${CATEGORY_VARS[gameCategory(game)] ?? CATEGORY_VARS[0]})` }">
-        <ion-back-button class="back" default-href="/home" text="" />
+        <!-- Retour : toujours l'accueil (comme le bouton retour du téléphone), même après une partie. -->
         <span class="big"><ion-icon :icon="GAME_ICONS[game]" aria-hidden="true" /></span>
         <h1>{{ title }}</h1>
         <p class="summary">{{ SUMMARIES[game] }}</p>
@@ -96,7 +96,8 @@
 <script setup lang="ts">
 import { withTrial } from '@/games/ready'
 import { computed, ref, watch } from 'vue'
-import { IonBackButton, IonButton, IonContent, IonFooter, IonIcon, IonPage, useIonRouter } from '@ionic/vue'
+import { IonButton, IonContent, IonFooter, IonIcon, IonPage, useIonRouter } from '@ionic/vue'
+import { arrowBack } from 'ionicons/icons'
 import { useRoute } from 'vue-router'
 import { bestScore, getScores, hasLocalScores, levelLabel, scoresHref, type Board, type GameId } from '@/games/highScores'
 import { GAME_ICONS } from '@/games/icons'
@@ -215,9 +216,14 @@ function start(trial = false, challenge = false) {
   position: absolute;
   top: calc(12px + var(--ion-safe-area-top, 0px));
   left: 12px;
-  --color: var(--ion-color-primary);
-  --background: var(--hw-surface, #fff);
-  --border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: none;
+  padding: 0;
+  color: var(--ion-color-primary);
+  background: var(--hw-surface, #fff);
+  font-size: 22px;
+  cursor: pointer;
   width: 40px;
   height: 40px;
   box-shadow: 0 2px 8px rgba(45, 48, 71, 0.15);

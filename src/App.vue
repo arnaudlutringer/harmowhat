@@ -54,11 +54,15 @@ useBackButton(10, (processNextHandler) => {
   processNextHandler()
 })
 
-// Plus rien derrière (par exemple le Hall of fame ouvert après « Accueil », qui repart de zéro) :
-// on revient à l'accueil ; sur l'accueil, on met l'appli en arrière-plan au lieu de la fermer.
+// Bouton retour du téléphone, hors partie (les jeux et leur écran de fin ont leur propre règle, dans GameShell) :
+// - à l'accueil : on quitte l'appli ;
+// - sur les réglages d'un jeu et sur les onglets de la barre du bas : retour à l'accueil ;
+// - ailleurs (meilleurs scores, infos, écran diapason…) : l'écran précédent, sinon l'accueil.
+const TABS = ['/trophees', '/hall-of-fame', '/parametres', '/matchs']
 useBackButton(-1, () => {
-  if (router.currentRoute.value.path === '/home') void App.minimizeApp().catch(() => {})
-  // Un écran précédent dans l'historique : on y revient directement.
+  const path = router.currentRoute.value.path
+  if (path === '/home') void App.exitApp().catch(() => {})
+  else if (/^\/games\/[^/]+$/.test(path) || TABS.includes(path)) ionRouter.navigate('/home', 'back', 'replace')
   else if (ionRouter.canGoBack()) ionRouter.back()
   else ionRouter.navigate('/home', 'back', 'replace')
 })
