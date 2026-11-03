@@ -60,7 +60,7 @@ export const SIGHT_LEVELS: Record<Level, SightLevel> = {
  * Fenêtre de lecture, en temps : la note à lire se dit pendant qu'elle est entre les deux barres violettes,
  * c'est-à-dire de ce nombre de temps avant la barre de gauche jusqu'à elle.
  */
-export const WINDOW_BEATS = 1.6
+export const WINDOW_BEATS = (1.6 * 4) / 3
 
 /** Pas de nombre de questions : la partie dure tant que le joueur lit juste. */
 export const SIGHT_QUESTION_COUNTS = [1] as const
