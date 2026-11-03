@@ -4,6 +4,9 @@
       <!-- Bandeau aux couleurs de la catégorie : la grande icône du jeu, penchée, et son nom. -->
       <header class="hero" :style="{ '--cat': `var(${CATEGORY_VARS[gameCategory(game)] ?? CATEGORY_VARS[0]})` }">
         <!-- Retour : toujours l'accueil (comme le bouton retour du téléphone), même après une partie. -->
+        <button class="back" aria-label="Retour à l'accueil" @click="router.navigate('/home', 'back', 'replace')">
+          <ion-icon :icon="arrowBack" aria-hidden="true" />
+        </button>
         <span class="big"><ion-icon :icon="GAME_ICONS[game]" aria-hidden="true" /></span>
         <h1>{{ title }}</h1>
         <p class="summary">{{ SUMMARIES[game] }}</p>
