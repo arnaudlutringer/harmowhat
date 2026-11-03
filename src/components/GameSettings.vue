@@ -105,6 +105,7 @@ import { INTROS, SUMMARIES } from '@/games/intros'
 import { featureEnabled } from '@/config/features'
 import { matchesAvailable } from '@/games/matches'
 import { newSeed } from '@/games/seed'
+import { confirmSoundOn } from '@/audio/volume'
 import { earnedTrophies, gameCategory, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
 
 /**
@@ -186,7 +187,9 @@ const records = computed(() => getScores(board.value).slice(0, 5))
 
 const matchs = featureEnabled('matchs') && matchesAvailable
 
-function start(trial = false, challenge = false) {
+async function start(trial = false, challenge = false) {
+  // Son du téléphone coupé : on prévient avant de lancer la partie.
+  if (!(await confirmSoundOn())) return
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(props.storageKey, JSON.stringify({ ...settings, ...props.extra }))
