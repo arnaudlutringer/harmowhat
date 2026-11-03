@@ -182,6 +182,8 @@ interface Stats {
   temposFound: number
   /** Jours (numéros) où le défi du jour a été relevé. */
   challenges: number[]
+  /** Meilleur résultat du défi du jour, par jour (numéro) : bonnes réponses sur nombre de questions. */
+  challengeScores: Record<number, { correct: number; total: number }>
   /** Questionnaires terminés, par jeu. */
   plays: Partial<Record<GameId, number>>
   /** Médailles de niveau gagnées (un sans faute à ce niveau), par jeu. */
@@ -203,7 +205,7 @@ const STORAGE_KEY = 'harmowhat.trophies'
 
 const emptyStats = (): Stats => ({
   games: 0, correct: 0, lastDay: '', streak: 0, played: [], instruments: [], perfect: [], harmoniesSung: 0,
-  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], plays: {}, levelMedals: {}, bestResults: {},
+  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], challengeScores: {}, plays: {}, levelMedals: {}, bestResults: {},
 })
 
 function load(): State {
@@ -223,6 +225,8 @@ export const pendingTrophyCount = ref(load().pending.length)
 export const impossibleUnlocked = ref<GameId[]>(load().stats.impossible)
 /** Jours où le défi du jour a été relevé (réactif, pour l'accueil). */
 export const challengeDays = ref<number[]>(load().stats.challenges)
+/** Meilleur résultat du défi du jour, par jour (réactif, pour l'accueil). */
+export const challengeScores = ref<Record<number, { correct: number; total: number }>>(load().stats.challengeScores)
 /** Médailles de niveau gagnées, par jeu (réactif, pour l'accueil et les réglages). */
 export const levelMedals = ref<Partial<Record<GameId, Tier[]>>>(load().stats.levelMedals)
 /** Meilleure réussite par jeu et par niveau (réactif, pour le défi du jour). */
@@ -253,6 +257,7 @@ function save(state: State) {
   pendingTrophyCount.value = state.pending.length
   impossibleUnlocked.value = [...state.stats.impossible]
   challengeDays.value = [...state.stats.challenges]
+  challengeScores.value = { ...state.stats.challengeScores }
   levelMedals.value = { ...state.stats.levelMedals }
   bestResults.value = { ...state.stats.bestResults }
   try {
@@ -340,7 +345,11 @@ export function evaluateGame(ctx: GameContext): void {
   const yesterday = dayOf(new Date(new Date(today).getTime() - 86400000))
   if (s.lastDay !== today) s.streak = s.lastDay === yesterday ? s.streak + 1 : 1
   s.lastDay = today
-  // Défi du jour relevé : au moins 80 % de bonnes réponses.
+  // Défi du jour terminé : on garde le meilleur résultat du jour ; relevé avec au moins 80 % de bonnes réponses.
+  if (ctx.challengeDay !== undefined && results.length > 0) {
+    const before = s.challengeScores[ctx.challengeDay]
+    if (!before || correct > before.correct) s.challengeScores = { ...s.challengeScores, [ctx.challengeDay]: { correct, total: results.length } }
+  }
   if (ctx.challengeDay !== undefined && results.length > 0 && correct / results.length >= 0.8) s.challenges = addUnique(s.challenges, ctx.challengeDay)
 
   // Compteurs d'abord : « Premiers pas » s'annonce avant les exploits de la partie.

@@ -14,9 +14,10 @@
       <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
 
       <!-- Défi du jour : le même jeu et le même niveau pour tout le monde, jusqu'à minuit. -->
-      <!-- Une fois relevé, il se replie en une ligne jusqu'à minuit. -->
-      <p v-if="challengeDone" class="daily-done">
-        ✓ Défi du jour relevé <small>· {{ challenge.title }} · reviens demain pour le suivant</small>
+      <!-- Une fois terminé, il se replie en une ligne jusqu'à minuit, avec le meilleur résultat du jour. -->
+      <p v-if="todayScore" class="daily-done" :class="{ failed: !challengeDone }">
+        {{ challengeDone ? '✓ Défi du jour relevé' : 'Défi du jour terminé' }} · {{ todayScore.correct }}/{{ todayScore.total }}
+        <small>· {{ challenge.title }} · reviens demain pour le suivant</small>
       </p>
       <button v-else class="daily" @click="router.push(challenge.href)">
         <ion-icon class="daily-icon" :icon="GAME_ICONS[challenge.board.game]" aria-hidden="true" />
@@ -56,12 +57,14 @@ import { GAME_ICONS } from '@/games/icons'
 import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
-import { challengeDays, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
+import { challengeDays, challengeScores, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
 // Le défi du jour, figé pour la journée (son niveau suit les progrès du joueur d'un jour à l'autre).
 const challenge = todaysChallenge()
 const challengeDone = computed(() => challengeDays.value.includes(dayNumber()))
+/** Meilleur résultat du défi d'aujourd'hui (le défi est terminé dès qu'il existe). */
+const todayScore = computed(() => challengeScores.value[dayNumber()] ?? (challengeDone.value ? { correct: challenge.board.questions, total: challenge.board.questions } : null))
 
 const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
 const idOf = (path: string) => path.replace('/games/', '') as GameId
@@ -245,6 +248,10 @@ h1 {
   color: var(--ion-color-success);
   font-weight: 700;
   font-size: 14px;
+}
+/* Défi terminé sans être relevé : le score en violet, sans coche. */
+.daily-done.failed {
+  color: var(--ion-color-primary);
 }
 .daily-done small {
   font-weight: 400;

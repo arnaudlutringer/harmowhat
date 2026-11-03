@@ -67,6 +67,19 @@ describe('Trophées', () => {
     expect(levelMedalWon('lecture-note', 'normal')).toBe(true)
   })
 
+  it('défi du jour : terminé (meilleur score du jour gardé), relevé à partir de 80 %', async () => {
+    const { challengeScores, challengeDays } = await import('./trophies')
+    const board = { game: 'tonalite' as const, level: 'normal', questions: 10 }
+    game({ board, challengeDay: 500, results: [...results(Array(6).fill(5000)), ...results(Array(4).fill(0), false)] })
+    expect(challengeScores.value[500]).toEqual({ correct: 6, total: 10 })
+    expect(challengeDays.value).not.toContain(500)
+    game({ board, challengeDay: 500, results: [...results(Array(4).fill(5000)), ...results(Array(6).fill(0), false)] })
+    expect(challengeScores.value[500]).toEqual({ correct: 6, total: 10 })
+    game({ board, challengeDay: 500, results: [...results(Array(9).fill(5000)), ...results([0], false)] })
+    expect(challengeScores.value[500]).toEqual({ correct: 9, total: 10 })
+    expect(challengeDays.value).toContain(500)
+  })
+
   it('donne Premiers pas, Sans faute et Virtuose à un premier questionnaire parfait, une seule fois', () => {
     game()
     expect(ids()).toEqual(['premiers-pas', 'sans-faute', 'virtuose', 'medal-grave-ou-aigu'])
