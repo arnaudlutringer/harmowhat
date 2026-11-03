@@ -45,7 +45,7 @@
             <li v-for="(e, i) in entries.slice(3)" :key="i" :class="{ me: i + 3 === highlight, mine: isMine(e) }">
               <span class="rank">{{ i + 4 }}</span>
               <span class="name">{{ withFlag(e) }}</span>
-              <strong class="points">{{ e.points.toLocaleString('fr-FR') }} pts</strong>
+              <strong class="points">{{ e.points.toLocaleString('fr-FR') }} <span class="pts">pts</span></strong>
             </li>
           </ol>
         </template>

@@ -6,7 +6,7 @@
     </ion-button>
     <trophy-unlocked :queue="unlocked" />
     <img class="emoji" :src="tierImage" alt="" />
-    <h1>{{ summary.points }} <small>pts</small></h1>
+    <h1>{{ summary.points }} <span class="pts">pts</span></h1>
     <p v-if="answersLabel" class="answers">{{ answersLabel }}</p>
     <p v-else class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
     <ion-button class="share" fill="clear" size="small" :disabled="sharing" @click="share('score')">
@@ -310,8 +310,7 @@ h1 {
   font-size: 48px;
   margin: 8px 0 0;
 }
-h1 small {
-  font-size: 20px;
+h1 .pts {
   color: var(--ion-color-medium);
 }
 .answers {

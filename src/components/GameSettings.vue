@@ -65,7 +65,7 @@
             <li v-for="(r, i) in records" :key="i">
               <span class="rank">{{ ['🥇', '🥈', '🥉'][i] ?? `${i + 1}.` }}</span>
               <span class="name">{{ r.name }}</span>
-              <strong>{{ r.points.toLocaleString('fr-FR') }} pts</strong>
+              <strong>{{ r.points.toLocaleString('fr-FR') }} <span class="pts">pts</span></strong>
             </li>
           </ol>
           <p v-else class="empty">Pas encore de score pour ces réglages : à toi de jouer !</p>

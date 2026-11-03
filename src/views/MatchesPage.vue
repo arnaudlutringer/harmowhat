@@ -49,7 +49,7 @@
             <ion-icon class="game" :icon="GAME_ICONS[m.game]" aria-hidden="true" />
             <div class="text">
               <strong>{{ GAMES[m.game].title }} <small>· {{ levelLabel(boardOf(m)) }}</small></strong>
-              <span>{{ flagOf(m.creator_country) }} {{ m.creator_name }} · {{ m.creator_points.toLocaleString('fr-FR') }} pts à battre</span>
+              <span>{{ flagOf(m.creator_country) }} {{ m.creator_name }} · {{ m.creator_points.toLocaleString('fr-FR') }} <span class="pts">pts</span> à battre</span>
             </div>
             <span class="go">⚔️</span>
           </button>

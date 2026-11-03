@@ -14,7 +14,7 @@
               <!-- Record du jeu : médaille d'or, (drapeau,) nom du premier et ses points. -->
               <p v-if="loading">…</p>
               <p v-else-if="g.best" class="record">
-                <span aria-hidden="true">🥇</span> {{ g.best.country ? `${flag(g.best.country)} ` : '' }}{{ g.best.name }} : {{ g.best.points }} pts
+                <span aria-hidden="true">🥇</span> {{ g.best.country ? `${flag(g.best.country)} ` : '' }}{{ g.best.name }} : {{ g.best.points }} <span class="pts">pts</span>
               </p>
               <p v-else>Pas encore de score</p>
             </ion-label>
