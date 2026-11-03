@@ -2,7 +2,7 @@ import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 
 /**
- * Reconnaissance vocale en continu (jeu « Lis et dis ») : le texte reconnu arrive au fil de la parole,
+ * Reconnaissance vocale en continu (jeu « Lecture continue ») : le texte reconnu arrive au fil de la parole,
  * en français. Sur le téléphone, le module natif d'Android ou d'iOS ; dans le navigateur, la reconnaissance
  * du navigateur (Chrome). La reconnaissance s'arrête d'elle-même après un silence : on la relance aussitôt,
  * et chaque relance ouvre une nouvelle « séance » (le texte repart de zéro).

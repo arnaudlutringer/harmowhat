@@ -1,6 +1,6 @@
 <template>
   <game-shell
-    title="Lis et dis"
+    title="Lecture continue"
     prompt="Dis le nom de chaque note avant qu'elle ne passe la barre violette."
     :quiz="quiz"
     :board="{ game: 'lis-dis', level: settings.level, questions: 1 }"

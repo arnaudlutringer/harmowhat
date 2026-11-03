@@ -148,7 +148,7 @@ export const GAMES: Record<GameId, GameInfo> = {
     questionCounts: SIGHT_QUESTION_COUNTS,
   },
   'lis-dis': {
-    title: 'Lis et dis',
+    title: 'Lecture continue',
     emoji: '🗣️',
     levels: Object.entries(SIGHT_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: SIGHT_QUESTION_COUNTS,

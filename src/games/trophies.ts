@@ -76,7 +76,7 @@ const GAME_NAMES: Record<GameId, string> = {
   'garde-tempo': 'Garde le tempo',
   'trouve-tempo': 'Trouve le tempo',
   'lis-chante': 'Lis et chante',
-  'lis-dis': 'Lis et dis',
+  'lis-dis': 'Lecture continue',
 }
 
 /** Les jeux proposés (ceux derrière un interrupteur coupé n'existent pas encore pour le joueur). */
@@ -149,8 +149,8 @@ export const TROPHIES: Trophy[] = [
   { id: 'sept-modes', family: 'oreille', icon: '🎭', title: 'Les sept modes', condition: 'Reconnais les 7 modes au moins une fois chacun' },
   { id: 'toutes-les-cles', family: 'oreille', icon: '🗝️', title: 'Toutes les clés', condition: "Lis juste une note en clé de sol, de fa et d'ut" },
   { id: 'armures', family: 'oreille', icon: '🛡️', title: 'Armures au complet', condition: 'Trouve les 15 tonalités majeures au moins une fois chacune' },
-  { id: 'lecture-a-vue', family: 'oreille', icon: '👓', title: 'Lecture à vue', condition: 'Lis 20 notes d’affilée dans « Lis et chante » ou « Lis et dis »' },
-  { id: 'prima-vista', family: 'oreille', icon: '🏎️', title: 'Prima vista', condition: 'Lis une note à 100 à la noire ou plus dans « Lis et chante » ou « Lis et dis »' },
+  { id: 'lecture-a-vue', family: 'oreille', icon: '👓', title: 'Lecture à vue', condition: 'Lis 20 notes d’affilée dans « Lis et chante » ou « Lecture continue »' },
+  { id: 'prima-vista', family: 'oreille', icon: '🏎️', title: 'Prima vista', condition: 'Lis une note à 100 à la noire ou plus dans « Lis et chante » ou « Lecture continue »' },
   { id: 'comme-une-horloge', family: 'tempo', icon: '🕰️', title: 'Comme une horloge', condition: 'Tiens 2 minutes de suite dans « Garde le tempo »' },
   { id: 'infatigable', family: 'tempo', icon: '🔋', title: 'Infatigable', condition: 'Tiens 5 minutes de suite dans « Garde le tempo »' },
   { id: 'grand-huit', family: 'tempo', icon: '🎢', title: 'Grand huit', condition: 'Dans une même partie de « Garde le tempo », tiens un palier sous 60 et un autre au-dessus de 140' },

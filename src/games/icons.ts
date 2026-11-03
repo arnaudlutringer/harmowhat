@@ -75,11 +75,11 @@ const SVGS: Record<GameId, string> = {
     `<path d="M340 92a54 54 0 1 1 80 48c-24 14-34 30-34 58" ${S}/><circle cx="386" cy="262" r="18"/>`,
   // Un micro, et des notes qui défilent vers la gauche : lis et chante.
   'lis-chante': MIC + `<path d="M488 96H336m44-40l-44 40 44 40" ${S}/>` + `<ellipse cx="380" cy="236" rx="38" ry="26" transform="rotate(-20 380 236)" ${S}/>` + `<ellipse cx="452" cy="320" rx="38" ry="26" transform="rotate(-20 452 320)" ${S}/>` + `<ellipse cx="388" cy="410" rx="38" ry="26" transform="rotate(-20 388 410)" ${S}/>`,
-  // Une bulle de parole, et des notes qui défilent vers la gauche : lis et dis.
+  // Comme « Lecture de note », mais la portée continue en pointillés, et une note y arrive, coupée en deux par le bord : lecture continue.
   'lis-dis':
-    `<path d="M72 96h196a40 40 0 0 1 40 40v120a40 40 0 0 1-40 40H150l-70 64v-64h-8a40 40 0 0 1-40-40V136a40 40 0 0 1 40-40z" ${S}/>` +
-    `<circle cx="110" cy="196" r="20"/><circle cx="170" cy="196" r="20"/><circle cx="230" cy="196" r="20"/>` +
-    `<path d="M488 96H336m44-40l-44 40 44 40" ${S}/>` + `<ellipse cx="380" cy="236" rx="38" ry="26" transform="rotate(-20 380 236)" ${S}/>` + `<ellipse cx="452" cy="320" rx="38" ry="26" transform="rotate(-20 452 320)" ${S}/>` + `<ellipse cx="388" cy="410" rx="38" ry="26" transform="rotate(-20 388 410)" ${S}/>`,
+    [136, 196, 256, 316, 376].map((y) => `<line x1="32" y1="${y}" x2="330" y2="${y}" class="ionicon-fill-none" stroke-width="12"/><line x1="352" y1="${y}" x2="480" y2="${y}" class="ionicon-fill-none" stroke-width="12" stroke-dasharray="22 18"/>`).join('') +
+    `<ellipse cx="200" cy="286" rx="74" ry="48" transform="rotate(-20 200 286)" ${S}/>` +
+    `<path d="M480 176a74 48 0 0 0 0 96" ${S}/>`,
   // Une armure : deux dièses sur la portée.
   tonalite:
     STAFF +

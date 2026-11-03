@@ -1,7 +1,7 @@
 <template>
   <game-settings
     game="lis-dis"
-    title="Lis et dis"
+    title="Lecture continue"
     :levels="SIGHT_LEVELS"
     :question-counts="SIGHT_QUESTION_COUNTS"
     storage-key="harmowhat.lis-dis.settings"

@@ -12,7 +12,7 @@ export const FEATURES = {
   matchs: false,
   /** « Lis et chante » : lire les notes d'une portée qui défile et les chanter au micro. */
   lectureChantee: true,
-  /** « Lis et dis » : lire les notes d'une portée qui défile et dire leur nom au micro. */
+  /** « Lecture continue » : lire les notes d'une portée qui défile et dire leur nom au micro. */
   lectureParlee: true,
 }
 

@@ -151,7 +151,7 @@ const theoryGames = [
   {
     path: '/games/lis-dis',
     icon: GAME_ICONS['lis-dis'],
-    title: 'Lis et dis',
+    title: 'Lecture continue',
   },
 ].filter((g) => gameEnabled(idOf(g.path)))
 

@@ -1,4 +1,4 @@
--- Nouveaux jeux « Lis et chante » et « Lis et dis » (lis-chante, lis-dis) : la base doit accepter leurs scores et leurs matchs.
+-- Nouveaux jeux « Lis et chante » et « Lecture continue » (lis-chante, lis-dis) : la base doit accepter leurs scores et leurs matchs.
 -- Ce script inclut aussi les jeux précédents : il suffit même si 005 à 011 n'ont pas été exécutés.
 -- À exécuter une fois dans Supabase : SQL Editor → New query → coller ce fichier → Run.
 -- (Déjà pris en compte dans schema.sql pour une nouvelle base.)
