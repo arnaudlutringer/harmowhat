@@ -149,7 +149,7 @@ const SPOKEN_LETTERS: [number, string[]][] = [
   [0, ['do', 'dos', 'doh', 'dot', 'deau', 'domino']],
   [2, ['re', 'rai', 'raie', 'rais', 'ray', 'rez', 'ret', 'rey']],
   [4, ['mi', 'mie', 'mis', 'mit', 'mii', 'my', 'me']],
-  [5, ['fa', 'fas', 'far', 'fat', 'fah']],
+  [5, ['fa', 'fas', 'far', 'fat', 'fah', 'pha', 'phas', 'faps']],
   [7, ['sol', 'sole', 'sols', 'saule', 'sel', 'seul', 'soul', 'sold', 'sal']],
   [9, ['la', 'las', 'lat', 'lah']],
   [11, ['si', 'scie', 'six', 'ci', 'sis', 'sy', 'see', '6']],

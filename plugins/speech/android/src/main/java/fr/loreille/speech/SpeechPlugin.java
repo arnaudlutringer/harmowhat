@@ -143,6 +143,8 @@ public class SpeechPlugin extends Plugin {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, language);
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+        // Reconnaissance sur le téléphone quand le modèle français y est installé : plus rapide que par Internet.
+        intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getContext().getPackageName());
         try {
