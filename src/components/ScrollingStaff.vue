@@ -1,6 +1,6 @@
 <template>
-  <!-- Portée qui défile : les notes arrivent de la droite, une par temps, et se lisent entre les deux barres violettes
-       (le reste de la portée est assombri).
+  <!-- Portée qui défile : les notes arrivent de la droite, une par temps, et chacune se lit avant d'atteindre la barre violette
+       (le joueur peut prendre de l'avance ; ce qui a passé la barre est assombri).
        La clé de la note à lire reste affichée à gauche ; un changement de clé est écrit dans la portée, devant sa note. -->
   <div class="scroller" role="img" :aria-label="label">
     <svg :viewBox="`0 0 ${WIDTH} ${HEIGHT}`" preserveAspectRatio="xMidYMid meet">
@@ -9,9 +9,8 @@
       <rect x="0" y="0" :width="CLEF_W" :height="HEIGHT" class="paper" />
       <line v-for="y in lines" :key="`c${y}`" x1="0" :x2="CLEF_W" :y1="y" :y2="y" class="line" />
       <rect :x="CLEF_W" y="0" :width="LINE_X - CLEF_W" :height="HEIGHT" class="shade" />
-      <rect :x="END_X" y="0" :width="WIDTH - END_X" :height="HEIGHT" class="shade" />
       <g v-html="clefSvg" />
-      <rect v-for="x in [LINE_X, END_X]" :key="x" :x="x - 2" :y="lines[0] - 18" width="4" :height="lines[4] - lines[0] + 36" rx="2" class="reading" />
+      <rect :x="LINE_X - 2" :y="lines[0] - 18" width="4" :height="lines[4] - lines[0] + 36" rx="2" class="reading" />
     </svg>
   </div>
 </template>
@@ -21,7 +20,7 @@ import { computed, ref, watch } from 'vue'
 import { Accidental, BarlineType, Formatter, Renderer, Stave, StaveNote } from 'vexflow/bravura'
 import { CLEFS, type ClefId } from '@/games/readNote'
 import { vexAccidental, vexKeyOf } from '@/music/spelling'
-import { WINDOW_BEATS, type SightNote } from '@/games/sightReading'
+import type { SightNote } from '@/games/sightReading'
 
 export interface StaffNote {
   index: number
@@ -43,13 +42,12 @@ const WIDTH = 320
 const HEIGHT = 150
 /** Zone de la clé, à gauche. */
 const CLEF_W = 52
-/** Fenêtre de lecture : de la barre de gauche (la note doit être dite avant de l'atteindre) à celle de droite. */
+/** Barre de lecture : la note doit être dite avant de l'atteindre. */
 const LINE_X = 96
 /** Écart entre deux notes (un temps). */
 const SPACING = 68
 /** Largeur d'un bloc dessiné par VexFlow (une note, et sa clé si elle change). */
 const BLOCK_W = 90
-const END_X = LINE_X + WINDOW_BEATS * SPACING
 const STAVE_Y = 20
 
 const fontReady = ref(false)

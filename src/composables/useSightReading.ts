@@ -1,6 +1,6 @@
 import { computed, onBeforeUnmount, ref, shallowRef } from 'vue'
 import type { StaffNote } from '@/components/ScrollingStaff.vue'
-import { NoteStream, notePoints, noteName, tempoAfter, WINDOW_BEATS, type Level } from '@/games/sightReading'
+import { NoteStream, notePoints, noteName, tempoAfter, READ_AHEAD_BEATS, type Level } from '@/games/sightReading'
 import type { useQuiz } from './useQuiz'
 
 /** Temps d'approche avant que la première note n'atteigne la barre de lecture. */
@@ -16,7 +16,7 @@ const MAX_RECOGNITION_MS = 3000
 
 /**
  * Moteur commun des jeux de lecture en défilement : les notes avancent d'un temps par battement du tempo ;
- * la note à lire se dit pendant qu'elle est entre les deux barres violettes, avant d'atteindre celle de gauche
+ * la note à lire se dit dès qu'elle apparaît, avant d'atteindre la barre violette
  * (plus `latency` secondes, le temps que le micro reconnaisse la réponse). Chaque bonne réponse accélère le tempo.
  */
 export function useSightReading(
@@ -57,10 +57,10 @@ export function useSightReading(
     return history.length ? history[0].p : position.value
   }
 
-  /** L'instant `t` tombe-t-il pendant que la note `index` était entre les deux barres (ou juste après) ? */
+  /** L'instant `t` tombe-t-il pendant que la note `index` était visible, avant la barre (ou juste après) ? */
   const inWindow = (t: number, index: number) => {
     const p = positionAt(t)
-    return p >= index - WINDOW_BEATS - 0.1 && p <= index + ONSET_SLACK_BEATS
+    return p >= index - READ_AHEAD_BEATS && p <= index + ONSET_SLACK_BEATS
   }
 
   const current = computed(() => notes.value.find((n) => n.index === target)?.note ?? null)
@@ -135,14 +135,14 @@ export function useSightReading(
 
   /**
    * Réponse du joueur (classe de note, 0 = Do) ; `said` décrit ce qu'il a chanté ou dit.
-   * Renvoie false si la réponse arrive trop tôt (aucune note à portée) et n'a pas été prise en compte.
+   * Les notes se disent dans l'ordre, aussi tôt que le joueur le peut. Renvoie false si la réponse n'a pas été prise en compte.
    */
   function submit(pc: number, said: string): boolean {
     if (phase.value !== 'running') return false
     const n = current.value
     if (!n) return false
     if (timed) {
-      // La réponse est datée de la première attaque tombée pendant que la note était entre les barres ;
+      // La réponse est datée de la première attaque tombée pendant que la note était visible ;
       // les attaques plus anciennes (bruit, réponse trop tôt) sont oubliées.
       const at = onsets.findIndex((t) => inWindow(t, target))
       if (at >= 0) onsets.splice(0, at + 1)
@@ -150,14 +150,13 @@ export function useSightReading(
         // Pas d'attaque à temps (notes enchaînées sans creux de voix, par exemple) : on date le mot de son arrivée,
         // moins le temps habituel de reconnaissance.
         const p = position.value - (latency * tempo.value) / 60
-        if (target - p > WINDOW_BEATS + 0.1) return false
         if (p > target + ONSET_SLACK_BEATS) {
           mark(target, 'ko')
           end(`Trop tard : c'était ${noteName(n)}.`)
           return true
         }
       }
-    } else if (target - position.value > WINDOW_BEATS + 0.1) return false
+    }
     if (pc !== n.pc) {
       mark(target, 'ko')
       end(`${said}, mais c'était ${noteName(n)}.`)
@@ -194,8 +193,8 @@ export function useSightReading(
   function onset(t: number) {
     timed = true
     if (phase.value !== 'running') return
-    // Trop tôt pour la note à lire : ce n'est pas une réponse.
-    if (positionAt(t) < target - WINDOW_BEATS - 0.1) return
+    // Avant que la note à lire n'apparaisse : ce n'est pas une réponse.
+    if (positionAt(t) < target - READ_AHEAD_BEATS) return
     onsets.push(t)
   }
 

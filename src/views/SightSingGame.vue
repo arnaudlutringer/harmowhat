@@ -1,7 +1,7 @@
 <template>
   <game-shell
     title="Chante en continu"
-    prompt="Chante les notes qui sont entre les deux barres violettes."
+    prompt="Chante chaque note avant qu’elle n’atteigne la barre violette."
     :quiz="quiz"
     :board="{ game: 'lis-chante', level: settings.level, questions: 1 }"
     settings-href="/games/lis-chante"
@@ -107,7 +107,7 @@ const summary = computed(() => `${readLabel.value}, jusqu'à ♩ = ${sight.topTe
 const status = computed(() => {
   if (sight.phase.value === 'over') return sight.reason.value
   if (sight.position.value < 0) return 'Les notes arrivent… prépare ta voix.'
-  return 'Chante la note qui est entre les deux barres.'
+  return 'Chante les notes avant la barre, aussi vite que tu peux.'
 })
 </script>
 

@@ -1,7 +1,7 @@
 <template>
   <game-shell
     title="Lecture continue"
-    prompt="Dis les notes qui sont entre les deux barres violettes."
+    prompt="Dis chaque note avant qu’elle n’atteigne la barre violette."
     :quiz="quiz"
     :board="{ game: 'lis-dis', level: settings.level, questions: 1 }"
     settings-href="/games/lis-dis"
@@ -159,7 +159,7 @@ const summary = computed(() => `${readLabel.value}, jusqu'à ♩ = ${sight.topTe
 const status = computed(() => {
   if (sight.phase.value === 'over') return sight.reason.value
   if (sight.position.value < 0) return 'Les notes arrivent… prépare-toi à les nommer.'
-  return 'Dis la note entre les deux barres : « do », « fa dièse », « si bémol »…'
+  return 'Dis les notes avant la barre, aussi vite que tu peux : « do », « fa dièse », « si bémol »…'
 })
 </script>
 

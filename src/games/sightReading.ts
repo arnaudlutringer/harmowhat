@@ -57,10 +57,10 @@ export const SIGHT_LEVELS: Record<Level, SightLevel> = {
 }
 
 /**
- * Fenêtre de lecture, en temps : la note à lire se dit pendant qu'elle est entre les deux barres violettes,
- * c'est-à-dire de ce nombre de temps avant la barre de gauche jusqu'à elle.
+ * Avance possible, en temps : une note se dit dès qu'elle apparaît sur la portée (à droite), jusqu'à la barre violette.
+ * Le joueur peut donc prendre de l'avance, en disant les notes dans l'ordre.
  */
-export const WINDOW_BEATS = (1.6 * 4) / 3
+export const READ_AHEAD_BEATS = 3.4
 
 /** Pas de nombre de questions : la partie dure tant que le joueur lit juste. */
 export const SIGHT_QUESTION_COUNTS = [1] as const
