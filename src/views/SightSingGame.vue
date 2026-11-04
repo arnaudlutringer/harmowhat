@@ -43,11 +43,12 @@ import { useSightReading } from '@/composables/useSightReading'
 import { listenToMicrophone, type Listening } from '@/audio/microphone'
 import { midiOf } from '@/audio/pitch'
 import { pitchClassName } from '@/music/notes'
-import { clefLabel, parseSightSettings, SIGHT_MEDAL_POINTS, tempoAfter, SungNotes } from '@/games/sightReading'
+import { clefLabel, parseSightSettings, SIGHT_MEDAL_POINTS, tempoAfter, SungNotes, trialTempo } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 
-const settings = parseSightSettings(useRoute().query)
+const route = useRoute()
+const settings = parseSightSettings(route.query)
 
 // Une seule « question » : toute la partie, de la première note à la première erreur.
 const quiz = useQuiz({
@@ -58,7 +59,9 @@ const quiz = useQuiz({
   advanceDelay: null,
 })
 // Une voix met un peu de temps à se poser sur la note : 0,5 s de marge après la barre.
-const sight = useSightReading(quiz, settings.level, 0.5)
+// Essai rapide : on part de ♩ = 120, pour s'entraîner à enchaîner les notes.
+const fastStart = trialTempo(quiz.trial, route.query.tempo)
+const sight = useSightReading(quiz, settings.level, 0.5, fastStart)
 
 const sung = new SungNotes()
 const hold = ref(0)
@@ -99,7 +102,7 @@ async function begin(): Promise<number> {
 watch(sight.phase, (phase) => {
   if (phase !== 'over') return
   stopMic()
-  trophyEvent({ type: 'sight-run', game: 'lis-chante', notes: sight.read.value, tempo: tempoAfter(settings.level, Math.max(0, sight.read.value - 1)) })
+  if (!fastStart) trophyEvent({ type: 'sight-run', game: 'lis-chante', notes: sight.read.value, tempo: tempoAfter(settings.level, Math.max(0, sight.read.value - 1)) })
 })
 
 const readLabel = computed(() => `${sight.read.value} note${sight.read.value > 1 ? 's' : ''} lue${sight.read.value > 1 ? 's' : ''}`)

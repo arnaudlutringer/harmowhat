@@ -80,8 +80,15 @@ export function parseSightSettings(raw: { questions?: unknown; level?: unknown }
   return { questions: 1, level: level in SIGHT_LEVELS ? level : DEFAULT_SIGHT_SETTINGS.level }
 }
 
-/** Tempo après `read` notes lues. */
-export const tempoAfter = (level: Level, read: number) => Math.min(MAX_TEMPO, SIGHT_LEVELS[level].start + read * SIGHT_LEVELS[level].step)
+/** Tempo après `read` notes lues (en partant de `start` : le tempo de départ du niveau, sauf essai rapide). */
+export const tempoAfter = (level: Level, read: number, start = SIGHT_LEVELS[level].start) =>
+  Math.min(MAX_TEMPO, start + read * SIGHT_LEVELS[level].step)
+
+/** Tempo de départ de l'essai rapide, pour s'entraîner à enchaîner les notes ; il ne compte pas pour les trophées. */
+export const FAST_TRIAL_TEMPO = 120
+
+/** Tempo de départ demandé dans l'adresse (essai rapide seulement), sinon undefined. */
+export const trialTempo = (trial: boolean, raw: unknown) => (trial && Number(raw) === FAST_TRIAL_TEMPO ? FAST_TRIAL_TEMPO : undefined)
 
 /** Points d'une note lue : dix fois le tempo auquel elle passait (300 à 30 à la noire, 1 000 à 100). */
 export const notePoints = (tempo: number) => Math.round(tempo * 10)

@@ -41,11 +41,12 @@ import { useQuiz } from '@/composables/useQuiz'
 import { useSightReading } from '@/composables/useSightReading'
 import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
 import { pitchClassName } from '@/music/notes'
-import { clefLabel, parseSightSettings, parseSpokenNotes, SIGHT_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter } from '@/games/sightReading'
+import { clefLabel, parseSightSettings, parseSpokenNotes, SIGHT_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 
-const settings = parseSightSettings(useRoute().query)
+const route = useRoute()
+const settings = parseSightSettings(route.query)
 const { accidentals } = SIGHT_LEVELS[settings.level]
 
 const quiz = useQuiz({
@@ -57,7 +58,9 @@ const quiz = useQuiz({
 })
 // La reconnaissance vocale rend le mot avec un peu de retard. Sur Android, chaque note est jugée au moment où le joueur a commencé
 // à la dire (attaque de la voix) ; ailleurs, ou sans attaque repérée, on compte 1,1 s de reconnaissance.
-const sight = useSightReading(quiz, settings.level, 1.1)
+// Essai rapide : on part de ♩ = 120, pour s'entraîner à enchaîner les notes.
+const fastStart = trialTempo(quiz.trial, route.query.tempo)
+const sight = useSightReading(quiz, settings.level, 1.1, fastStart)
 
 const heard = ref('')
 /** La voix du joueur vient d'être entendue : le mot est en cours de reconnaissance. */
@@ -151,7 +154,7 @@ async function begin(): Promise<number> {
 watch(sight.phase, (phase) => {
   if (phase !== 'over') return
   stopSpeech()
-  trophyEvent({ type: 'sight-run', game: 'lis-dis', notes: sight.read.value, tempo: tempoAfter(settings.level, Math.max(0, sight.read.value - 1)) })
+  if (!fastStart) trophyEvent({ type: 'sight-run', game: 'lis-dis', notes: sight.read.value, tempo: tempoAfter(settings.level, Math.max(0, sight.read.value - 1)) })
 })
 
 const readLabel = computed(() => `${sight.read.value} note${sight.read.value > 1 ? 's' : ''} lue${sight.read.value > 1 ? 's' : ''}`)

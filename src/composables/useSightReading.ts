@@ -23,12 +23,14 @@ export function useSightReading(
   quiz: Pick<ReturnType<typeof useQuiz>, 'answer' | 'finish' | 'trial'>,
   level: Level,
   latency: number,
+  /** Tempo de départ imposé (essai rapide) ; sinon celui du niveau. */
+  startTempo?: number,
 ) {
   type Phase = 'waiting' | 'running' | 'over'
   const phase = ref<Phase>('waiting')
   const notes = shallowRef<StaffNote[]>([])
   const position = ref(-LEAD_IN_BEATS)
-  const tempo = ref(tempoAfter(level, 0))
+  const tempo = ref(tempoAfter(level, 0, startTempo))
   const read = ref(0)
   const points = ref(0)
   /** Fin de partie : ce qui s'est passé. */
@@ -120,7 +122,7 @@ export function useSightReading(
     read.value = 0
     points.value = 0
     reason.value = ''
-    tempo.value = tempoAfter(level, 0)
+    tempo.value = tempoAfter(level, 0, startTempo)
     topTempo.value = tempo.value
     position.value = -LEAD_IN_BEATS
     history = []
@@ -165,7 +167,7 @@ export function useSightReading(
     mark(target, 'ok')
     points.value += notePoints(tempo.value)
     read.value++
-    tempo.value = tempoAfter(level, read.value)
+    tempo.value = tempoAfter(level, read.value, startTempo)
     topTempo.value = Math.max(topTempo.value, tempo.value)
     target++
     fill()
