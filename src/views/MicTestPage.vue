@@ -28,6 +28,13 @@
         <p v-if="verdict" class="verdict" :class="verdict.ok ? 'ok' : 'ko'">{{ verdict.text }}</p>
         <p v-if="error" class="error">{{ error }}</p>
 
+        <!-- Notes enchaînées : « Lecture continue » en essai, en partant de ♩ = 120 (hors records et trophées). -->
+        <h2>Enchaînement rapide</h2>
+        <p class="how">Une partie d’essai de « Lecture continue » qui démarre à ♩ = {{ FAST_TRIAL_TEMPO }}, pour tester les notes dites à la suite.</p>
+        <div class="buttons">
+          <ion-button fill="outline" router-link="/games/lis-dis/jouer?questions=1&level=debutant&tempo=120&essai=1">Lecture à ♩ = {{ FAST_TRIAL_TEMPO }}</ion-button>
+        </div>
+
         <h2>
           Journal
           <button class="copy" @click="copyLog">{{ copied ? 'Copié ✓' : 'Copier' }}</button>
@@ -50,7 +57,7 @@ import { listenToSpeech, speechServices, type SpeechEvent, type SpeechListening 
 import { pitchClassName, randomInt } from '@/music/notes'
 import { spelledPitchName } from '@/music/spelling'
 import { noteAt } from '@/games/readNote'
-import { parseSpokenNotes } from '@/games/sightReading'
+import { FAST_TRIAL_TEMPO, parseSpokenNotes } from '@/games/sightReading'
 
 /**
  * Écran de test (interrupteur testMicro, voir config/features.ts) : une note à dire, et le détail de la

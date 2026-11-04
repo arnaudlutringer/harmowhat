@@ -84,7 +84,7 @@ export function parseSightSettings(raw: { questions?: unknown; level?: unknown }
 export const tempoAfter = (level: Level, read: number, start = SIGHT_LEVELS[level].start) =>
   Math.min(MAX_TEMPO, start + read * SIGHT_LEVELS[level].step)
 
-/** Tempo de départ de l'essai rapide, pour s'entraîner à enchaîner les notes ; il ne compte pas pour les trophées. */
+/** Tempo de départ de l'essai rapide (écran Test du micro), pour tester les notes enchaînées ; hors records et trophées. */
 export const FAST_TRIAL_TEMPO = 120
 
 /** Tempo de départ demandé dans l'adresse (essai rapide seulement), sinon undefined. */
