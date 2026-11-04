@@ -26,7 +26,7 @@
         <p class="status" :class="{ ko: sight.phase.value === 'over' }" aria-live="polite">{{ status }}</p>
         <p v-if="micError" class="error">{{ micError }}</p>
         <!-- Ce que la reconnaissance vocale a entendu, pour comprendre une réponse refusée. -->
-        <p class="heard">{{ heard ? `« ${heard} »` : ' ' }}</p>
+        <p class="heard">{{ recognizing ? 'Je t’ai entendu, je reconnais le mot…' : heard ? `« ${heard} »` : ' ' }}</p>
       </div>
     </template>
   </game-shell>
@@ -60,6 +60,8 @@ const quiz = useQuiz({
 const sight = useSightReading(quiz, settings.level, 1.1)
 
 const heard = ref('')
+/** La voix du joueur vient d'être entendue : le mot est en cours de reconnaissance. */
+const recognizing = ref(false)
 const micError = ref('')
 let speech: SpeechListening | null = null
 /** Séance de reconnaissance en cours, et nombre de notes déjà jugées dans son texte. */
@@ -76,18 +78,16 @@ function stopSpeech() {
 }
 onBeforeUnmount(stopSpeech)
 
-/** Dernière note jugée ; `fresh` : rien n'a encore été jugé dans la séance en cours. */
-let last = { pc: -1, at: 0 }
-let fresh = false
+/** Dernière note jugée. */
+let lastPc = -1
 
 function judge(pc: number) {
   consumed++
-  // Deux notes de suite n'ont jamais le même nom : la même note juste après une relance de la reconnaissance,
-  // c'est la phrase précédente qui revient (résultat final en retard), pas une nouvelle réponse.
-  const repeat = fresh && pc === last.pc && performance.now() - last.at < 2000
-  fresh = false
-  if (repeat) return
-  last = { pc, at: performance.now() }
+  recognizing.value = false
+  // Deux notes de suite n'ont jamais le même nom : la note qu'on vient de valider, redite (le joueur la répète parce
+  // que le mot tarde à être reconnu, ou la phrase précédente revient en retard), n'est pas une réponse pour la suivante.
+  if (pc === lastPc) return
+  lastPc = pc
   sight.submit(pc, `Tu as dit ${pitchClassName(pc)}`)
 }
 
@@ -96,7 +96,6 @@ function onSpeech(text: string, s: number, final: boolean, alternatives: string[
   if (s !== session) {
     session = s
     consumed = 0
-    fresh = true
   }
   heard.value = text
   clearTimeout(pending)
@@ -120,11 +119,15 @@ const perfTime = (at: number) => performance.now() - (Date.now() - at)
 let speechEnd = 0
 
 function onEvent(e: SpeechEvent) {
-  if (e.type === 'onset') sight.onset(perfTime(e.at))
+  if (e.type === 'onset') {
+    sight.onset(perfTime(e.at))
+    if (sight.phase.value === 'running') recognizing.value = true
+  }
   if (e.type === 'end') speechEnd = perfTime(e.at)
   // Phrase terminée : ses attaques restées sans nom de note (bruit, « euh ») sont oubliées, après le jugement de ses mots.
   if (e.type === 'final' || e.type === 'error') {
     const end = speechEnd
+    setTimeout(() => (recognizing.value = false))
     setTimeout(() => sight.forgetOnsets(end))
   }
 }
@@ -133,6 +136,8 @@ async function begin(): Promise<number> {
   const started = sight.start()
   micError.value = ''
   heard.value = ''
+  lastPc = -1
+  recognizing.value = false
   if (!speech) {
     try {
       speech = await listenToSpeech(onSpeech, onEvent)
