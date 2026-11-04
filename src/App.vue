@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { IonApp, IonRouterOutlet, useBackButton, useIonRouter } from '@ionic/vue'
 import SplashScreen from '@/components/SplashScreen.vue'
 import TrophyAnnouncer from '@/components/TrophyAnnouncer.vue'
@@ -16,6 +16,7 @@ import { useRouter } from 'vue-router'
 import { App } from '@capacitor/app'
 import { stopAll } from '@/audio/engine'
 import { syncWorldScores } from '@/games/worldScores'
+import { online } from '@/player/online'
 import { featureEnabled } from '@/config/features'
 import { parseCode, refreshUnseen } from '@/games/matches'
 
@@ -36,6 +37,8 @@ const splash = ref(true)
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 void Promise.race([Promise.all([syncWorldScores(), wait(SPLASH_MIN_MS)]), wait(SPLASH_MAX_MS)]).finally(() => (splash.value = false))
 void App.addListener('resume', () => void syncWorldScores()).catch(() => {})
+// Retour de la connexion : les scores en attente partent, et les classements en cache se rechargent.
+watch(online, (now) => now && void syncWorldScores())
 
 // Matchs (fonctionnalité en préparation) : nouveaux résultats au lancement et au retour dans l'appli ;
 // un lien direct loreille://match/CODE ouvre le match.

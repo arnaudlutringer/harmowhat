@@ -7,6 +7,7 @@
     storage-key="harmowhat.lis-dis.settings"
     play-path="/games/lis-dis/jouer"
     :parse="parseSightSettings"
+    needs-online
   />
 </template>
 

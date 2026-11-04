@@ -6,8 +6,10 @@
       <div class="hall">
         <p class="hint">Les meilleurs scores de chaque jeu, par niveau et par nombre de questions.</p>
         <scope-tabs />
-        <p v-if="failed" class="hint">Classement indisponible pour le moment : vérifie ta connexion.</p>
-        <ion-list lines="full">
+        <!-- Monde et pays sans connexion : un message à la place des records, rechargés dès que la connexion revient. -->
+        <p v-if="needConnection" class="offline">📶 Connecte-toi à Internet pour voir les records {{ scope === 'pays' ? 'de ton pays' : 'du monde' }}.</p>
+        <p v-else-if="failed" class="hint">Classement indisponible pour le moment : vérifie ta connexion.</p>
+        <ion-list v-if="!needConnection" lines="full">
           <ion-item v-for="g in games" :key="g.id" button detail :router-link="`${scoresHref(g.board)}&vue=${scope}`">
             <ion-label>
               <strong>{{ g.title }}</strong>
@@ -27,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { IonContent, IonItem, IonLabel, IonList, IonPage, onIonViewWillEnter } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
 import BottomNav from '@/components/BottomNav.vue'
@@ -38,6 +40,7 @@ import { cachedRecord, fetchRecord, scope, worldVersion, type WorldRecord } from
 import { flag } from '@/player/countries'
 import { gameEnabled } from '@/config/features'
 import { profile } from '@/player/profile'
+import { online } from '@/player/online'
 
 interface Best {
   name: string
@@ -122,8 +125,10 @@ async function load() {
     if (id === request) loading.value = false
   }
 }
-// worldVersion : des scores viennent d'arriver dans la base.
-watch([scope, worldVersion], () => void load())
+const needConnection = computed(() => scope.value !== 'appareil' && !online.value)
+
+// worldVersion : des scores viennent d'arriver dans la base ; online : la connexion revient (records à jour en direct).
+watch([scope, worldVersion, online], () => void load())
 onIonViewWillEnter(() => void load())
 void load()
 </script>
@@ -135,6 +140,12 @@ void load()
 }
 .hint,
 ion-label p {
+  color: var(--ion-color-medium);
+}
+.offline {
+  margin: 24px 0;
+  text-align: center;
+  font-weight: 600;
   color: var(--ion-color-medium);
 }
 /* Pastille « 1 » or devant le record (le rang, pas une médaille de niveau). */

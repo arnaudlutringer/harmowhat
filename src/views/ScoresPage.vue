@@ -27,7 +27,9 @@
           </div>
         </template>
 
-        <p v-if="loading" class="empty">Chargement du classement…</p>
+        <!-- Monde et pays sans connexion : un message à la place du classement, rechargé dès que la connexion revient. -->
+        <p v-if="needConnection" class="empty">📶 Connecte-toi à Internet pour voir le classement {{ scope === 'pays' ? 'de ton pays' : 'mondial' }}.</p>
+        <p v-else-if="loading" class="empty">Chargement du classement…</p>
         <p v-else-if="failed" class="empty">Classement indisponible pour le moment : vérifie ta connexion.</p>
         <template v-else-if="entries.length">
           <!-- Podium : le deuxième à gauche, le premier au centre (plus haut), le troisième à droite. -->
@@ -79,6 +81,7 @@ import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref, shownLeve
 import { cachedBoard, fetchBoard, parseScope, scope, updateCachedBoard, worldVersion, type WorldScore } from '@/games/worldScores'
 import { flag } from '@/player/countries'
 import { profile } from '@/player/profile'
+import { online } from '@/player/online'
 
 interface Row {
   name: string
@@ -147,8 +150,10 @@ async function load() {
     if (id === request) loading.value = false
   }
 }
-// worldVersion : des scores viennent d'arriver dans la base (celui qu'on vient d'enregistrer, ou des scores en attente).
-watch([board, scope, worldVersion], () => void load())
+const needConnection = computed(() => scope.value !== 'appareil' && !online.value)
+
+// worldVersion : des scores viennent d'arriver dans la base ; online : la connexion revient (classement à jour en direct).
+watch([board, scope, worldVersion, online], () => void load())
 onIonViewWillEnter(() => void load())
 void load()
 

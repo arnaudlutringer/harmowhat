@@ -10,8 +10,10 @@
         </div>
         <p class="expected">Note attendue : <strong>{{ expected }}</strong></p>
 
+        <!-- La reconnaissance vocale passe par Internet : écoute bloquée hors connexion, réactivée dès son retour. -->
+        <p v-if="!online" class="error">📶 Connecte-toi à Internet pour tester le micro : la reconnaissance vocale en a besoin.</p>
         <div class="buttons">
-          <ion-button :color="listening ? 'medium' : 'primary'" @click="toggle">{{ listening ? 'Arrêter l’écoute' : 'Démarrer l’écoute' }}</ion-button>
+          <ion-button :color="listening ? 'medium' : 'primary'" :disabled="!online && !listening" @click="toggle">{{ listening ? 'Arrêter l’écoute' : 'Démarrer l’écoute' }}</ion-button>
           <ion-button fill="outline" @click="nextNote">Autre note</ion-button>
         </div>
 
@@ -32,7 +34,7 @@
         <h2>Enchaînement rapide</h2>
         <p class="how">Une partie d’essai de « Lecture continue » qui démarre à ♩ = {{ FAST_TRIAL_TEMPO }}, pour tester les notes dites à la suite.</p>
         <div class="buttons">
-          <ion-button fill="outline" router-link="/games/lis-dis/jouer?questions=1&level=debutant&tempo=120&essai=1">Lecture à ♩ = {{ FAST_TRIAL_TEMPO }}</ion-button>
+          <ion-button fill="outline" :disabled="!online" router-link="/games/lis-dis/jouer?questions=1&level=debutant&tempo=120&essai=1">Lecture à ♩ = {{ FAST_TRIAL_TEMPO }}</ion-button>
         </div>
 
         <h2>
@@ -58,6 +60,7 @@ import { pitchClassName, randomInt } from '@/music/notes'
 import { spelledPitchName } from '@/music/spelling'
 import { noteAt } from '@/games/readNote'
 import { FAST_TRIAL_TEMPO, parseSpokenNotes } from '@/games/sightReading'
+import { online } from '@/player/online'
 
 /**
  * Écran de test (interrupteur testMicro, voir config/features.ts) : une note à dire, et le détail de la

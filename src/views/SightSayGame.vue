@@ -44,6 +44,7 @@ import { pitchClassName } from '@/music/notes'
 import { clefLabel, parseSightSettings, parseSpokenNotes, SIGHT_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
+import { online } from '@/player/online'
 
 const route = useRoute()
 const settings = parseSightSettings(route.query)
@@ -141,6 +142,8 @@ async function begin(): Promise<number> {
   heard.value = ''
   lastPc = -1
   recognizing.value = false
+  // Arrivé ici sans connexion (bouton « Jouer » des classements, par exemple) : la reconnaissance vocale ne marchera pas.
+  if (!online.value) micError.value = 'Pas de connexion à Internet : la reconnaissance vocale ne peut pas comprendre les notes.'
   if (!speech) {
     try {
       speech = await listenToSpeech(onSpeech, onEvent)

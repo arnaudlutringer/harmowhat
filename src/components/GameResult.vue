@@ -103,6 +103,7 @@ import {
 import { cachedBoard, fetchBoard, submitScore, worldEnabled } from '@/games/worldScores'
 import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
+import { online } from '@/player/online'
 import { evaluateGame, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
 import TrophyUnlocked from './TrophyUnlocked.vue'
 import MatchResult from './MatchResult.vue'
@@ -168,13 +169,20 @@ onMounted(() => {
   }
   if (world) update('monde', world)
   if (local) update('pays', local)
-  fetchBoard(props.board)
-    .then((rows) => update('monde', rows))
-    .catch(() => {})
-  fetchBoard(props.board, code)
-    .then((rows) => update('pays', rows))
-    .catch(() => {})
+  const refresh = () => {
+    fetchBoard(props.board)
+      .then((rows) => update('monde', rows))
+      .catch(() => {})
+    fetchBoard(props.board, code)
+      .then((rows) => update('pays', rows))
+      .catch(() => {})
+  }
+  refresh()
+  // Partie finie hors connexion : les classements monde et pays sont rechargés dès que la connexion revient.
+  stopOnline = watch(online, (now) => now && refresh())
 })
+let stopOnline: (() => void) | undefined
+onBeforeUnmount(() => stopOnline?.())
 
 /** Enregistre le score sur le téléphone (son top 10) et l'envoie au classement mondial ; renvoie son rang sur le téléphone. */
 function storeScore(name: string): { rank: number; sent: Promise<unknown> } {
