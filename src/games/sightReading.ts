@@ -147,7 +147,7 @@ export const noteName = (n: SightNote) => spelledPitchName(n.note)
 /** Ce que la reconnaissance vocale écrit pour chaque nom de note (sans accents, en minuscules), homophones compris. */
 const SPOKEN_LETTERS: [number, string[]][] = [
   [0, ['do', 'dos', 'doh', 'dot', 'deau', 'domino']],
-  [2, ['re', 'rai', 'raie', 'rais', 'ray', 'rez', 'ret', 'rey']],
+  [2, ['re', 'rai', 'raie', 'rais', 'rait', 'ray', 'rez', 'ret', 'rey', 'arret', 'arrete', 'arrets']],
   [4, ['mi', 'mie', 'mis', 'mit', 'mii', 'my', 'me']],
   [5, ['fa', 'fas', 'far', 'fat', 'fah', 'pha', 'phas', 'faps']],
   [7, ['sol', 'sole', 'sols', 'saule', 'sel', 'seul', 'soul', 'sold', 'sal']],

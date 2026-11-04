@@ -9,6 +9,7 @@ describe('Lecture en défilement', () => {
     expect(parseSpokenNotes('scie six seul là').map((n) => n.pc)).toEqual([11, 11, 7, 9])
     expect(parseSpokenNotes('do bémol')[0]).toEqual({ pc: 11, altered: true })
     expect(parseSpokenNotes('euh bonjour')).toEqual([])
+    expect(parseSpokenNotes('Arrêt').map((n) => n.pc)).toEqual([2])
     // Notes collées en un mot par la reconnaissance vocale.
     expect(parseSpokenNotes('doré solla').map((n) => n.pc)).toEqual([0, 2, 7, 9])
     expect(parseSpokenNotes('fadièse rémi').map((n) => n.pc)).toEqual([6, 2, 4])
