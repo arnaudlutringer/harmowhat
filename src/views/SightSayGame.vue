@@ -39,7 +39,7 @@ import GameShell from '@/components/GameShell.vue'
 import ScrollingStaff from '@/components/ScrollingStaff.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { useSightReading } from '@/composables/useSightReading'
-import { listenToSpeech, type SpeechListening } from '@/audio/speech'
+import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
 import { pitchClassName } from '@/music/notes'
 import { clefLabel, parseSightSettings, parseSpokenNotes, SIGHT_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
@@ -55,7 +55,8 @@ const quiz = useQuiz({
   untimed: true,
   advanceDelay: null,
 })
-// La reconnaissance vocale rend le mot avec un peu de retard : 1,1 s de marge après la barre.
+// La reconnaissance vocale rend le mot avec un peu de retard. Sur Android, chaque note est jugée au moment où le joueur a commencé
+// à la dire (attaque de la voix) ; ailleurs, ou sans attaque repérée, on compte 1,1 s de reconnaissance.
 const sight = useSightReading(quiz, settings.level, 1.1)
 
 const heard = ref('')
@@ -113,13 +114,28 @@ function onSpeech(text: string, s: number, final: boolean, alternatives: string[
   }
 }
 
+/** Instant d'un événement du module vocal (horloge Date.now()) sur l'horloge du jeu (performance.now()). */
+const perfTime = (at: number) => performance.now() - (Date.now() - at)
+/** Fin de la dernière parole entendue par la reconnaissance. */
+let speechEnd = 0
+
+function onEvent(e: SpeechEvent) {
+  if (e.type === 'onset') sight.onset(perfTime(e.at))
+  if (e.type === 'end') speechEnd = perfTime(e.at)
+  // Phrase terminée : ses attaques restées sans nom de note (bruit, « euh ») sont oubliées, après le jugement de ses mots.
+  if (e.type === 'final' || e.type === 'error') {
+    const end = speechEnd
+    setTimeout(() => sight.forgetOnsets(end))
+  }
+}
+
 async function begin(): Promise<number> {
   const started = sight.start()
   micError.value = ''
   heard.value = ''
   if (!speech) {
     try {
-      speech = await listenToSpeech(onSpeech)
+      speech = await listenToSpeech(onSpeech, onEvent)
     } catch {
       micError.value = 'La reconnaissance vocale n’est pas accessible : autorise le micro pour cette appli, puis réessaie.'
     }

@@ -45,6 +45,19 @@ public class SpeechPlugin extends Plugin {
     private String service = "";
     private long lastLevel = 0;
 
+    // Détection des attaques de la voix (début de chaque syllabe), d'après le niveau du micro : le jeu juge
+    // chaque note au moment où le joueur a commencé à la dire, pas à l'arrivée du mot reconnu (une à deux secondes après).
+    private static final float ONSET_RISE_DB = 3.5f;
+    private static final float DIP_DB = 3f;
+    private static final long QUIET_MS = 60;
+    private float floor = 0f;
+    private boolean loud = false;
+    private long quietSince = 0;
+    private float peak = 0f;
+    private float dipMin = 0f;
+    private boolean dipping = false;
+    private boolean dippingToQuiet = false;
+
     @PluginMethod
     public void available(PluginCall call) {
         JSObject result = new JSObject();
@@ -146,6 +159,9 @@ public class SpeechPlugin extends Plugin {
         // Reconnaissance sur le téléphone quand le modèle français y est installé : plus rapide que par Internet.
         intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+        // Phrase jugée finie après un court silence (les noms de notes sont des mots brefs) : le résultat arrive plus tôt.
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 400L);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 300L);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getContext().getPackageName());
         try {
             recognizer.startListening(intent);
@@ -195,6 +211,45 @@ public class SpeechPlugin extends Plugin {
         }
     }
 
+    /**
+     * Attaque : la voix monte nettement au-dessus du bruit de fond après un silence, ou remonte après un creux
+     * (notes enchaînées sans reprendre son souffle : « do-ré-mi »).
+     */
+    private void detectOnset(float db, long now) {
+        if (!loud) {
+            // Bruit de fond : suit vite les baisses, lentement les hausses.
+            floor = db < floor ? db : floor + 0.02f * (db - floor);
+            if (db > floor + ONSET_RISE_DB && now - quietSince >= QUIET_MS) {
+                loud = true;
+                peak = db;
+                dipping = false;
+                emit("onset", null, null);
+            }
+            return;
+        }
+        if (db < floor + ONSET_RISE_DB / 2) {
+            if (!dippingToQuiet) {
+                quietSince = now;
+                dippingToQuiet = true;
+            }
+            if (now - quietSince >= QUIET_MS) loud = false;
+            return;
+        }
+        dippingToQuiet = false;
+        if (db > peak) peak = db;
+        if (!dipping && db < peak - DIP_DB) {
+            dipping = true;
+            dipMin = db;
+        } else if (dipping) {
+            if (db < dipMin) dipMin = db;
+            if (db > dipMin + DIP_DB) {
+                dipping = false;
+                peak = db;
+                emit("onset", null, null);
+            }
+        }
+    }
+
     private class Listener implements RecognitionListener {
 
         @Override
@@ -210,6 +265,7 @@ public class SpeechPlugin extends Plugin {
         @Override
         public void onRmsChanged(float rmsdB) {
             long now = System.currentTimeMillis();
+            detectOnset(rmsdB, now);
             if (now - lastLevel < 100) return;
             lastLevel = now;
             emit("level", "db", rmsdB);

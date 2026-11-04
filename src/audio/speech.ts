@@ -10,6 +10,8 @@ import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 
 export interface SpeechListening {
   stop: () => void
+  /** Les attaques de la voix (début de chaque syllabe) arrivent dans les événements « onset » (Android). */
+  onsets: boolean
 }
 
 /**
@@ -20,7 +22,7 @@ export type OnSpeech = (text: string, session: number, final: boolean, alternati
 
 /** Étape de la reconnaissance, pour le test du micro (prêt, début et fin de parole, niveau du micro, erreur…). */
 export interface SpeechEvent {
-  type: 'info' | 'ready' | 'begin' | 'end' | 'level' | 'partial' | 'final' | 'error'
+  type: 'info' | 'ready' | 'begin' | 'end' | 'level' | 'onset' | 'partial' | 'final' | 'error'
   texts?: string[]
   db?: number
   code?: number
@@ -106,6 +108,7 @@ async function listenAndroid(onSpeech: OnSpeech, onEvent?: (e: SpeechEvent) => v
     throw error
   }
   return {
+    onsets: true,
     stop() {
       void handle.remove()
       void AndroidSpeech.stop().catch(() => {})
@@ -169,6 +172,7 @@ async function listenNative(onSpeech: OnSpeech): Promise<SpeechListening> {
   }, 500)
   await start()
   return {
+    onsets: false,
     stop() {
       stopped = true
       clearInterval(watchdog)
@@ -221,6 +225,7 @@ async function listenWeb(onSpeech: OnSpeech, onEvent?: (e: SpeechEvent) => void)
   await new Promise((resolve) => setTimeout(resolve, 300))
   if (failed) throw new Error('Micro refusé')
   return {
+    onsets: false,
     stop() {
       stopped = true
       recognition?.abort()

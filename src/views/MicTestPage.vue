@@ -104,6 +104,9 @@ function onEvent(e: SpeechEvent) {
       phase.value = 'thinking'
       write('fin de parole')
       break
+    case 'onset':
+      write('attaque de la voix')
+      break
     case 'level':
       level.value = e.db ?? -2
       break

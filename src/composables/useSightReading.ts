@@ -9,6 +9,10 @@ const LEAD_IN_BEATS = 3
 const AHEAD = 6
 /** Temps laissé pour lire le message de fin avant le bilan. */
 const END_DELAY_MS = 2000
+/** Retard toléré sur la barre de gauche, en temps, pour une réponse datée de son attaque. */
+const ONSET_SLACK_BEATS = 0.3
+/** Délai le plus long entre l'attaque d'une note dite et l'arrivée du mot reconnu. */
+const MAX_RECOGNITION_MS = 3000
 
 /**
  * Moteur commun des jeux de lecture en défilement : les notes avancent d'un temps par battement du tempo ;
@@ -36,6 +40,28 @@ export function useSightReading(
   let endTimer: ReturnType<typeof setTimeout> | undefined
   /** Plus haut tempo atteint (trophées, bilan). */
   const topTempo = ref(tempo.value)
+  /** Position de la portée au fil du temps (dernières secondes), pour dater une réponse de son attaque. */
+  let history: { t: number; p: number }[] = []
+  /** Attaques de la voix pas encore associées à un mot reconnu (horloge performance.now()). */
+  let onsets: number[] = []
+  /** Mode « attaques » : les réponses sont jugées au moment où le joueur a commencé à les dire. */
+  let timed = false
+
+  /** Position de la portée à l'instant `t`. */
+  function positionAt(t: number): number {
+    for (let i = history.length - 1; i > 0; i--) {
+      const a = history[i - 1]
+      const b = history[i]
+      if (a.t <= t) return b.t === a.t ? b.p : a.p + ((b.p - a.p) * (Math.min(t, b.t) - a.t)) / (b.t - a.t)
+    }
+    return history.length ? history[0].p : position.value
+  }
+
+  /** L'instant `t` tombe-t-il pendant que la note `index` était entre les deux barres (ou juste après) ? */
+  const inWindow = (t: number, index: number) => {
+    const p = positionAt(t)
+    return p >= index - WINDOW_BEATS - 0.1 && p <= index + ONSET_SLACK_BEATS
+  }
 
   const current = computed(() => notes.value.find((n) => n.index === target)?.note ?? null)
 
@@ -59,6 +85,21 @@ export function useSightReading(
     const dt = Math.min(0.1, (now - last) / 1000)
     last = now
     position.value += (dt * tempo.value) / 60
+    history.push({ t: now, p: position.value })
+    while (history.length > 2 && now - history[0].t > 6000) history.shift()
+    if (timed) {
+      // Une attaque restée sans mot reconnu trop longtemps : bruit, ou mot pas compris.
+      const stale = onsets.length > 0 && now - onsets[0] > MAX_RECOGNITION_MS
+      onsets = onsets.filter((t) => now - t <= MAX_RECOGNITION_MS)
+      // La note a passé la barre : on attend encore le mot si le joueur a commencé à la dire à temps.
+      if (position.value > target + ONSET_SLACK_BEATS && !onsets.some((t) => inWindow(t, target))) {
+        mark(target, 'ko')
+        const n = current.value
+        return end(`${stale ? 'Pas compris à temps' : 'Note oubliée'} : c'était ${n ? noteName(n) : '?'}.`)
+      }
+      frame = requestAnimationFrame(step)
+      return
+    }
     // La note doit être lue avant d'atteindre la barre de gauche ; on laisse en plus au micro le temps de reconnaître la réponse.
     const grace = (latency * tempo.value) / 60
     if (position.value > target + grace) {
@@ -82,9 +123,12 @@ export function useSightReading(
     tempo.value = tempoAfter(level, 0)
     topTempo.value = tempo.value
     position.value = -LEAD_IN_BEATS
+    history = []
+    onsets = []
     fill()
     phase.value = 'running'
     last = performance.now()
+    history.push({ t: last, p: position.value })
     frame = requestAnimationFrame(step)
     return Promise.resolve(0)
   }
@@ -96,7 +140,24 @@ export function useSightReading(
   function submit(pc: number, said: string): boolean {
     if (phase.value !== 'running') return false
     const n = current.value
-    if (!n || target - position.value > WINDOW_BEATS + 0.1) return false
+    if (!n) return false
+    if (timed) {
+      // La réponse est datée de la première attaque tombée pendant que la note était entre les barres ;
+      // les attaques plus anciennes (bruit, réponse trop tôt) sont oubliées.
+      const at = onsets.findIndex((t) => inWindow(t, target))
+      if (at >= 0) onsets.splice(0, at + 1)
+      else {
+        // Pas d'attaque à temps (notes enchaînées sans creux de voix, par exemple) : on date le mot de son arrivée,
+        // moins le temps habituel de reconnaissance.
+        const p = position.value - (latency * tempo.value) / 60
+        if (target - p > WINDOW_BEATS + 0.1) return false
+        if (p > target + ONSET_SLACK_BEATS) {
+          mark(target, 'ko')
+          end(`Trop tard : c'était ${noteName(n)}.`)
+          return true
+        }
+      }
+    } else if (target - position.value > WINDOW_BEATS + 0.1) return false
     if (pc !== n.pc) {
       mark(target, 'ko')
       end(`${said}, mais c'était ${noteName(n)}.`)
@@ -129,7 +190,21 @@ export function useSightReading(
     clearTimeout(endTimer)
   }
 
+  /** Attaque de la voix à l'instant `t` (performance.now()) : passe le jeu en mode « attaques ». */
+  function onset(t: number) {
+    timed = true
+    if (phase.value !== 'running') return
+    // Trop tôt pour la note à lire : ce n'est pas une réponse.
+    if (positionAt(t) < target - WINDOW_BEATS - 0.1) return
+    onsets.push(t)
+  }
+
+  /** Oublie les attaques d'avant `t` restées sans mot (fin d'une phrase de la reconnaissance vocale). */
+  function forgetOnsets(t: number) {
+    onsets = onsets.filter((o) => o >= t)
+  }
+
   onBeforeUnmount(stop)
 
-  return { phase, notes, position, tempo, topTempo, read, points, reason, current, start, submit, stop }
+  return { phase, notes, position, tempo, topTempo, read, points, reason, current, start, submit, stop, onset, forgetOnsets }
 }
