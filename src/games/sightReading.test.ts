@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NoteStream, notePoints, parseSightSettings, parseSpokenNotes, SungNotes, tempoAfter } from './sightReading'
+import { NoteStream, notePoints, parseSightSettings, parseSpokenNotes, setLearnedWords, SungNotes, tempoAfter } from './sightReading'
 
 describe('Lecture en défilement', () => {
   it('reconnaît les noms de notes dits, avec leurs altérations et quelques homophones', () => {
@@ -13,6 +13,15 @@ describe('Lecture en défilement', () => {
     // Notes collées en un mot par la reconnaissance vocale.
     expect(parseSpokenNotes('doré solla').map((n) => n.pc)).toEqual([0, 2, 7, 9])
     expect(parseSpokenNotes('fadièse rémi').map((n) => n.pc)).toEqual([6, 2, 4])
+  })
+
+  it('comprend les transcriptions apprises de la voix du joueur', () => {
+    expect(parseSpokenNotes('les')).toEqual([])
+    setLearnedWords({ re: ['les'], diese: ['des yeux'] })
+    expect(parseSpokenNotes('Les').map((n) => n.pc)).toEqual([2])
+    expect(parseSpokenNotes('fa des yeux, les')).toEqual([{ pc: 6, altered: true }, { pc: 2, altered: false }])
+    setLearnedWords({})
+    expect(parseSpokenNotes('les')).toEqual([])
   })
 
   it('accélère à chaque note lue, sans dépasser 200, et paie dix fois le tempo', () => {

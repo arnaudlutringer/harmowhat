@@ -37,6 +37,8 @@
           <ion-button fill="outline" :disabled="!online" router-link="/games/lis-dis/jouer?questions=1&level=debutant&tempo=120&essai=1">Lecture à ♩ = {{ FAST_TRIAL_TEMPO }}</ion-button>
         </div>
 
+        <sound-match-test ref="soundTest" :expected="pc" @start="listening && stop()" />
+
         <h2>
           Journal
           <button class="copy" @click="copyLog">{{ copied ? 'Copié ✓' : 'Copier' }}</button>
@@ -55,12 +57,15 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { IonButton, IonContent, IonPage, onIonViewWillLeave } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
 import ChordStaff from '@/components/ChordStaff.vue'
+import SoundMatchTest from '@/components/SoundMatchTest.vue'
 import { listenToSpeech, speechServices, type SpeechEvent, type SpeechListening } from '@/audio/speech'
 import { pitchClassName, randomInt } from '@/music/notes'
 import { spelledPitchName } from '@/music/spelling'
 import { noteAt } from '@/games/readNote'
 import { FAST_TRIAL_TEMPO, parseSpokenNotes } from '@/games/sightReading'
 import { online } from '@/player/online'
+// Mots appris de la voix du joueur (« Ma voix »).
+import '@/games/voiceWords'
 
 /**
  * Écran de test (interrupteur testMicro, voir config/features.ts) : une note à dire, et le détail de la
@@ -143,7 +148,11 @@ function onSpeech(text: string, _s: number, final: boolean, alternatives: string
   verdict.value = { ok, text: ok ? `Compris : ${pitchClassName(last.pc)} ✓` : `Compris : ${pitchClassName(last.pc)}, au lieu de ${expected.value}` }
 }
 
+/** Essai « par le son » : arrêté quand la reconnaissance vocale démarre (un seul utilisateur du micro). */
+const soundTest = ref<InstanceType<typeof SoundMatchTest> | null>(null)
+
 async function start() {
+  soundTest.value?.stop()
   error.value = ''
   phase.value = 'starting'
   listening.value = true

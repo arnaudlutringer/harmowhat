@@ -45,6 +45,8 @@ import { clefLabel, parseSightSettings, parseSpokenNotes, SIGHT_LEVELS, SIGHT_ME
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 import { online } from '@/player/online'
+// Mots appris de la voix du joueur (« Ma voix ») : chargés pour la lecture de ce qu'il dit.
+import '@/games/voiceWords'
 
 const route = useRoute()
 const settings = parseSightSettings(route.query)

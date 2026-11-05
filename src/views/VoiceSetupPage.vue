@@ -1,0 +1,229 @@
+<template>
+  <ion-page>
+    <ion-content class="ion-padding">
+      <page-nav title="Ma voix" back-href="/games/lis-dis" />
+      <div class="voice">
+        <template v-if="step < prompts.length">
+          <p class="how">
+            Dis chaque mot quand il s'affiche, normalement. L'appli retient comment la reconnaissance vocale comprend ta voix,
+            pour mieux te comprendre pendant « Lecture continue ».
+          </p>
+          <p v-if="!online" class="error">📶 Connecte-toi à Internet : la reconnaissance vocale en a besoin.</p>
+          <p class="progress">Mot {{ step + 1 }} / {{ prompts.length }}</p>
+          <p class="word" aria-live="polite">{{ prompts[step].label }}</p>
+          <p class="state" :class="feedback?.kind">{{ feedback?.text ?? (listening ? 'Je t’écoute…' : ' ') }}</p>
+          <div class="buttons">
+            <ion-button v-if="!listening" :disabled="!online" @click="start">Commencer</ion-button>
+            <ion-button v-else fill="outline" @click="skip">Passer ce mot</ion-button>
+          </div>
+          <p v-if="error" class="error">{{ error }}</p>
+        </template>
+
+        <template v-else>
+          <h2>C'est enregistré ✓</h2>
+          <p class="how">Voici ce que la reconnaissance vocale a compris. Les mots écrits autrement seront acceptés pour la bonne note.</p>
+          <ul class="summary">
+            <li v-for="w in VOICE_WORDS" :key="w.key">
+              <strong>{{ w.label }}</strong>
+              <span>{{ summaryOf(w.key) }}</span>
+            </li>
+          </ul>
+          <div class="buttons">
+            <ion-button v-if="suite" @click="play">Jouer</ion-button>
+            <ion-button v-else @click="router.navigate('/games/lis-dis', 'back', 'replace')">Terminé</ion-button>
+            <ion-button fill="outline" @click="restart">Recommencer</ion-button>
+          </div>
+        </template>
+      </div>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import { onBeforeUnmount, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { IonButton, IonContent, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
+import PageNav from '@/components/PageNav.vue'
+import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
+import { saveVoiceWords, toLearn, VOICE_TAKES, VOICE_WORDS, type VoiceWord } from '@/games/voiceWords'
+import { spokenWords } from '@/games/sightReading'
+import { online } from '@/player/online'
+
+const route = useRoute()
+const router = useIonRouter()
+/** Écran à ouvrir ensuite (la partie demandée), avec l'essai s'il en est un. */
+const suite = typeof route.query.suite === 'string' && route.query.suite.startsWith('/games/') ? route.query.suite : ''
+
+/** Chaque mot, plusieurs fois. */
+const prompts: VoiceWord[] = VOICE_WORDS.flatMap((w) => Array.from({ length: VOICE_TAKES }, () => w))
+const step = ref(0)
+const listening = ref(false)
+const feedback = ref<{ kind: 'ok' | 'ko'; text: string } | null>(null)
+const error = ref('')
+/** Ce que la reconnaissance a écrit pour chaque syllabe. */
+const heard: Record<string, string[]> = {}
+let speech: SpeechListening | null = null
+/** Pause après un mot entendu, avant le suivant : on ignore ce qui arrive pendant ce temps. */
+let waiting = false
+/** Dernier résultat partiel de la phrase en cours (si la phrase finit sans résultat final). */
+let partial = ''
+
+function stopListening() {
+  speech?.stop()
+  speech = null
+  listening.value = false
+}
+
+function take(text: string) {
+  if (waiting || step.value >= prompts.length) return
+  const word = prompts[step.value]
+  const said = text.trim()
+  if (!said) return
+  ;(heard[word.key] ??= []).push(said)
+  const exact = spokenWords(said).join(' ') === word.key
+  feedback.value = { kind: 'ok', text: `Entendu : « ${said} »${exact ? ' ✓' : ''}` }
+  next()
+}
+
+function next() {
+  waiting = true
+  partial = ''
+  setTimeout(() => {
+    waiting = false
+    feedback.value = null
+    step.value++
+    if (step.value >= prompts.length) finish()
+  }, 900)
+}
+
+function skip() {
+  feedback.value = { kind: 'ko', text: 'Mot passé.' }
+  next()
+}
+
+function onSpeech(text: string, _session: number, final: boolean) {
+  if (final) take(text)
+  else partial = text
+}
+
+function onEvent(e: SpeechEvent) {
+  // Phrase finie sans résultat final : on garde le dernier résultat partiel ; rien du tout : on redemande.
+  if (e.type !== 'error' || waiting) return
+  if (partial) return take(partial)
+  if (e.message === 'rien compris') feedback.value = { kind: 'ko', text: `Je n'ai pas compris, redis « ${prompts[step.value]?.label} ».` }
+}
+
+async function start() {
+  error.value = ''
+  listening.value = true
+  try {
+    speech = await listenToSpeech(onSpeech, onEvent)
+  } catch {
+    listening.value = false
+    error.value = 'La reconnaissance vocale n’est pas accessible : autorise le micro pour cette appli, puis réessaie.'
+  }
+}
+
+/** Transcriptions retenues : celles qu'on ne comprenait pas déjà, et pas pour deux syllabes à la fois. */
+function learnedWords(): Record<string, string[]> {
+  const out: Record<string, string[]> = {}
+  for (const [key, texts] of Object.entries(heard)) {
+    const list = texts.map(toLearn).filter((t): t is string => !!t)
+    if (list.length) out[key] = [...new Set(list)]
+  }
+  const owners = new Map<string, string[]>()
+  for (const [key, list] of Object.entries(out)) for (const t of list) owners.set(t, [...(owners.get(t) ?? []), key])
+  for (const [key, list] of Object.entries(out)) out[key] = list.filter((t) => owners.get(t)?.length === 1)
+  return out
+}
+
+let saved: Record<string, string[]> = {}
+function finish() {
+  stopListening()
+  saved = learnedWords()
+  saveVoiceWords(saved)
+}
+
+function summaryOf(key: string): string {
+  const texts = heard[key] ?? []
+  if (!texts.length) return 'passé'
+  const extra = saved[key] ?? []
+  return extra.length ? `compris « ${extra.join(' », « ')} » : accepté désormais` : 'bien compris'
+}
+
+function restart() {
+  for (const k of Object.keys(heard)) delete heard[k]
+  step.value = 0
+  feedback.value = null
+  void start()
+}
+
+function play() {
+  router.navigate(`${suite}${route.query.essai ? '&essai=1' : ''}`, 'forward', 'replace')
+}
+
+onIonViewWillLeave(stopListening)
+onBeforeUnmount(stopListening)
+</script>
+
+<style scoped>
+.voice {
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+}
+.how {
+  color: var(--ion-color-medium);
+  font-size: 14px;
+  text-align: left;
+}
+.progress {
+  margin: 18px 0 0;
+  color: var(--ion-color-medium);
+  font-weight: 600;
+}
+.word {
+  margin: 8px 0;
+  font-size: 64px;
+  font-weight: 800;
+  color: var(--ion-color-primary);
+}
+.state {
+  min-height: 24px;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+}
+.state.ok {
+  color: var(--ion-color-success);
+}
+.state.ko,
+.error {
+  color: var(--ion-color-danger);
+}
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.summary {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+}
+.summary li {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  background: var(--hw-surface, #fff);
+}
+.summary strong {
+  width: 52px;
+}
+.summary span {
+  flex: 1;
+  color: var(--ion-color-medium);
+}
+</style>

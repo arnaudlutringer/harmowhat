@@ -198,10 +198,44 @@ function unglue(word: string): string[] | null {
   return null
 }
 
+/** Les mots d'une phrase, sans accents ni ponctuation (pour comparer des transcriptions). */
+export const spokenWords = words
+
+/** Le mot est déjà compris tel quel : nom de note (homophones compris), dièse ou bémol. */
+export const isKnownWord = (w: string) => LETTER_OF.has(w) || SHARP.has(w) || FLAT.has(w)
+
+/**
+ * Transcriptions apprises de la voix du joueur (écran « Ma voix ») : ce que la reconnaissance a écrit quand il disait
+ * une syllabe (« les » pour ré, « des yeux » pour dièse), remplacé par cette syllabe avant la lecture. Les plus longues d'abord.
+ */
+let learned: { words: string[]; syllable: string }[] = []
+
+/** Remplace les transcriptions apprises (syllabe : do, re, mi, fa, sol, la, si, diese, bemol → ses transcriptions). */
+export function setLearnedWords(map: Partial<Record<string, string[]>>) {
+  learned = Object.entries(map)
+    .flatMap(([syllable, phrases]) => (phrases ?? []).map((p) => ({ words: words(p), syllable })))
+    .filter((l) => l.words.length)
+    .sort((a, b) => b.words.length - a.words.length)
+}
+
+/** Remplace dans la suite de mots les transcriptions apprises par leur syllabe. */
+function applyLearned(list: string[]): string[] {
+  if (!learned.length) return list
+  const out: string[] = []
+  for (let i = 0; i < list.length; ) {
+    const hit = learned.find((l) => l.words.every((w, j) => list[i + j] === w))
+    if (hit) {
+      out.push(hit.syllable)
+      i += hit.words.length
+    } else out.push(list[i++])
+  }
+  return out
+}
+
 /** Les noms de notes reconnus dans une phrase, dans l'ordre (« do dièse ré » → Do♯, Ré). */
 export function parseSpokenNotes(text: string): SpokenNote[] {
   const out: SpokenNote[] = []
-  const all = words(text).flatMap((w) => (LETTER_OF.has(w) || SHARP.has(w) || FLAT.has(w) ? [w] : (unglue(w) ?? [w])))
+  const all = applyLearned(words(text)).flatMap((w) => (isKnownWord(w) ? [w] : (unglue(w) ?? [w])))
   for (const w of all) {
     const pc = LETTER_OF.get(w)
     if (pc !== undefined) {

@@ -53,6 +53,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/lis-chante/jouer', component: () => import('@/views/SightSingGame.vue') },
   { path: '/games/lis-dis', component: () => import('@/views/SightSaySettings.vue') },
   { path: '/games/lis-dis/jouer', component: () => import('@/views/SightSayGame.vue') },
+  // « Ma voix » : les noms de notes dits par le joueur, avant sa première partie de « Lecture continue ».
+  { path: '/games/lis-dis/voix', component: () => import('@/views/VoiceSetupPage.vue') },
   // Test du micro (interrupteur testMicro).
   { path: '/debug/micro', component: () => import('@/views/MicTestPage.vue') },
 ]
