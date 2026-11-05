@@ -232,7 +232,7 @@ const SOUND_PCS: Record<string, number> = { do: 0, re: 2, mi: 4, fa: 5, sol: 7, 
 const SOUND_LABELS: Record<string, string> = { do: 'do', re: 'ré', mi: 'mi', fa: 'fa', sol: 'sol', la: 'la', si: 'si', diese: 'dièse', bemol: 'bémol' }
 let syllables: SyllableListening | null = null
 /** Note dite, en attente d'un éventuel « dièse » ou « bémol » (niveaux avec altérations). */
-let held: { pc: number; timer: ReturnType<typeof setTimeout>; learn: Learned[]; features: Features; end: number } | null = null
+let held: { pc: number; timer: ReturnType<typeof setTimeout>; learn: Learned[]; features: Features; start: number; end: number } | null = null
 const HOLD_MS = 900
 /** Après « dièse » ou « bémol », ce qui suit de près (le reste du mot) n'est pas une note. */
 let skipUntil = 0
@@ -278,8 +278,10 @@ function decodePair(f1: Features, f2: Features) {
   return { best, f1, f2, cost: options[0]?.cost ?? Infinity, text: `meilleur ${label(options[0])}, puis ${label(second)}${tie}` }
 }
 
-/** Au-delà de 40 trames (400 ms), un son peut contenir la note et son altération dites d'un trait (« si-bémol »). */
-const SPLIT_FRAMES = 40
+/** Au-delà de 50 trames (500 ms), un son peut contenir la note et son altération dites d'un trait (« si-bémol »). */
+/** La coupe doit ressembler nettement mieux que le son entier (au moins 15 %) : un simple « la » ne s'invente pas un dièse. */
+const SPLIT_GAIN = 0.85
+const SPLIT_FRAMES = 50
 
 /**
  * Note altérée dite d'un seul tenant : on essaie de couper le son à différents endroits (entre 30 et 70 %), chaque
@@ -298,8 +300,9 @@ function decodeSplit(f: Features) {
 function release() {
   if (!held) return
   clearTimeout(held.timer)
-  const { pc, learn: syllablesHeard } = held
+  const { pc, learn: syllablesHeard, start } = held
   held = null
+  if (earlyWrong(pc, start)) return log('  réponse fausse dite tôt : ignorée (une exclamation ?)')
   judge(pc, syllablesHeard)
 }
 
@@ -393,7 +396,7 @@ function onSyllable(s: Syllable) {
   // Note à lire altérée et son long : peut-être la note et son altération d'un seul tenant (« si-bémol »). Si une coupe
   // en note + altération ressemble mieux (en moyenne) que le son entier comme note seule, c'est elle qui est retenue.
   const split = altered ? decodeSplit(s.features) : null
-  if (split?.best && split.cost / 2 < (best?.distance ?? Infinity)) {
+  if (split?.best && split.cost / 2 < (best?.distance ?? Infinity) * SPLIT_GAIN) {
     const { pc, letter, accidental } = split.best
     log(`${head}${scores} · coupé en deux : ${split.text}`, s.start)
     if (earlyWrong(pc, s.start)) return log('  réponse fausse dite tôt : ignorée (une exclamation ?)')
@@ -442,7 +445,7 @@ function onSyllable(s: Syllable) {
   const syllable: Learned = { key: best.key, features: s.features }
   if (!couldAlter) return judge(pc, [syllable])
   log(`  ${pitchClassName(pc)} : attente d'un dièse ou d'un bémol (${HOLD_MS} ms)`)
-  held = { pc, timer: setTimeout(release, HOLD_MS), learn: [syllable], features: s.features, end: s.end }
+  held = { pc, timer: setTimeout(release, HOLD_MS), learn: [syllable], features: s.features, start: s.start, end: s.end }
 }
 
 async function begin(): Promise<number> {
