@@ -192,7 +192,13 @@ function nextNote() {
 }
 
 async function copyLog() {
-  const text = [`Service : ${service.value}`, `Services installés : ${services.value.join(' ; ')}`, ...[...log.value].reverse()].join('\n')
+  const sound = soundTest.value?.report() ?? []
+  const text = [
+    `Service : ${service.value}`,
+    `Services installés : ${services.value.join(' ; ')}`,
+    ...[...log.value].reverse(),
+    ...(sound.length ? ['', 'Par le son :', ...sound] : []),
+  ].join('\n')
   try {
     await navigator.clipboard.writeText(text)
     copied.value = true

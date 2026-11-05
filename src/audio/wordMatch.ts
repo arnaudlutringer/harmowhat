@@ -34,7 +34,11 @@ export function downsample(input: Float32Array, rate: number): Float32Array {
   return out
 }
 
-/** Transformée de Fourier (sur place, taille puissance de 2). */
+/** Cosinus et sinus de la transformée de Fourier, calculés une fois. */
+const COS = Float64Array.from({ length: FFT / 2 }, (_, k) => Math.cos((-2 * Math.PI * k) / FFT))
+const SIN = Float64Array.from({ length: FFT / 2 }, (_, k) => Math.sin((-2 * Math.PI * k) / FFT))
+
+/** Transformée de Fourier (sur place, taille FFT). */
 function fft(re: Float64Array, im: Float64Array) {
   const n = re.length
   for (let i = 1, j = 0; i < n; i++) {
@@ -42,16 +46,20 @@ function fft(re: Float64Array, im: Float64Array) {
     for (; j & bit; bit >>= 1) j ^= bit
     j ^= bit
     if (i < j) {
-      ;[re[i], re[j]] = [re[j], re[i]]
-      ;[im[i], im[j]] = [im[j], im[i]]
+      let t = re[i]
+      re[i] = re[j]
+      re[j] = t
+      t = im[i]
+      im[i] = im[j]
+      im[j] = t
     }
   }
   for (let len = 2; len <= n; len <<= 1) {
-    const angle = (-2 * Math.PI) / len
+    const stride = n / len
     for (let i = 0; i < n; i += len) {
       for (let k = 0; k < len / 2; k++) {
-        const wr = Math.cos(angle * k)
-        const wi = Math.sin(angle * k)
+        const wr = COS[k * stride]
+        const wi = SIN[k * stride]
         const a = i + k
         const b = a + len / 2
         const xr = re[b] * wr - im[b] * wi
@@ -68,37 +76,47 @@ function fft(re: Float64Array, im: Float64Array) {
 const mel = (hz: number) => 2595 * Math.log10(1 + hz / 700)
 const hzOf = (m: number) => 700 * (10 ** (m / 2595) - 1)
 
-/** Bancs de filtres triangulaires sur l'échelle des mels (80 à 7 600 Hz). */
-const FILTERS: number[][] = (() => {
+/** Bancs de filtres triangulaires sur l'échelle des mels (80 à 7 600 Hz) : premier point du spectre et poids. */
+const FILTERS: { from: number; weights: Float64Array }[] = (() => {
   const low = mel(80)
   const high = mel(7600)
   const points = Array.from({ length: MELS + 2 }, (_, i) => Math.floor(((FFT + 1) * hzOf(low + ((high - low) * i) / (MELS + 1))) / RATE))
   return Array.from({ length: MELS }, (_, m) => {
-    const f = new Array(FFT / 2 + 1).fill(0)
-    for (let k = points[m]; k < points[m + 1]; k++) f[k] = (k - points[m]) / Math.max(1, points[m + 1] - points[m])
-    for (let k = points[m + 1]; k < points[m + 2]; k++) f[k] = (points[m + 2] - k) / Math.max(1, points[m + 2] - points[m + 1])
-    return f
+    const [a, b, c] = [points[m], points[m + 1], points[m + 2]]
+    const weights = new Float64Array(Math.max(1, c - a))
+    for (let k = a; k < b; k++) weights[k - a] = (k - a) / Math.max(1, b - a)
+    for (let k = b; k < c; k++) weights[k - a] = (c - k) / Math.max(1, c - b)
+    return { from: a, weights }
   })
 })()
 
-const WINDOW = Array.from({ length: FRAME }, (_, i) => 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (FRAME - 1)))
+const WINDOW = Float64Array.from({ length: FRAME }, (_, i) => 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (FRAME - 1)))
+/** Matrice de la transformée en cosinus (énergies des filtres → coefficients). */
+const DCT = Array.from({ length: COEFFS }, (_, c) => Float64Array.from({ length: MELS }, (_, m) => Math.cos((Math.PI * (c + 1) * (m + 0.5)) / MELS)))
 
 /** Coefficients cepstraux d'un son à 16 kHz, centrés (la couleur du micro et de la pièce s'efface). */
 export function features(samples: Float32Array): Features {
   const frames: number[][] = []
   const re = new Float64Array(FFT)
   const im = new Float64Array(FFT)
+  const power = new Float64Array(FFT / 2 + 1)
+  const energies = new Float64Array(MELS)
   for (let start = 0; start + FRAME <= samples.length; start += HOP) {
     re.fill(0)
     im.fill(0)
     for (let i = 0; i < FRAME; i++) re[i] = (samples[start + i] - (i ? 0.97 * samples[start + i - 1] : 0)) * WINDOW[i]
     fft(re, im)
-    const power = Array.from({ length: FFT / 2 + 1 }, (_, k) => re[k] * re[k] + im[k] * im[k])
-    const energies = FILTERS.map((f) => Math.log(1e-10 + f.reduce((s, w, k) => s + w * power[k], 0)))
+    for (let k = 0; k < power.length; k++) power[k] = re[k] * re[k] + im[k] * im[k]
+    for (let m = 0; m < MELS; m++) {
+      const { from, weights } = FILTERS[m]
+      let sum = 1e-10
+      for (let k = 0; k < weights.length; k++) sum += weights[k] * power[from + k]
+      energies[m] = Math.log(sum)
+    }
     const coeffs: number[] = []
-    for (let c = 1; c <= COEFFS; c++) {
+    for (let c = 0; c < COEFFS; c++) {
       let sum = 0
-      for (let m = 0; m < MELS; m++) sum += energies[m] * Math.cos((Math.PI * c * (m + 0.5)) / MELS)
+      for (let m = 0; m < MELS; m++) sum += energies[m] * DCT[c][m]
       coeffs.push(sum)
     }
     frames.push(coeffs)
@@ -111,16 +129,47 @@ export function features(samples: Float32Array): Features {
 /** Distance entre deux syllabes, quelle que soit la vitesse à laquelle elles ont été dites (DTW, par trame). */
 export function distance(a: Features, b: Features): number {
   if (!a.length || !b.length) return Infinity
-  const d = (i: number, j: number) => Math.sqrt(a[i].reduce((s, v, c) => s + (v - b[j][c]) ** 2, 0))
-  let prev = new Float64Array(b.length + 1).fill(Infinity)
+  const x = flat(a)
+  const y = flat(b)
+  const n = a.length
+  const m = b.length
+  let prev = new Float64Array(m + 1).fill(Infinity)
+  let cur = new Float64Array(m + 1)
   prev[0] = 0
-  for (let i = 1; i <= a.length; i++) {
-    const cur = new Float64Array(b.length + 1).fill(Infinity)
-    for (let j = 1; j <= b.length; j++) cur[j] = d(i - 1, j - 1) + Math.min(prev[j], cur[j - 1], prev[j - 1])
-    prev = cur
+  for (let i = 1; i <= n; i++) {
+    cur[0] = Infinity
+    const xi = (i - 1) * COEFFS
+    for (let j = 1; j <= m; j++) {
+      const yj = (j - 1) * COEFFS
+      let d = 0
+      for (let c = 0; c < COEFFS; c++) {
+        const diff = x[xi + c] - y[yj + c]
+        d += diff * diff
+      }
+      const before = prev[j] < cur[j - 1] ? prev[j] : cur[j - 1]
+      cur[j] = Math.sqrt(d) + (before < prev[j - 1] ? before : prev[j - 1])
+    }
+    ;[prev, cur] = [cur, prev]
   }
-  return prev[b.length] / (a.length + b.length)
+  return prev[m] / (n + m)
 }
+
+/** Coefficients d'une syllabe à plat (calculés une fois par syllabe) : la comparaison va bien plus vite. */
+const flats = new WeakMap<Features, Float64Array>()
+function flat(f: Features): Float64Array {
+  let out = flats.get(f)
+  if (!out) {
+    out = new Float64Array(f.length * COEFFS)
+    f.forEach((row, i) => row.forEach((v, c) => c < COEFFS && (out![i * COEFFS + c] = v)))
+    flats.set(f, out)
+  }
+  return out
+}
+
+/** Syllabe la plus courte retenue (en dessous : bruit, souffle, bout de mot). */
+export const MIN_SYLLABLE_MS = 180
+/** Écart minimal entre la note la plus proche et la suivante pour répondre (sinon : pas sûr). */
+export const MIN_MARGIN = 1
 
 /** Enregistrements du joueur : plusieurs par syllabe. */
 export type Templates = Record<string, Features[]>
@@ -174,13 +223,14 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
   let dip = false
   let length = 0
   let startedAt = 0
+  let lastLevel = 0
 
   function close(now: number) {
     if (!voice) return
     const audio = concat(voice)
     voice = null
-    // Moins de 80 ms : un claquement, pas une syllabe.
-    if (audio.length < ctx.sampleRate * 0.08) return
+    // Trop court : un claquement, un souffle ou un bout de mot, pas une syllabe.
+    if (audio.length < (ctx.sampleRate * MIN_SYLLABLE_MS) / 1000) return
     onSyllable({ features: features(downsample(audio, ctx.sampleRate)), start: startedAt, end: now })
   }
 
@@ -194,7 +244,11 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
       const chunk = merged.slice(i, i + hop)
       const rms = Math.sqrt(chunk.reduce((s, v) => s + v * v, 0) / chunk.length)
       const now = performance.now()
-      onLevel?.(Math.min(1, rms * 20))
+      // Niveau pour l'affichage : 20 fois par seconde suffisent.
+      if (now - lastLevel > 50) {
+        lastLevel = now
+        onLevel?.(Math.min(1, rms * 20))
+      }
       history.push(chunk)
       if (history.length > 4) history.shift()
       if (!voice) {

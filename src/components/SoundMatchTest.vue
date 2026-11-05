@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { IonButton, onIonViewWillLeave } from '@ionic/vue'
-import { closest, listenToSyllables, loadTemplates, saveTemplates, type Syllable, type SyllableListening, type Templates } from '@/audio/wordMatch'
+import { closest, listenToSyllables, loadTemplates, MIN_MARGIN, saveTemplates, type Syllable, type SyllableListening, type Templates } from '@/audio/wordMatch'
 import { pitchClassName } from '@/music/notes'
 
 const props = defineProps<{
@@ -123,14 +123,26 @@ function test() {
     if (!best) return
     const note = NOTES.find((n) => n.key === best.key)
     if (!note) return
-    const ok = note.pc === props.expected
+    const expected = pitchClassName(props.expected)
     const length = Math.round(s.end - s.start)
-    result.value = { ok, text: ok ? `Entendu : ${note.label} ✓` : `Entendu : ${note.label}, au lieu de ${pitchClassName(props.expected)}` }
-    log.value = [`${note.label} · distance ${best.distance.toFixed(1)} · écart ${best.margin.toFixed(1)} · syllabe ${length} ms · calcul ${ms} ms`, ...log.value].slice(0, 20)
+    // Deux notes presque à égalité : mieux vaut ne pas répondre que deviner.
+    const sure = best.margin >= MIN_MARGIN
+    const ok = sure && note.pc === props.expected
+    result.value = sure
+      ? { ok, text: ok ? `Entendu : ${note.label} ✓` : `Entendu : ${note.label}, au lieu de ${expected}` }
+      : { ok: false, text: `Pas sûr (peut-être ${note.label}) : redis ${expected}.` }
+    const verdict = !sure ? '?' : ok ? '✓' : '✗'
+    log.value = [
+      `${verdict} attendu ${expected} · entendu ${note.label} · distance ${best.distance.toFixed(1)} · écart ${best.margin.toFixed(1)} · syllabe ${length} ms · calcul ${ms} ms`,
+      ...log.value,
+    ].slice(0, 40)
   })
 }
 
-defineExpose({ stop })
+/** Le journal, du plus ancien au plus récent (bouton « Copier » du Test du micro). */
+const report = () => [...log.value].reverse()
+
+defineExpose({ stop, report })
 onIonViewWillLeave(stop)
 onBeforeUnmount(stop)
 </script>
