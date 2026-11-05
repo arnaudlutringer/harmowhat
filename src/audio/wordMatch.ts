@@ -171,6 +171,11 @@ function flat(f: Features): Float64Array {
 const LONG_HOPS = 40
 const EDGE_HOPS = 12
 
+/** Mesure du bruit ambiant au début de l'écoute (rien n'est découpé pendant ce temps). */
+export const AMBIENT_MS = 800
+/** Une syllabe doit dépasser le bruit ambiant (ses pointes) de ce facteur pour commencer. */
+const AMBIENT_FACTOR = 2.5
+
 /** Un son sans voix qui finit moins de 120 ms avant une syllabe en est la consonne (« s » de « si », « sol »). */
 const CONSONANT_GAP_MS = 120
 
@@ -292,6 +297,11 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
   let length = 0
   let startedAt = 0
   let lastLevel = 0
+  // Bruit ambiant (gymnase, voix autour) : mesuré pendant la première seconde, une syllabe doit ensuite le dépasser
+  // nettement pour commencer (la voix du joueur, proche du micro, est bien plus forte).
+  const ambient: number[] = []
+  const listenedFrom = performance.now()
+  let threshold = 0.01
 
   /**
    * Son sans voix (un « s », un « ch ») gardé un instant : s'il est suivi de près d'une syllabe avec de la voix, c'est
@@ -356,9 +366,18 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
       }
       history.push(chunk)
       if (history.length > 4) history.shift()
+      if (now - listenedFrom < AMBIENT_MS) {
+        ambient.push(rms)
+        continue
+      }
+      if (ambient.length) {
+        const sorted = [...ambient].sort((a, b) => a - b)
+        threshold = Math.max(0.01, sorted[Math.floor(sorted.length * 0.9)] * AMBIENT_FACTOR)
+        ambient.length = 0
+      }
       if (!voice) {
         floor = rms < floor ? rms : floor + 0.01 * (rms - floor)
-        if (rms > Math.max(floor * 4, 0.01)) {
+        if (rms > Math.max(floor * 4, threshold)) {
           voice = [...history]
           levels = history.map(() => rms)
           startedAt = now - history.length * 10

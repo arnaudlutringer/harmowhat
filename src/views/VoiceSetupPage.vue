@@ -47,7 +47,7 @@ import { IonButton, IonContent, IonPage, onIonViewWillLeave, useIonRouter } from
 import PageNav from '@/components/PageNav.vue'
 import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
 import { recognition, saveVoiceWords, SOUND_PROMPTS, toLearn, VOICE_TAKES, VOICE_WORDS, type SoundPrompt } from '@/games/voiceWords'
-import { listenToSyllables, loadTemplates, MIN_VOICED_MS, saveTemplates, type Features, type Syllable, type SyllableListening } from '@/audio/wordMatch'
+import { AMBIENT_MS, listenToSyllables, loadTemplates, MIN_VOICED_MS, saveTemplates, type Features, type Syllable, type SyllableListening } from '@/audio/wordMatch'
 import { spokenWords } from '@/games/sightReading'
 import { online } from '@/player/online'
 
@@ -170,7 +170,12 @@ async function start() {
   error.value = ''
   listening.value = true
   try {
-    if (bySound) syllables = await listenToSyllables(onSyllable, (l) => (level.value = l))
+    if (bySound) {
+      syllables = await listenToSyllables(onSyllable, (l) => (level.value = l))
+      // Le bruit ambiant est mesuré au début : on demande le silence pendant ce temps.
+      feedback.value = { kind: 'ko', text: 'Ne parle pas encore : je mesure le bruit autour de toi…' }
+      setTimeout(() => (feedback.value = null), AMBIENT_MS)
+    }
     else speech = await listenToSpeech(onSpeech, onEvent)
   } catch {
     listening.value = false
