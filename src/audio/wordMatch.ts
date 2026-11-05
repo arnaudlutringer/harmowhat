@@ -210,6 +210,17 @@ function spread(templates: Templates): number {
   return s
 }
 
+/** Chaque mot enregistré, du plus proche au plus loin de la syllabe (sa distance : celle de son meilleur enregistrement). */
+export function ranked(f: Features, templates: Templates): { key: string; distance: number }[] {
+  return Object.entries(templates)
+    .map(([key, list]) => ({ key, distance: Math.min(...list.map((t) => distance(f, t))) }))
+    .filter((r) => Number.isFinite(r.distance))
+    .sort((x, y) => x.distance - y.distance)
+}
+
+/** Distance au-delà de laquelle un son est loin de tous les enregistrements. */
+export const noiseLimit = (templates: Templates) => spread(templates) * NOISE_FACTOR
+
 /**
  * La syllabe la plus proche parmi les enregistrements, avec sa distance et l'écart avec la suivante ;
  * `noise` : elle est bien plus loin que deux enregistrements d'un même mot entre eux (un bruit, pas un nom de note).
@@ -220,10 +231,7 @@ export function closest(
   /** Sens de chaque enregistrement : l'écart se mesure avec le plus proche d'un autre sens. */
   meaning: (key: string) => string = (k) => k,
 ): { key: string; distance: number; margin: number; noise: boolean } | null {
-  const best = Object.entries(templates)
-    .map(([key, list]) => ({ key, distance: Math.min(...list.map((t) => distance(f, t))) }))
-    .filter((r) => Number.isFinite(r.distance))
-    .sort((x, y) => x.distance - y.distance)
+  const best = ranked(f, templates)
   if (!best.length) return null
   const d = best[0].distance
   const other = best.find((r) => meaning(r.key) !== meaning(best[0].key))

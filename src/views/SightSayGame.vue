@@ -54,7 +54,13 @@ import { trophyEvent } from '@/games/trophies'
 import { online } from '@/player/online'
 // Mots appris de la voix du joueur (« Ma voix ») : chargés pour la lecture de ce qu'il dit.
 import { recognition, soundReady } from '@/games/voiceWords'
-import { closest, listenToSyllables, loadTemplates, MIN_MARGIN, MIN_VOICED_MS, type Syllable, type SyllableListening } from '@/audio/wordMatch'
+import { closest, listenToSyllables, loadTemplates, MIN_MARGIN, MIN_VOICED_MS, noiseLimit, ranked, saveTemplates, type Features, type Syllable, type SyllableListening, type Templates } from '@/audio/wordMatch'
+
+/** Une syllabe entendue et le mot qu'elle était : apprise si la réponse est juste. */
+interface Learned {
+  key: string
+  features: Features
+}
 
 const route = useRoute()
 const settings = parseSightSettings(route.query)
@@ -137,7 +143,7 @@ async function copyReport() {
 /** Dernière note jugée. */
 let lastPc = -1
 
-function judge(pc: number) {
+function judge(pc: number, heardSyllables: Learned[] = []) {
   consumed++
   recognizing.value = false
   // Deux notes de suite n'ont jamais le même nom : la note qu'on vient de valider, redite (le joueur la répète parce
@@ -147,8 +153,11 @@ function judge(pc: number) {
   const before = sight.read.value
   const context = where()
   const taken = sight.submit(pc, `Tu as dit ${pitchClassName(pc)}`)
-  const verdict = !taken ? 'pas pris en compte' : sight.read.value > before ? 'JUSTE ✓' : 'FAUX ✗'
+  const right = taken && sight.read.value > before
+  const verdict = !taken ? 'pas pris en compte' : right ? 'JUSTE ✓' : 'FAUX ✗'
   log(`→ réponse ${pitchClassName(pc)} · ${context} · ${verdict}`)
+  // Réponse juste : ses syllabes, dites en jeu, rejoignent les enregistrements (la reconnaissance s'habitue à ta voix en jeu).
+  if (right) learn(heardSyllables)
 }
 
 function onSpeech(text: string, s: number, final: boolean, alternatives: string[] = [text]) {
@@ -199,11 +208,12 @@ function onEvent(e: SpeechEvent) {
 /** Par le son, si le joueur a enregistré ses mots (sinon, Google). */
 const bySound = recognition.value === 'son' && soundReady()
 const templates = loadTemplates()
+const LETTER_KEYS = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si']
 const SOUND_PCS: Record<string, number> = { do: 0, re: 2, mi: 4, fa: 5, sol: 7, la: 9, si: 11 }
 const SOUND_LABELS: Record<string, string> = { do: 'do', re: 'ré', mi: 'mi', fa: 'fa', sol: 'sol', la: 'la', si: 'si', diese: 'dièse', bemol: 'bémol' }
 let syllables: SyllableListening | null = null
 /** Note dite, en attente d'un éventuel « dièse » ou « bémol » (niveaux avec altérations). */
-let held: { pc: number; timer: ReturnType<typeof setTimeout> } | null = null
+let held: { pc: number; timer: ReturnType<typeof setTimeout>; learn: Learned[] } | null = null
 const HOLD_MS = 900
 /** Après « dièse » ou « bémol », ce qui suit de près (le reste du mot) n'est pas une note. */
 let skipUntil = 0
@@ -215,14 +225,35 @@ const meaning = (key: string) => key.replace(/2$/, '')
 function release() {
   if (!held) return
   clearTimeout(held.timer)
-  const { pc } = held
+  const { pc, learn: syllablesHeard } = held
   held = null
-  judge(pc)
+  judge(pc, syllablesHeard)
 }
 
 /** Enregistrements des notes seules, et ceux des altérations : on ne compare une syllabe qu'aux mots qui ont du sens à ce moment. */
-const noteTemplates = Object.fromEntries(Object.entries(templates).filter(([k]) => k in SOUND_PCS))
-const accidentalTemplates = Object.fromEntries(Object.entries(templates).filter(([k]) => k in ACCIDENTAL))
+let noteTemplates: Templates = {}
+let accidentalTemplates: Templates = {}
+function rebuild() {
+  noteTemplates = Object.fromEntries(Object.entries(templates).filter(([k]) => k in SOUND_PCS))
+  accidentalTemplates = Object.fromEntries(Object.entries(templates).filter(([k]) => k in ACCIDENTAL))
+}
+rebuild()
+
+/** Enregistrements gardés par mot : ceux de « Ma voix », plus les derniers appris en jeu. */
+const RECORDED = 2
+const LEARNED = 4
+
+/** Ajoute aux enregistrements les syllabes d'une réponse juste (en remplaçant les plus anciennes apprises en jeu). */
+function learn(list: Learned[]) {
+  if (!list.length) return
+  for (const { key, features } of list) {
+    const kept = [...(templates[key] ?? []), features]
+    if (kept.length > RECORDED + LEARNED) kept.splice(RECORDED, 1)
+    templates[key] = kept
+  }
+  saveTemplates(templates)
+  rebuild()
+}
 
 function onSyllable(s: Syllable) {
   if (sight.phase.value !== 'running') return
@@ -241,22 +272,34 @@ function onSyllable(s: Syllable) {
       skipUntil = s.end + 300
       clearTimeout(held.timer)
       const pc = (held.pc + shift) % 12
+      const syllablesHeard = [...held.learn, { key: acc!.key, features: s.features }]
       held = null
       heard.value = pitchClassName(pc)
-      return judge(pc)
+      return judge(pc, syllablesHeard)
     }
     // Pas une altération : c'est déjà la note suivante ; celle qui attendait est jugée telle quelle.
     release()
   }
 
-  const best = closest(s.features, noteTemplates)
+  let best = closest(s.features, noteTemplates)
   const scores = best ? ` · proche : ${best.key} (distance ${best.distance.toFixed(1)}, écart ${best.margin.toFixed(1)})` : ''
+  // Hésitation entre la note la plus proche et la note à lire (presque à égalité) : on retient la note à lire.
+  const expected = LETTER_KEYS[sight.current.value?.note.letter ?? -1]
+  let tieBreak = ''
+  if (best && expected && expected !== best.key && (best.noise || best.margin < MIN_MARGIN)) {
+    const list = ranked(s.features, noteTemplates)
+    const exp = list.find((r) => r.key === expected)
+    if (exp && exp.distance - list[0].distance < MIN_MARGIN && exp.distance <= noiseLimit(noteTemplates) * 1.2) {
+      tieBreak = ` · hésitation avec ${expected} (distance ${exp.distance.toFixed(1)}) : ${expected} retenu`
+      best = { key: expected, distance: exp.distance, margin: MIN_MARGIN, noise: false }
+    }
+  }
   // Bruit, ou deux notes presque à égalité : pas de réponse (le joueur peut redire la note).
   if (!best || best.noise || best.margin < MIN_MARGIN) {
     if (best && !best.noise) heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
     return log(`${head}${scores} · ${best?.noise ? 'trop loin de tes mots' : 'pas sûr'} : ignoré`, s.start)
   }
-  log(`${head}${scores}`, s.start)
+  log(`${head}${scores}${tieBreak}`, s.start)
   heard.value = SOUND_LABELS[best.key] ?? ''
   const pc = SOUND_PCS[best.key]
   // La note redite (déjà validée) n'est pas une réponse pour la suivante : pas d'attaque à dater.
@@ -267,9 +310,10 @@ function onSyllable(s: Syllable) {
   // jugée tout de suite (elle passe au vert sans délai).
   const target = sight.current.value?.pc
   const couldAlter = accidentals && target !== undefined && target !== pc && ((pc + 1) % 12 === target || (pc + 11) % 12 === target)
-  if (!couldAlter) return judge(pc)
+  const syllable: Learned = { key: best.key, features: s.features }
+  if (!couldAlter) return judge(pc, [syllable])
   log(`  ${pitchClassName(pc)} : attente d'un dièse ou d'un bémol (${HOLD_MS} ms)`)
-  held = { pc, timer: setTimeout(release, HOLD_MS) }
+  held = { pc, timer: setTimeout(release, HOLD_MS), learn: [syllable] }
 }
 
 async function begin(): Promise<number> {
