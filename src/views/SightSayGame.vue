@@ -124,7 +124,7 @@ function log(line: string, at = performance.now()) {
 async function copyReport() {
   const t = loadTemplates()
   const lines = [
-    `Lecture continue · ${new Date().toLocaleString('fr-FR')}`,
+    `Lecture continue · ${new Date().toLocaleString('fr-FR')} · version du ${new Date(__BUILD_TIME__).toLocaleString('fr-FR')}`,
     `Niveau ${SIGHT_LEVELS[settings.level].label} · tempo de départ ${tempoAfter(settings.level, 0, fastStart)} · reconnaissance ${bySound ? 'par le son' : 'Google'}`,
     bySound ? `Enregistrements : ${Object.entries(t).map(([k, l]) => `${k} ${l.length}`).join(', ')}` : '',
     `Résultat : ${readLabel.value}, jusqu'à ♩ = ${sight.topTempo.value} · ${sight.reason.value}`,
@@ -327,9 +327,13 @@ function onSyllable(s: Syllable) {
   }
 
   let best = closest(s.features, noteTemplates)
-  const scores = best ? ` · proche : ${best.key} (distance ${best.distance.toFixed(1)}, écart ${best.margin.toFixed(1)})` : ''
   // Hésitation entre la note la plus proche et la note à lire (presque à égalité) : on retient la note à lire.
   const expected = LETTER_KEYS[sight.current.value?.note.letter ?? -1]
+  const expectedDistance = expected ? ranked(s.features, noteTemplates).find((r) => r.key === expected)?.distance : undefined
+  const scores = best
+    ? ` · proche : ${best.key} (distance ${best.distance.toFixed(1)}, écart ${best.margin.toFixed(1)})` +
+      (expected && expected !== best.key && expectedDistance !== undefined ? ` · ${expected} à ${expectedDistance.toFixed(1)}` : '')
+    : ''
   let tieBreak = ''
   if (best && expected && expected !== best.key && (best.noise || best.margin < MIN_MARGIN)) {
     const list = ranked(s.features, noteTemplates)
