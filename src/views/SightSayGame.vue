@@ -213,7 +213,7 @@ const SOUND_PCS: Record<string, number> = { do: 0, re: 2, mi: 4, fa: 5, sol: 7, 
 const SOUND_LABELS: Record<string, string> = { do: 'do', re: 'ré', mi: 'mi', fa: 'fa', sol: 'sol', la: 'la', si: 'si', diese: 'dièse', bemol: 'bémol' }
 let syllables: SyllableListening | null = null
 /** Note dite, en attente d'un éventuel « dièse » ou « bémol » (niveaux avec altérations). */
-let held: { pc: number; timer: ReturnType<typeof setTimeout>; learn: Learned[] } | null = null
+let held: { pc: number; timer: ReturnType<typeof setTimeout>; learn: Learned[]; features: Features; end: number } | null = null
 const HOLD_MS = 900
 /** Après « dièse » ou « bémol », ce qui suit de près (le reste du mot) n'est pas une note. */
 let skipUntil = 0
@@ -221,8 +221,40 @@ let skipUntil = 0
 const ACCIDENTAL: Record<string, 1 | 11> = { diese: 1, diese2: 1, bemol: 11, bemol2: 11 }
 /** Sens d'un enregistrement, pour juger si deux mots sont presque à égalité (deux moitiés de « dièse » ne le sont pas). */
 const meaning = (key: string) => key.replace(/2$/, '')
-/** Écart sous lequel « dièse » et « bémol » sont jugés presque à égalité. */
-const ACCIDENTAL_MARGIN = 2
+/** Syllabe qui suit la note de moins de 250 ms : elle fait partie de la même réponse (« do-dièse » dit d'un trait). */
+const GLUED_MS = 250
+
+/**
+ * Une note altérée dite en deux syllabes (« do » + « dièse ») : chaque couple note + altération est noté par la somme
+ * de ses deux distances, et le meilleur retenu. À égalité (presque) avec la note à lire, c'est elle qui est retenue.
+ */
+function decodePair(f1: Features, f2: Features) {
+  const letters = ranked(f1, noteTemplates)
+  const accs = ranked(f2, accidentalTemplates)
+  const accDistance = (k: 'diese' | 'bemol') => Math.min(...accs.filter((a) => meaning(a.key) === k).map((a) => a.distance))
+  const options = letters
+    .flatMap((l) =>
+      (['diese', 'bemol'] as const).map((accidental) => ({
+        letter: l.key,
+        accidental,
+        pc: (SOUND_PCS[l.key] + ACCIDENTAL[accidental]) % 12,
+        cost: l.distance + accDistance(accidental),
+      })),
+    )
+    .filter((o) => Number.isFinite(o.cost))
+    .sort((a, b) => a.cost - b.cost)
+  let best = options[0]
+  const second = options.find((o) => o.pc !== best?.pc)
+  const target = sight.current.value?.pc
+  const wanted = options.find((o) => o.pc === target)
+  let tie = ''
+  if (best && wanted && wanted.pc !== best.pc && wanted.cost - best.cost < MIN_MARGIN) {
+    tie = ` · hésitation : ${SOUND_LABELS[wanted.letter]} ${SOUND_LABELS[wanted.accidental]} retenu`
+    best = wanted
+  }
+  const label = (o?: (typeof options)[number]) => (o ? `${SOUND_LABELS[o.letter]} ${SOUND_LABELS[o.accidental]} (${o.cost.toFixed(1)})` : '—')
+  return { best, f1, text: `meilleur ${label(options[0])}, puis ${label(second)}${tie}` }
+}
 
 function release() {
   if (!held) return
@@ -265,29 +297,26 @@ function onSyllable(s: Syllable) {
   if (s.start < skipUntil) return log(`${head} · fin de « dièse » / « bémol » : ignoré`, s.start)
 
   // Une note attend son altération : la syllabe qui suit ne peut être que « dièse » ou « bémol » (sinon, « di » se
-  // confond avec « si »). On la compare seulement à ces deux mots.
+  // confond avec « si »). Collée à la note (« do-dièse » d'un trait), ou clairement une altération, on juge les deux
+  // syllabes ensemble : la note et l'altération qui, à elles deux, ressemblent le plus à ce qui a été dit.
   if (held) {
     const acc = closest(s.features, accidentalTemplates, meaning)
-    let shift = acc && !acc.noise ? ACCIDENTAL[acc.key] : undefined
-    // « Dièse » et « bémol » presque à égalité : on retient celui qui donne la note à lire (on n'attend une altération
-    // que si l'une des deux la donne).
-    const needed = ((sight.current.value?.pc ?? held.pc) - held.pc + 12) % 12
-    const tie = !!shift && acc!.margin < ACCIDENTAL_MARGIN && (needed === 1 || needed === 11) && shift !== needed
-    if (tie) shift = needed as 1 | 11
-    log(
-      `${head}${acc ? ` · altération la plus proche : ${acc.key} (distance ${acc.distance.toFixed(1)}, écart ${acc.margin.toFixed(1)})` : ''}` +
-        `${!shift ? ' · pas une altération' : tie ? ` · hésitation : ${needed === 1 ? 'dièse' : 'bémol'} retenu` : ''}`,
-      s.start,
-    )
-    if (shift) {
-      skipUntil = s.end + 300
-      clearTimeout(held.timer)
-      const pc = (held.pc + shift) % 12
-      const syllablesHeard = [...held.learn, { key: shift === 1 ? 'diese' : 'bemol', features: s.features }]
-      held = null
-      heard.value = pitchClassName(pc)
-      return judge(pc, syllablesHeard)
-    }
+    const glued = s.start - held.end < GLUED_MS
+    if (acc && (glued || !acc.noise)) {
+      const pair = decodePair(held.features, s.features)
+      log(`${head} · avec la syllabe d'avant : ${pair.text}`, s.start)
+      if (pair.best) {
+        skipUntil = s.end + 300
+        clearTimeout(held.timer)
+        const { pc, letter, accidental } = pair.best
+        held = null
+        heard.value = pitchClassName(pc)
+        return judge(pc, [
+          { key: letter, features: pair.f1 },
+          { key: accidental, features: s.features },
+        ])
+      }
+    } else log(`${head} · pas une altération${acc ? ` (${acc.key}, distance ${acc.distance.toFixed(1)})` : ''}`, s.start)
     // Pas une altération : c'est déjà la note suivante ; celle qui attendait est jugée telle quelle.
     release()
   }
@@ -305,8 +334,10 @@ function onSyllable(s: Syllable) {
       best = { key: expected, distance: exp.distance, margin: MIN_MARGIN, noise: false }
     }
   }
+  // Note à lire altérée : une note même incertaine est gardée, pour être jugée avec l'altération qui suit.
+  const altered = accidentals && (sight.current.value?.note.alter ?? 0) !== 0
   // Bruit, ou deux notes presque à égalité : pas de réponse (le joueur peut redire la note).
-  if (!best || best.noise || best.margin < MIN_MARGIN) {
+  if (!best || best.noise || (best.margin < MIN_MARGIN && !altered)) {
     if (best && !best.noise) heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
     return log(`${head}${scores} · ${best?.noise ? 'trop loin de tes mots' : 'pas sûr'} : ignoré`, s.start)
   }
@@ -320,11 +351,13 @@ function onSyllable(s: Syllable) {
   // On n'attend une altération que si elle peut donner la note à lire (« fa » quand c'est fa dièse) ; sinon la note est
   // jugée tout de suite (elle passe au vert sans délai).
   const target = sight.current.value?.pc
-  const couldAlter = accidentals && target !== undefined && target !== pc && ((pc + 1) % 12 === target || (pc + 11) % 12 === target)
+  // Note à lire altérée : on attend toujours (« do » peut être le début de « do dièse » même mal reconnu) ;
+  // sinon, seulement si une altération peut donner la note à lire.
+  const couldAlter = altered || (accidentals && target !== undefined && target !== pc && ((pc + 1) % 12 === target || (pc + 11) % 12 === target))
   const syllable: Learned = { key: best.key, features: s.features }
   if (!couldAlter) return judge(pc, [syllable])
   log(`  ${pitchClassName(pc)} : attente d'un dièse ou d'un bémol (${HOLD_MS} ms)`)
-  held = { pc, timer: setTimeout(release, HOLD_MS), learn: [syllable] }
+  held = { pc, timer: setTimeout(release, HOLD_MS), learn: [syllable], features: s.features, end: s.end }
 }
 
 async function begin(): Promise<number> {
