@@ -19,9 +19,11 @@ describe('Reconnaissance par le son', () => {
   })
 
   it('mesure l’écart avec le plus proche d’un autre sens (les deux syllabes de « dièse » ne se concurrencent pas)', () => {
-    const a = features(vowel(750, 1200, 300))
-    const templates = { diese: [a], diese2: [features(vowel(740, 1210, 300))], mi: [features(vowel(300, 2300, 300))] }
-    expect(closest(a, templates)?.margin).toBeLessThan(closest(a, templates, (k) => k.replace(/2$/, ''))?.margin ?? 0)
+    const frames = (v: number) => Array.from({ length: 5 }, () => new Array(12).fill(v))
+    const a = frames(0)
+    const templates = { diese: [a], diese2: [frames(0.1)], mi: [frames(5)] }
+    expect(closest(a, templates)?.margin).toBeCloseTo(Math.sqrt(12) * 0.1 / 2)
+    expect(closest(a, templates, (k) => k.replace(/2$/, ''))?.margin).toBeCloseTo(Math.sqrt(12) * 5 / 2)
   })
 
   it('mesure une distance nulle entre deux syllabes identiques', () => {
