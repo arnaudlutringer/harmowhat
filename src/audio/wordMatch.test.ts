@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { closest, distance, downsample, features } from './wordMatch'
+import { closest, distance, downsample, features, voicedMs } from './wordMatch'
 
 /** Son de synthèse à 16 kHz : une voyelle grossière (fondamentale et deux formants), sur `ms` millisecondes. */
 function vowel(f1: number, f2: number, ms: number, pitch = 120): Float32Array {
@@ -22,6 +22,12 @@ describe('Reconnaissance par le son', () => {
     const f = features(vowel(500, 1500, 200))
     expect(distance(f, f)).toBe(0)
     expect(distance(f, [])).toBe(Infinity)
+  })
+
+  it('distingue une voix (son régulier) d’un souffle (bruit)', () => {
+    const breath = Float32Array.from({ length: 16 * 300 }, () => (Math.random() - 0.5) * 0.5)
+    expect(voicedMs(vowel(500, 1500, 300))).toBeGreaterThanOrEqual(200)
+    expect(voicedMs(breath)).toBeLessThan(80)
   })
 
   it('rééchantillonne à 16 kHz', () => {

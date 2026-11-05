@@ -1,4 +1,5 @@
 import { audioContext } from './engine'
+import { detectPitch } from './pitch'
 
 /**
  * Reconnaissance des noms de notes « par le son » (essai, écran Test du micro) : sans Internet ni service de
@@ -171,22 +172,57 @@ export const MIN_SYLLABLE_MS = 180
 /** Écart minimal entre la note la plus proche et la suivante pour répondre (sinon : pas sûr). */
 export const MIN_MARGIN = 1
 
+/** Durée de voix « chantée » (son régulier, avec une hauteur) exigée dans une syllabe : souffle et toux n'en ont presque pas. */
+export const MIN_VOICED_MS = 80
+/** Au-delà de cette part de la distance habituelle entre deux enregistrements d'un même mot : ce n'est aucun des mots. */
+const NOISE_FACTOR = 1.6
+
+/** Durée de voix avec une hauteur nette dans un son à 16 kHz (fenêtres de 40 ms). */
+export function voicedMs(samples: Float32Array): number {
+  const win = 640
+  let voiced = 0
+  for (let start = 0; start + win <= samples.length; start += win) {
+    const p = detectPitch(samples.subarray(start, start + win), RATE)
+    if (p && p.clarity >= 0.75 && p.frequency >= 70 && p.frequency <= 500) voiced++
+  }
+  return voiced * 40
+}
+
 /** Enregistrements du joueur : plusieurs par syllabe. */
 export type Templates = Record<string, Features[]>
 
-/** La syllabe la plus proche parmi les enregistrements, avec sa distance et l'écart avec la suivante. */
-export function closest(f: Features, templates: Templates): { key: string; distance: number; margin: number } | null {
+/** Distance habituelle entre deux enregistrements d'un même mot (moyenne), ou Infinity s'il n'y en a qu'un par mot. */
+const spreads = new WeakMap<Templates, number>()
+function spread(templates: Templates): number {
+  let s = spreads.get(templates)
+  if (s === undefined) {
+    const pairs: number[] = []
+    for (const list of Object.values(templates)) for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) pairs.push(distance(list[i], list[j]))
+    s = pairs.length ? pairs.reduce((a, b) => a + b, 0) / pairs.length : Infinity
+    spreads.set(templates, s)
+  }
+  return s
+}
+
+/**
+ * La syllabe la plus proche parmi les enregistrements, avec sa distance et l'écart avec la suivante ;
+ * `noise` : elle est bien plus loin que deux enregistrements d'un même mot entre eux (un bruit, pas un nom de note).
+ */
+export function closest(f: Features, templates: Templates): { key: string; distance: number; margin: number; noise: boolean } | null {
   const best = Object.entries(templates)
     .map(([key, list]) => ({ key, distance: Math.min(...list.map((t) => distance(f, t))) }))
     .filter((r) => Number.isFinite(r.distance))
     .sort((x, y) => x.distance - y.distance)
   if (!best.length) return null
-  return { key: best[0].key, distance: best[0].distance, margin: (best[1]?.distance ?? Infinity) - best[0].distance }
+  const d = best[0].distance
+  return { key: best[0].key, distance: d, margin: (best[1]?.distance ?? Infinity) - d, noise: d > spread(templates) * NOISE_FACTOR }
 }
 
 /** Une syllabe découpée dans le son du micro, avec l'instant de son début et de sa fin (performance.now()). */
 export interface Syllable {
   features: Features
+  /** Durée de voix avec une hauteur nette, en ms (presque nulle pour un souffle ou une toux). */
+  voiced: number
   start: number
   end: number
 }
@@ -231,7 +267,8 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
     voice = null
     // Trop court : un claquement, un souffle ou un bout de mot, pas une syllabe.
     if (audio.length < (ctx.sampleRate * MIN_SYLLABLE_MS) / 1000) return
-    onSyllable({ features: features(downsample(audio, ctx.sampleRate)), start: startedAt, end: now })
+    const low = downsample(audio, ctx.sampleRate)
+    onSyllable({ features: features(low), voiced: voicedMs(low), start: startedAt, end: now })
   }
 
   processor.onaudioprocess = (e) => {

@@ -36,9 +36,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef } from 'vue'
 import { IonButton, onIonViewWillLeave } from '@ionic/vue'
-import { closest, listenToSyllables, loadTemplates, MIN_MARGIN, saveTemplates, type Syllable, type SyllableListening, type Templates } from '@/audio/wordMatch'
+import { closest, listenToSyllables, loadTemplates, MIN_MARGIN, MIN_VOICED_MS, saveTemplates, type Syllable, type SyllableListening, type Templates } from '@/audio/wordMatch'
 import { pitchClassName } from '@/music/notes'
 
 const props = defineProps<{
@@ -60,7 +60,7 @@ const NOTES = [
 const TAKES = 3
 const prompts = NOTES.flatMap((n) => Array.from({ length: TAKES }, () => n))
 
-const templates = ref<Templates>(loadTemplates())
+const templates = shallowRef<Templates>(loadTemplates())
 const count = computed(() => Object.values(templates.value).reduce((n, l) => n + l.length, 0))
 const ready = computed(() => NOTES.every((n) => templates.value[n.key]?.length))
 const mode = ref<'idle' | 'record' | 'test'>('idle')
@@ -97,7 +97,8 @@ function record() {
   recorded.value = false
   mode.value = 'record'
   void listen((s) => {
-    if (recorded.value || mode.value !== 'record') return
+    // Souffle, toux : pas un mot, on ne l'enregistre pas.
+    if (recorded.value || mode.value !== 'record' || s.voiced < MIN_VOICED_MS) return
     const note = prompts[step.value]
     ;(fresh[note.key] ??= []).push(s.features)
     recorded.value = true
@@ -117,6 +118,12 @@ function test() {
   result.value = null
   log.value = []
   void listen((s) => {
+    const length = Math.round(s.end - s.start)
+    // Souffle, toux : presque pas de voix avec une hauteur ; ignoré sans réponse.
+    if (s.voiced < MIN_VOICED_MS) {
+      log.value = [`· bruit ignoré (voix ${s.voiced} ms) · syllabe ${length} ms`, ...log.value].slice(0, 40)
+      return
+    }
     const t0 = performance.now()
     const best = closest(s.features, templates.value)
     const ms = Math.round(performance.now() - t0)
@@ -124,7 +131,10 @@ function test() {
     const note = NOTES.find((n) => n.key === best.key)
     if (!note) return
     const expected = pitchClassName(props.expected)
-    const length = Math.round(s.end - s.start)
+    if (best.noise) {
+      log.value = [`· bruit ignoré (le plus proche : ${note.label}, distance ${best.distance.toFixed(1)}) · syllabe ${length} ms`, ...log.value].slice(0, 40)
+      return
+    }
     // Deux notes presque à égalité : mieux vaut ne pas répondre que deviner.
     const sure = best.margin >= MIN_MARGIN
     const ok = sure && note.pc === props.expected
