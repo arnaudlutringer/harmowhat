@@ -46,7 +46,8 @@ import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 import { online } from '@/player/online'
 // Mots appris de la voix du joueur (« Ma voix ») : chargés pour la lecture de ce qu'il dit.
-import '@/games/voiceWords'
+import { recognition, soundReady } from '@/games/voiceWords'
+import { closest, listenToSyllables, loadTemplates, MIN_MARGIN, MIN_VOICED_MS, type Syllable, type SyllableListening } from '@/audio/wordMatch'
 
 const route = useRoute()
 const settings = parseSightSettings(route.query)
@@ -81,6 +82,10 @@ function stopSpeech() {
   clearTimeout(pending)
   speech?.stop()
   speech = null
+  syllables?.stop()
+  syllables = null
+  if (held) clearTimeout(held.timer)
+  held = null
 }
 onBeforeUnmount(stopSpeech)
 
@@ -138,12 +143,76 @@ function onEvent(e: SpeechEvent) {
   }
 }
 
+// ——— Reconnaissance par le son (par défaut) : chaque syllabe comparée aux enregistrements du joueur, sans Internet ———
+
+/** Par le son, si le joueur a enregistré ses mots (sinon, Google). */
+const bySound = recognition.value === 'son' && soundReady()
+const templates = loadTemplates()
+const SOUND_PCS: Record<string, number> = { do: 0, re: 2, mi: 4, fa: 5, sol: 7, la: 9, si: 11 }
+const SOUND_LABELS: Record<string, string> = { do: 'do', re: 'ré', mi: 'mi', fa: 'fa', sol: 'sol', la: 'la', si: 'si', diese: 'dièse', bemol: 'bémol' }
+let syllables: SyllableListening | null = null
+/** Note dite, en attente d'un éventuel « dièse » ou « bémol » (niveaux avec altérations). */
+let held: { pc: number; timer: ReturnType<typeof setTimeout> } | null = null
+const HOLD_MS = 500
+/** « Dièse » et « bémol » ont deux syllabes : la seconde (« -èse », « -mol ») n'est pas une note. */
+let skipUntil = 0
+
+function release() {
+  if (!held) return
+  clearTimeout(held.timer)
+  const { pc } = held
+  held = null
+  judge(pc)
+}
+
+function onSyllable(s: Syllable) {
+  if (sight.phase.value !== 'running') return
+  // Souffle, toux, seconde moitié de « dièse » : ignorés.
+  if (s.voiced < MIN_VOICED_MS || s.start < skipUntil) return
+  const best = closest(s.features, templates)
+  // Bruit, ou deux mots presque à égalité : pas de réponse (le joueur peut redire la note).
+  if (!best || best.noise || best.margin < MIN_MARGIN) {
+    if (best && !best.noise) heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
+    return
+  }
+  heard.value = SOUND_LABELS[best.key] ?? ''
+  if (best.key === 'diese' || best.key === 'bemol') {
+    skipUntil = s.end + 300
+    if (!held) return
+    clearTimeout(held.timer)
+    const pc = (held.pc + (best.key === 'diese' ? 1 : 11)) % 12
+    held = null
+    heard.value = `${pitchClassName(pc)}`
+    return judge(pc)
+  }
+  const pc = SOUND_PCS[best.key]
+  if (pc === undefined) return
+  release()
+  // La note redite (déjà validée) n'est pas une réponse pour la suivante : pas d'attaque à dater.
+  if (pc === lastPc) return
+  // La réponse est datée du début de la syllabe.
+  sight.onset(s.start)
+  if (!accidentals) return judge(pc)
+  held = { pc, timer: setTimeout(release, HOLD_MS) }
+}
+
 async function begin(): Promise<number> {
   const started = sight.start()
   micError.value = ''
   heard.value = ''
   lastPc = -1
   recognizing.value = false
+  skipUntil = 0
+  if (bySound) {
+    if (!syllables) {
+      try {
+        syllables = await listenToSyllables(onSyllable)
+      } catch {
+        micError.value = 'Le micro n’est pas accessible : autorise-le pour cette appli, puis réessaie.'
+      }
+    }
+    return started
+  }
   // Arrivé ici sans connexion (bouton « Jouer » des classements, par exemple) : la reconnaissance vocale ne marchera pas.
   if (!online.value) micError.value = 'Pas de connexion à Internet : la reconnaissance vocale ne peut pas comprendre les notes.'
   if (!speech) {

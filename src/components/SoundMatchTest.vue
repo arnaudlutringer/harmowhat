@@ -61,6 +61,8 @@ const TAKES = 3
 const prompts = NOTES.flatMap((n) => Array.from({ length: TAKES }, () => n))
 
 const templates = shallowRef<Templates>(loadTemplates())
+/** Seulement les noms de notes (ce test ne demande pas d'altérations). */
+const noteTemplates = computed(() => Object.fromEntries(NOTES.filter((n) => templates.value[n.key]).map((n) => [n.key, templates.value[n.key]])))
 const count = computed(() => Object.values(templates.value).reduce((n, l) => n + l.length, 0))
 const ready = computed(() => NOTES.every((n) => templates.value[n.key]?.length))
 const mode = ref<'idle' | 'record' | 'test'>('idle')
@@ -106,8 +108,9 @@ function record() {
       recorded.value = false
       step.value++
       if (step.value < prompts.length) return
-      templates.value = fresh
-      saveTemplates(fresh)
+      // « Dièse » et « bémol » (enregistrés dans « Ma voix ») sont gardés.
+      templates.value = { ...loadTemplates(), ...fresh }
+      saveTemplates(templates.value)
       stop()
     }, 700)
   })
@@ -125,7 +128,7 @@ function test() {
       return
     }
     const t0 = performance.now()
-    const best = closest(s.features, templates.value)
+    const best = closest(s.features, noteTemplates.value)
     const ms = Math.round(performance.now() - t0)
     if (!best) return
     const note = NOTES.find((n) => n.key === best.key)

@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { isKnownWord, setLearnedWords, spokenWords } from './sightReading'
+import { loadTemplates } from '@/audio/wordMatch'
 
 /**
  * « Ma voix » : avant la première partie de « Lecture continue », le joueur dit chaque nom de note (et « dièse »,
@@ -52,8 +53,40 @@ function load(): Saved {
 export const voiceWords = ref<Saved>(load())
 setLearnedWords(voiceWords.value.words)
 
-/** Le joueur a déjà enregistré sa voix. */
-export const voiceReady = () => voiceWords.value.done
+/**
+ * Reconnaissance des notes dites : « par le son » (sur le téléphone, d'après les enregistrements du joueur, sans
+ * Internet ; voir audio/wordMatch.ts), ou par Google (service de reconnaissance vocale, avec Internet).
+ */
+export type Recognition = 'son' | 'google'
+const RECOGNITION_KEY = 'harmowhat.recognition'
+
+function loadRecognition(): Recognition {
+  try {
+    return localStorage.getItem(RECOGNITION_KEY) === 'google' ? 'google' : 'son'
+  } catch {
+    return 'son'
+  }
+}
+
+export const recognition = ref<Recognition>(loadRecognition())
+
+export function setRecognition(r: Recognition) {
+  recognition.value = r
+  try {
+    localStorage.setItem(RECOGNITION_KEY, r)
+  } catch {
+    // Stockage indisponible : valable pour cette session seulement.
+  }
+}
+
+/** Les enregistrements « par le son » couvrent tous les mots. */
+export const soundReady = () => {
+  const t = loadTemplates()
+  return VOICE_WORDS.every((w) => t[w.key]?.length)
+}
+
+/** Le joueur a déjà enregistré sa voix (pour la reconnaissance choisie). */
+export const voiceReady = () => (recognition.value === 'son' ? soundReady() : voiceWords.value.done)
 
 /**
  * Transcription à retenir pour une syllabe, ou null : seulement si aucun de ses mots n'est déjà compris
