@@ -221,6 +221,8 @@ let skipUntil = 0
 const ACCIDENTAL: Record<string, 1 | 11> = { diese: 1, diese2: 1, bemol: 11, bemol2: 11 }
 /** Sens d'un enregistrement, pour juger si deux mots sont presque à égalité (deux moitiés de « dièse » ne le sont pas). */
 const meaning = (key: string) => key.replace(/2$/, '')
+/** Écart sous lequel « dièse » et « bémol » sont jugés presque à égalité. */
+const ACCIDENTAL_MARGIN = 2
 
 function release() {
   if (!held) return
@@ -266,13 +268,22 @@ function onSyllable(s: Syllable) {
   // confond avec « si »). On la compare seulement à ces deux mots.
   if (held) {
     const acc = closest(s.features, accidentalTemplates, meaning)
-    const shift = acc && !acc.noise ? ACCIDENTAL[acc.key] : undefined
-    log(`${head}${acc ? ` · altération la plus proche : ${acc.key} (distance ${acc.distance.toFixed(1)})` : ''}${shift ? '' : ' · pas une altération'}`, s.start)
+    let shift = acc && !acc.noise ? ACCIDENTAL[acc.key] : undefined
+    // « Dièse » et « bémol » presque à égalité : on retient celui qui donne la note à lire (on n'attend une altération
+    // que si l'une des deux la donne).
+    const needed = ((sight.current.value?.pc ?? held.pc) - held.pc + 12) % 12
+    const tie = !!shift && acc!.margin < ACCIDENTAL_MARGIN && (needed === 1 || needed === 11) && shift !== needed
+    if (tie) shift = needed as 1 | 11
+    log(
+      `${head}${acc ? ` · altération la plus proche : ${acc.key} (distance ${acc.distance.toFixed(1)}, écart ${acc.margin.toFixed(1)})` : ''}` +
+        `${!shift ? ' · pas une altération' : tie ? ` · hésitation : ${needed === 1 ? 'dièse' : 'bémol'} retenu` : ''}`,
+      s.start,
+    )
     if (shift) {
       skipUntil = s.end + 300
       clearTimeout(held.timer)
       const pc = (held.pc + shift) % 12
-      const syllablesHeard = [...held.learn, { key: acc!.key, features: s.features }]
+      const syllablesHeard = [...held.learn, { key: shift === 1 ? 'diese' : 'bemol', features: s.features }]
       held = null
       heard.value = pitchClassName(pc)
       return judge(pc, syllablesHeard)
