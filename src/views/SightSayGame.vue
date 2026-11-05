@@ -27,6 +27,13 @@
         <p v-if="micError" class="error">{{ micError }}</p>
         <!-- Ce que la reconnaissance vocale a entendu, pour comprendre une réponse refusée. -->
         <p class="heard">{{ recognizing ? 'Je t’ai entendu, je reconnais le mot…' : heard ? `« ${heard} »` : ' ' }}</p>
+        <!-- Partie finie (essai compris) : le compte rendu de tout ce qui a été entendu et jugé. -->
+        <button v-if="sight.phase.value === 'over'" class="report" @click="copyReport">{{ copied ? 'Compte rendu copié ✓' : 'Copier le compte rendu' }}</button>
+      </div>
+    </template>
+    <template #result>
+      <div class="report-box">
+        <button class="report" @click="copyReport">{{ copied ? 'Compte rendu copié ✓' : 'Copier le compte rendu' }}</button>
       </div>
     </template>
   </game-shell>
@@ -41,7 +48,7 @@ import { useQuiz } from '@/composables/useQuiz'
 import { useSightReading } from '@/composables/useSightReading'
 import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
 import { pitchClassName } from '@/music/notes'
-import { clefLabel, parseSightSettings, parseSpokenNotes, SIGHT_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
+import { clefLabel, noteName, parseSightSettings, parseSpokenNotes, SIGHT_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 import { online } from '@/player/online'
@@ -89,6 +96,44 @@ function stopSpeech() {
 }
 onBeforeUnmount(stopSpeech)
 
+// ——— Compte rendu : tout ce qui est entendu et jugé, à copier en fin de partie pour comprendre une erreur ———
+
+const report: string[] = []
+let t0 = 0
+const copied = ref(false)
+
+/** La note à lire en ce moment, et où elle est par rapport à la barre (en temps : -1,5 = à un temps et demi de la barre). */
+function where(at = performance.now()): string {
+  const n = sight.current.value
+  const staff = sight.notes.value.find((s) => s.note === n)
+  if (!n || !staff) return 'aucune note à lire'
+  const late = sight.position.value - (performance.now() - at) * (sight.tempo.value / 60000) - staff.index
+  return `à lire : ${noteName(n)} (${late >= 0 ? '+' : ''}${late.toFixed(2)} temps)`
+}
+
+function log(line: string, at = performance.now()) {
+  report.push(`${((at - t0) / 1000).toFixed(2).padStart(6)} s  ${line}`)
+}
+
+async function copyReport() {
+  const t = loadTemplates()
+  const lines = [
+    `Lecture continue · ${new Date().toLocaleString('fr-FR')}`,
+    `Niveau ${SIGHT_LEVELS[settings.level].label} · tempo de départ ${tempoAfter(settings.level, 0, fastStart)} · reconnaissance ${bySound ? 'par le son' : 'Google'}`,
+    bySound ? `Enregistrements : ${Object.entries(t).map(([k, l]) => `${k} ${l.length}`).join(', ')}` : '',
+    `Résultat : ${readLabel.value}, jusqu'à ♩ = ${sight.topTempo.value} · ${sight.reason.value}`,
+    '',
+    ...report,
+  ]
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'))
+    copied.value = true
+    setTimeout(() => (copied.value = false), 2000)
+  } catch {
+    micError.value = 'Copie impossible.'
+  }
+}
+
 /** Dernière note jugée. */
 let lastPc = -1
 
@@ -97,9 +142,13 @@ function judge(pc: number) {
   recognizing.value = false
   // Deux notes de suite n'ont jamais le même nom : la note qu'on vient de valider, redite (le joueur la répète parce
   // que le mot tarde à être reconnu, ou la phrase précédente revient en retard), n'est pas une réponse pour la suivante.
-  if (pc === lastPc) return
+  if (pc === lastPc) return log(`  ${pitchClassName(pc)} redit : ignoré`)
   lastPc = pc
-  sight.submit(pc, `Tu as dit ${pitchClassName(pc)}`)
+  const before = sight.read.value
+  const context = where()
+  const taken = sight.submit(pc, `Tu as dit ${pitchClassName(pc)}`)
+  const verdict = !taken ? 'pas pris en compte' : sight.read.value > before ? 'JUSTE ✓' : 'FAUX ✗'
+  log(`→ réponse ${pitchClassName(pc)} · ${context} · ${verdict}`)
 }
 
 function onSpeech(text: string, s: number, final: boolean, alternatives: string[] = [text]) {
@@ -109,6 +158,7 @@ function onSpeech(text: string, s: number, final: boolean, alternatives: string[
     consumed = 0
   }
   heard.value = text
+  log(`Google ${final ? 'final' : 'partiel'} : ${alternatives.map((a) => `« ${a} »`).join(', ')}`)
   clearTimeout(pending)
   // Parmi les transcriptions possibles, celle où l'on trouve le plus de noms de notes (la plus probable à égalité).
   const said = alternatives.map(parseSpokenNotes).reduce((best, notes) => (notes.length > best.length ? notes : best), parseSpokenNotes(text))
@@ -131,6 +181,7 @@ let speechEnd = 0
 
 function onEvent(e: SpeechEvent) {
   if (e.type === 'onset') {
+    if (sight.phase.value === 'running') log(`attaque de la voix · ${where(perfTime(e.at))}`, perfTime(e.at))
     sight.onset(perfTime(e.at))
     if (sight.phase.value === 'running') recognizing.value = true
   }
@@ -171,19 +222,23 @@ function release() {
 
 function onSyllable(s: Syllable) {
   if (sight.phase.value !== 'running') return
+  const head = `syllabe ${Math.round(s.end - s.start)} ms, voix ${s.voiced} ms · ${where(s.start)}`
   // Souffle, toux, seconde moitié de « dièse » : ignorés.
-  if (s.voiced < MIN_VOICED_MS || s.start < skipUntil) return
+  if (s.voiced < MIN_VOICED_MS) return log(`${head} · souffle ou bruit : ignoré`, s.start)
+  if (s.start < skipUntil) return log(`${head} · fin de « dièse » / « bémol » : ignoré`, s.start)
   const best = closest(s.features, templates, meaning)
+  const scores = best ? ` · proche : ${best.key} (distance ${best.distance.toFixed(1)}, écart ${best.margin.toFixed(1)})` : ''
   // Bruit, ou deux mots presque à égalité : pas de réponse (le joueur peut redire la note).
   if (!best || best.noise || best.margin < MIN_MARGIN) {
     if (best && !best.noise) heard.value = `${SOUND_LABELS[meaning(best.key)] ?? '?'} ?`
-    return
+    return log(`${head}${scores} · ${best?.noise ? 'trop loin de tes mots' : 'pas sûr'} : ignoré`, s.start)
   }
+  log(`${head}${scores}`, s.start)
   const shift = ACCIDENTAL[best.key]
   if (shift) {
     // Dièse ou bémol (ou seulement sa seconde syllabe, quand la première s'est fondue dans la note) : il altère la note dite juste avant.
     skipUntil = s.end + 300
-    if (!held) return
+    if (!held) return log('  altération sans note juste avant : ignorée')
     clearTimeout(held.timer)
     const pc = (held.pc + shift) % 12
     held = null
@@ -195,10 +250,11 @@ function onSyllable(s: Syllable) {
   if (pc === undefined) return
   release()
   // La note redite (déjà validée) n'est pas une réponse pour la suivante : pas d'attaque à dater.
-  if (pc === lastPc) return
+  if (pc === lastPc) return log(`  ${pitchClassName(pc)} redit : ignoré`)
   // La réponse est datée du début de la syllabe.
   sight.onset(s.start)
   if (!accidentals) return judge(pc)
+  log(`  ${pitchClassName(pc)} : attente d'un dièse ou d'un bémol (${HOLD_MS} ms)`)
   held = { pc, timer: setTimeout(release, HOLD_MS) }
 }
 
@@ -209,6 +265,9 @@ async function begin(): Promise<number> {
   lastPc = -1
   recognizing.value = false
   skipUntil = 0
+  report.length = 0
+  t0 = performance.now()
+  log('départ (la première note arrive à la barre dans 3 temps)')
   if (bySound) {
     if (!syllables) {
       try {
@@ -233,6 +292,7 @@ async function begin(): Promise<number> {
 
 watch(sight.phase, (phase) => {
   if (phase !== 'over') return
+  log(`FIN : ${sight.reason.value}`)
   stopSpeech()
   if (!fastStart) trophyEvent({ type: 'sight-run', game: 'lis-dis', notes: sight.read.value, tempo: tempoAfter(settings.level, Math.max(0, sight.read.value - 1)) })
 })
@@ -285,5 +345,21 @@ const status = computed(() => {
   color: var(--ion-color-medium);
   font-style: italic;
   text-align: center;
+}
+.report-box {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+.report {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-color-primary);
+  font-family: inherit;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.08);
 }
 </style>

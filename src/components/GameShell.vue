@@ -34,6 +34,8 @@
         :fork-used="quiz.forkUsed.value"
         @restart="quiz.restart"
       />
+      <!-- Sous le bilan, ce qu'un jeu veut y ajouter (le compte rendu de « Lecture continue »). -->
+      <slot v-if="quiz.finished.value" name="result" />
 
       <div v-else-if="quiz.countdown.value !== null" class="countdown" aria-live="assertive">
         <p v-if="quiz.trial" class="trial countdown-trial">Essai</p>
