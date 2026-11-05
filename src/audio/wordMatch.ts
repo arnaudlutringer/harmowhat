@@ -208,14 +208,20 @@ function spread(templates: Templates): number {
  * La syllabe la plus proche parmi les enregistrements, avec sa distance et l'écart avec la suivante ;
  * `noise` : elle est bien plus loin que deux enregistrements d'un même mot entre eux (un bruit, pas un nom de note).
  */
-export function closest(f: Features, templates: Templates): { key: string; distance: number; margin: number; noise: boolean } | null {
+export function closest(
+  f: Features,
+  templates: Templates,
+  /** Sens de chaque enregistrement : l'écart se mesure avec le plus proche d'un autre sens. */
+  meaning: (key: string) => string = (k) => k,
+): { key: string; distance: number; margin: number; noise: boolean } | null {
   const best = Object.entries(templates)
     .map(([key, list]) => ({ key, distance: Math.min(...list.map((t) => distance(f, t))) }))
     .filter((r) => Number.isFinite(r.distance))
     .sort((x, y) => x.distance - y.distance)
   if (!best.length) return null
   const d = best[0].distance
-  return { key: best[0].key, distance: d, margin: (best[1]?.distance ?? Infinity) - d, noise: d > spread(templates) * NOISE_FACTOR }
+  const other = best.find((r) => meaning(r.key) !== meaning(best[0].key))
+  return { key: best[0].key, distance: d, margin: (other?.distance ?? Infinity) - d, noise: d > spread(templates) * NOISE_FACTOR }
 }
 
 /** Une syllabe découpée dans le son du micro, avec l'instant de son début et de sa fin (performance.now()). */

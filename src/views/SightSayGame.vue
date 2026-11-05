@@ -153,9 +153,13 @@ const SOUND_LABELS: Record<string, string> = { do: 'do', re: 'ré', mi: 'mi', fa
 let syllables: SyllableListening | null = null
 /** Note dite, en attente d'un éventuel « dièse » ou « bémol » (niveaux avec altérations). */
 let held: { pc: number; timer: ReturnType<typeof setTimeout> } | null = null
-const HOLD_MS = 500
-/** « Dièse » et « bémol » ont deux syllabes : la seconde (« -èse », « -mol ») n'est pas une note. */
+const HOLD_MS = 900
+/** Après « dièse » ou « bémol », ce qui suit de près (le reste du mot) n'est pas une note. */
 let skipUntil = 0
+/** Altération de chaque enregistrement : « dièse » et sa seconde syllabe (diese2) ont le même sens. */
+const ACCIDENTAL: Record<string, 1 | 11> = { diese: 1, diese2: 1, bemol: 11, bemol2: 11 }
+/** Sens d'un enregistrement, pour juger si deux mots sont presque à égalité (deux moitiés de « dièse » ne le sont pas). */
+const meaning = (key: string) => key.replace(/2$/, '')
 
 function release() {
   if (!held) return
@@ -169,22 +173,24 @@ function onSyllable(s: Syllable) {
   if (sight.phase.value !== 'running') return
   // Souffle, toux, seconde moitié de « dièse » : ignorés.
   if (s.voiced < MIN_VOICED_MS || s.start < skipUntil) return
-  const best = closest(s.features, templates)
+  const best = closest(s.features, templates, meaning)
   // Bruit, ou deux mots presque à égalité : pas de réponse (le joueur peut redire la note).
   if (!best || best.noise || best.margin < MIN_MARGIN) {
-    if (best && !best.noise) heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
+    if (best && !best.noise) heard.value = `${SOUND_LABELS[meaning(best.key)] ?? '?'} ?`
     return
   }
-  heard.value = SOUND_LABELS[best.key] ?? ''
-  if (best.key === 'diese' || best.key === 'bemol') {
+  const shift = ACCIDENTAL[best.key]
+  if (shift) {
+    // Dièse ou bémol (ou seulement sa seconde syllabe, quand la première s'est fondue dans la note) : il altère la note dite juste avant.
     skipUntil = s.end + 300
     if (!held) return
     clearTimeout(held.timer)
-    const pc = (held.pc + (best.key === 'diese' ? 1 : 11)) % 12
+    const pc = (held.pc + shift) % 12
     held = null
-    heard.value = `${pitchClassName(pc)}`
+    heard.value = pitchClassName(pc)
     return judge(pc)
   }
+  heard.value = SOUND_LABELS[best.key] ?? ''
   const pc = SOUND_PCS[best.key]
   if (pc === undefined) return
   release()

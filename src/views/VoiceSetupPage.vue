@@ -126,9 +126,23 @@ function onEvent(e: SpeechEvent) {
 }
 
 /** Par le son : la première syllabe avec de la voix (pas un souffle) est l'enregistrement du mot. */
+/** Dernier mot enregistré par le son, et la fin de sa dernière syllabe. */
+let lastTake = { key: '', end: 0 }
+
 function onSyllable(s: Syllable) {
-  if (waiting || step.value >= prompts.length || s.voiced < MIN_VOICED_MS) return
-  ;(sounds[prompts[step.value].key] ??= []).push(s.features)
+  if (step.value >= prompts.length || s.voiced < MIN_VOICED_MS) return
+  // « Dièse » et « bémol » ont deux syllabes : la seconde (« -èse », « -mol ») est enregistrée à part (diese2, bemol2),
+  // pour la reconnaître dans le jeu, même quand la première se fond dans la note (« fa-di-èse »).
+  if (waiting) {
+    if ((lastTake.key === 'diese' || lastTake.key === 'bemol') && s.start - lastTake.end < 400) {
+      ;(sounds[`${lastTake.key}2`] ??= []).push(s.features)
+      lastTake.end = s.end
+    }
+    return
+  }
+  const key = prompts[step.value].key
+  ;(sounds[key] ??= []).push(s.features)
+  lastTake = { key, end: s.end }
   feedback.value = { kind: 'ok', text: 'Enregistré ✓' }
   next()
 }
@@ -163,7 +177,10 @@ function finish() {
   stopListening()
   if (bySound) {
     // Les mots passés gardent leurs enregistrements précédents.
-    saveTemplates({ ...loadTemplates(), ...sounds })
+    const merged = { ...loadTemplates(), ...sounds }
+    // Mot réenregistré d'une seule syllabe : l'ancienne seconde syllabe ne vaut plus.
+    for (const k of ['diese', 'bemol']) if (sounds[k] && !sounds[`${k}2`]) delete merged[`${k}2`]
+    saveTemplates(merged)
     return
   }
   saved = learnedWords()
