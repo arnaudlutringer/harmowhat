@@ -171,6 +171,9 @@ function flat(f: Features): Float64Array {
 const LONG_HOPS = 40
 const EDGE_HOPS = 12
 
+/** Un son sans voix qui finit moins de 120 ms avant une syllabe en est la consonne (« s » de « si », « sol »). */
+const CONSONANT_GAP_MS = 120
+
 /** Syllabe la plus courte retenue (en dessous : bruit, souffle, bout de mot). */
 export const MIN_SYLLABLE_MS = 180
 /** Écart minimal entre la note la plus proche et la suivante pour répondre (sinon : pas sûr). */
@@ -290,12 +293,29 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
   let startedAt = 0
   let lastLevel = 0
 
+  /**
+   * Son sans voix (un « s », un « ch ») gardé un instant : s'il est suivi de près d'une syllabe avec de la voix, c'est
+   * sa consonne (« s » + « i » = « si »), et les deux sont réunis ; sinon c'est un souffle.
+   */
+  let unvoiced: { chunks: Float32Array[]; start: number; end: number } | null = null
+
   function emit(chunks: Float32Array[], start: number, end: number) {
-    const audio = concat(chunks)
+    let audio = concat(chunks)
+    let low = downsample(audio, ctx.sampleRate)
+    const voiced = voicedMs(low)
+    if (voiced < MIN_VOICED_MS) {
+      unvoiced = { chunks, start, end }
+      return
+    }
+    if (unvoiced && start - unvoiced.end < CONSONANT_GAP_MS) {
+      audio = concat([...unvoiced.chunks, ...chunks])
+      low = downsample(audio, ctx.sampleRate)
+      start = unvoiced.start
+    }
+    unvoiced = null
     // Trop court : un claquement, un souffle ou un bout de mot, pas une syllabe.
     if (audio.length < (ctx.sampleRate * MIN_SYLLABLE_MS) / 1000) return
-    const low = downsample(audio, ctx.sampleRate)
-    onSyllable({ features: features(low), voiced: voicedMs(low), start, end })
+    onSyllable({ features: features(low), voiced, start, end })
   }
 
   function close(now: number) {
