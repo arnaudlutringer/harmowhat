@@ -167,6 +167,10 @@ function flat(f: Features): Float64Array {
   return out
 }
 
+/** Au-delà de 400 ms d'un seul tenant, un son est sans doute fait de deux syllabes : on le coupe à son creux (loin des bords). */
+const LONG_HOPS = 40
+const EDGE_HOPS = 12
+
 /** Syllabe la plus courte retenue (en dessous : bruit, souffle, bout de mot). */
 export const MIN_SYLLABLE_MS = 180
 /** Écart minimal entre la note la plus proche et la suivante pour répondre (sinon : pas sûr). */
@@ -175,7 +179,9 @@ export const MIN_MARGIN = 1
 /** Durée de voix « chantée » (son régulier, avec une hauteur) exigée dans une syllabe : souffle et toux n'en ont presque pas. */
 export const MIN_VOICED_MS = 80
 /** Au-delà de cette part de la distance habituelle entre deux enregistrements d'un même mot : ce n'est aucun des mots. */
-const NOISE_FACTOR = 1.6
+const NOISE_FACTOR = 1.8
+/** Écart à partir duquel un mot se détache nettement des autres. */
+const CLEAR_MARGIN = 3
 
 /** Durée de voix avec une hauteur nette dans un son à 16 kHz (fenêtres de 40 ms). */
 export function voicedMs(samples: Float32Array): number {
@@ -221,7 +227,10 @@ export function closest(
   if (!best.length) return null
   const d = best[0].distance
   const other = best.find((r) => meaning(r.key) !== meaning(best[0].key))
-  return { key: best[0].key, distance: d, margin: (other?.distance ?? Infinity) - d, noise: d > spread(templates) * NOISE_FACTOR }
+  const margin = (other?.distance ?? Infinity) - d
+  // Loin de tous les enregistrements, et sans mot qui se détache nettement : un bruit. Un mot qui se détache (grand écart)
+  // est gardé, même un peu loin (voix plus fatiguée, plus rapide…).
+  return { key: best[0].key, distance: d, margin, noise: d > spread(templates) * NOISE_FACTOR && margin < CLEAR_MARGIN }
 }
 
 /** Une syllabe découpée dans le son du micro, avec l'instant de son début et de sa fin (performance.now()). */
@@ -259,22 +268,43 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
   /** Son récent (pour garder un peu avant l'attaque) et son de la syllabe en cours. */
   const history: Float32Array[] = []
   let voice: Float32Array[] | null = null
+  /** Énergie de chaque morceau de 10 ms de la syllabe en cours (pour la couper à son creux). */
+  let levels: number[] = []
   let floor = 0.002
   let peak = 0
+  let dipMin = 0
   let quiet = 0
-  let dip = false
   let length = 0
   let startedAt = 0
   let lastLevel = 0
 
-  function close(now: number) {
-    if (!voice) return
-    const audio = concat(voice)
-    voice = null
+  function emit(chunks: Float32Array[], start: number, end: number) {
+    const audio = concat(chunks)
     // Trop court : un claquement, un souffle ou un bout de mot, pas une syllabe.
     if (audio.length < (ctx.sampleRate * MIN_SYLLABLE_MS) / 1000) return
     const low = downsample(audio, ctx.sampleRate)
-    onSyllable({ features: features(low), voiced: voicedMs(low), start: startedAt, end: now })
+    onSyllable({ features: features(low), voiced: voicedMs(low), start, end })
+  }
+
+  function close(now: number) {
+    if (!voice) return
+    const chunks = voice
+    const lv = levels
+    voice = null
+    levels = []
+    // Long son d'un seul tenant (« si-bémol » dit d'un trait) : coupé en deux au creux d'énergie le plus net du milieu.
+    if (chunks.length > LONG_HOPS) {
+      let cut = -1
+      for (let i = EDGE_HOPS; i < chunks.length - EDGE_HOPS; i++) if (cut < 0 || lv[i] < lv[cut]) cut = i
+      const top = Math.max(...lv)
+      if (cut > 0 && lv[cut] < top * 0.6) {
+        const middle = startedAt + cut * 10
+        emit(chunks.slice(0, cut), startedAt, middle)
+        emit(chunks.slice(cut), middle, now)
+        return
+      }
+    }
+    emit(chunks, startedAt, now)
   }
 
   processor.onaudioprocess = (e) => {
@@ -298,28 +328,34 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
         floor = rms < floor ? rms : floor + 0.01 * (rms - floor)
         if (rms > Math.max(floor * 4, 0.01)) {
           voice = [...history]
+          levels = history.map(() => rms)
           startedAt = now - history.length * 10
           peak = rms
+          dipMin = rms
           quiet = 0
-          dip = false
           length = history.length
         }
         continue
       }
       voice.push(chunk)
+      levels.push(rms)
       length++
-      peak = Math.max(peak, rms)
+      if (rms > peak) {
+        peak = rms
+        dipMin = rms
+      } else dipMin = Math.min(dipMin, rms)
       if (rms < Math.max(floor * 2, 0.005)) quiet++
       else quiet = 0
-      // Creux de voix puis remontée (« do-ré ») : la syllabe s'arrête au creux, la suivante commence.
-      if (rms < peak * 0.35) dip = true
-      else if (dip && rms > peak * 0.6 && length > 12) {
+      // Creux de voix puis remontée (« do-ré », « si-bé-mol ») : la syllabe s'arrête au creux, la suivante commence.
+      if (length > 12 && dipMin < peak * 0.55 && rms > dipMin * 1.8 && rms > peak * 0.45) {
         voice.pop()
+        levels.pop()
         close(now)
         voice = [chunk]
+        levels = [rms]
         startedAt = now
         peak = rms
-        dip = false
+        dipMin = rms
         length = 1
         continue
       }
