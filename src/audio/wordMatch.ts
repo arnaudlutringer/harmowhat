@@ -239,7 +239,7 @@ export interface SyllableListening {
 
 /**
  * Écoute le micro et découpe la voix en syllabes : une syllabe commence quand l'énergie monte nettement au-dessus du
- * bruit de fond, et finit après 80 ms de silence, à un creux de voix (notes enchaînées) ou au bout de 700 ms.
+ * bruit de fond, et finit après 60 ms de silence, à un creux de voix (notes enchaînées) ou au bout de 700 ms.
  * `onLevel` reçoit le niveau (0 à 1) pour l'affichage.
  */
 export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLevel?: (level: number) => void): Promise<SyllableListening> {
@@ -323,7 +323,8 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
         length = 1
         continue
       }
-      if (quiet >= 8 || length >= 70) close(now)
+      // Fin de syllabe après 60 ms de silence : la réponse part vite.
+      if (quiet >= 6 || length >= 70) close(now)
     }
     pending = merged.slice(i)
   }

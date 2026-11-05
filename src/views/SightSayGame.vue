@@ -220,40 +220,54 @@ function release() {
   judge(pc)
 }
 
+/** Enregistrements des notes seules, et ceux des altérations : on ne compare une syllabe qu'aux mots qui ont du sens à ce moment. */
+const noteTemplates = Object.fromEntries(Object.entries(templates).filter(([k]) => k in SOUND_PCS))
+const accidentalTemplates = Object.fromEntries(Object.entries(templates).filter(([k]) => k in ACCIDENTAL))
+
 function onSyllable(s: Syllable) {
   if (sight.phase.value !== 'running') return
   const head = `syllabe ${Math.round(s.end - s.start)} ms, voix ${s.voiced} ms · ${where(s.start)}`
   // Souffle, toux, seconde moitié de « dièse » : ignorés.
   if (s.voiced < MIN_VOICED_MS) return log(`${head} · souffle ou bruit : ignoré`, s.start)
   if (s.start < skipUntil) return log(`${head} · fin de « dièse » / « bémol » : ignoré`, s.start)
-  const best = closest(s.features, templates, meaning)
+
+  // Une note attend son altération : la syllabe qui suit ne peut être que « dièse » ou « bémol » (sinon, « di » se
+  // confond avec « si »). On la compare seulement à ces deux mots.
+  if (held) {
+    const acc = closest(s.features, accidentalTemplates, meaning)
+    const shift = acc && !acc.noise ? ACCIDENTAL[acc.key] : undefined
+    log(`${head}${acc ? ` · altération la plus proche : ${acc.key} (distance ${acc.distance.toFixed(1)})` : ''}${shift ? '' : ' · pas une altération'}`, s.start)
+    if (shift) {
+      skipUntil = s.end + 300
+      clearTimeout(held.timer)
+      const pc = (held.pc + shift) % 12
+      held = null
+      heard.value = pitchClassName(pc)
+      return judge(pc)
+    }
+    // Pas une altération : c'est déjà la note suivante ; celle qui attendait est jugée telle quelle.
+    release()
+  }
+
+  const best = closest(s.features, noteTemplates)
   const scores = best ? ` · proche : ${best.key} (distance ${best.distance.toFixed(1)}, écart ${best.margin.toFixed(1)})` : ''
-  // Bruit, ou deux mots presque à égalité : pas de réponse (le joueur peut redire la note).
+  // Bruit, ou deux notes presque à égalité : pas de réponse (le joueur peut redire la note).
   if (!best || best.noise || best.margin < MIN_MARGIN) {
-    if (best && !best.noise) heard.value = `${SOUND_LABELS[meaning(best.key)] ?? '?'} ?`
+    if (best && !best.noise) heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
     return log(`${head}${scores} · ${best?.noise ? 'trop loin de tes mots' : 'pas sûr'} : ignoré`, s.start)
   }
   log(`${head}${scores}`, s.start)
-  const shift = ACCIDENTAL[best.key]
-  if (shift) {
-    // Dièse ou bémol (ou seulement sa seconde syllabe, quand la première s'est fondue dans la note) : il altère la note dite juste avant.
-    skipUntil = s.end + 300
-    if (!held) return log('  altération sans note juste avant : ignorée')
-    clearTimeout(held.timer)
-    const pc = (held.pc + shift) % 12
-    held = null
-    heard.value = pitchClassName(pc)
-    return judge(pc)
-  }
   heard.value = SOUND_LABELS[best.key] ?? ''
   const pc = SOUND_PCS[best.key]
-  if (pc === undefined) return
-  release()
   // La note redite (déjà validée) n'est pas une réponse pour la suivante : pas d'attaque à dater.
   if (pc === lastPc) return log(`  ${pitchClassName(pc)} redit : ignoré`)
   // La réponse est datée du début de la syllabe.
   sight.onset(s.start)
-  if (!accidentals) return judge(pc)
+  // On n'attend une altération que si elle peut donner la note à lire (« fa » quand c'est fa dièse) ; sinon la note est
+  // jugée tout de suite (elle passe au vert sans délai).
+  const target = sight.current.value?.pc
+  const couldAlter = accidentals && target !== undefined && target !== pc && ((pc + 1) % 12 === target || (pc + 11) % 12 === target)
+  if (!couldAlter) return judge(pc)
   log(`  ${pitchClassName(pc)} : attente d'un dièse ou d'un bémol (${HOLD_MS} ms)`)
   held = { pc, timer: setTimeout(release, HOLD_MS) }
 }
