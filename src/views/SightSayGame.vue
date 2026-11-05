@@ -223,6 +223,9 @@ let skipUntil = 0
 const ACCIDENTAL: Record<string, 1 | 11> = { diese: 1, diese2: 1, bemol: 11, bemol2: 11 }
 /** Sens d'un enregistrement, pour juger si deux mots sont presque à égalité (deux moitiés de « dièse » ne le sont pas). */
 const meaning = (key: string) => key.replace(/2$/, '')
+/** Pour compter une erreur, la note entendue doit être plus proche que la note à lire d'au moins cet écart. */
+const WRONG_MARGIN = 2.5
+
 /** Syllabe qui suit la note de moins de 250 ms : elle fait partie de la même réponse (« do-dièse » dit d'un trait). */
 const GLUED_MS = 250
 
@@ -342,6 +345,15 @@ function onSyllable(s: Syllable) {
   if (!best || best.noise || (best.margin < MIN_MARGIN && !altered)) {
     if (best && !best.noise) heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
     return log(`${head}${scores} · ${best?.noise ? 'trop loin de tes mots' : 'pas sûr'} : ignoré`, s.start)
+  }
+  // Une autre note que celle à lire, mais pas nettement plus proche qu'elle : pas assez sûr pour compter une erreur ;
+  // ignorée, le joueur peut redire la note.
+  if (!altered && expected && best.key !== expected) {
+    const exp = ranked(s.features, noteTemplates).find((r) => r.key === expected)
+    if (exp && exp.distance - best.distance < WRONG_MARGIN) {
+      heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
+      return log(`${head}${scores} · ${expected} à ${exp.distance.toFixed(1)} : pas assez net pour une erreur, ignoré`, s.start)
+    }
   }
   log(`${head}${scores}${tieBreak}`, s.start)
   heard.value = SOUND_LABELS[best.key] ?? ''
