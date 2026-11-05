@@ -30,6 +30,24 @@ export const VOICE_WORDS: VoiceWord[] = [
 /** Nombre de fois que chaque mot est demandé. */
 export const VOICE_TAKES = 2
 
+/** Un mot à dire pour l'enregistrement par le son : une note seule, ou une note altérée dite d'un trait. */
+export interface SoundPrompt extends VoiceWord {
+  /** Note altérée : la note (début de l'enregistrement) et son altération (la suite). */
+  phrase?: { note: string; accidental: 'diese' | 'bemol' }
+}
+
+/**
+ * Enregistrement par le son : les sept notes, puis quelques notes altérées dites d'un trait. « Dièse » et « bémol »
+ * y sont enregistrés tels qu'on les dit vraiment, enchaînés après une note.
+ */
+export const SOUND_PROMPTS: SoundPrompt[] = [
+  ...VOICE_WORDS.slice(0, 7),
+  { key: 'fa-diese', label: 'fa dièse', phrase: { note: 'fa', accidental: 'diese' } },
+  { key: 'do-diese', label: 'do dièse', phrase: { note: 'do', accidental: 'diese' } },
+  { key: 'si-bemol', label: 'si bémol', phrase: { note: 'si', accidental: 'bemol' } },
+  { key: 'mi-bemol', label: 'mi bémol', phrase: { note: 'mi', accidental: 'bemol' } },
+]
+
 const STORAGE_KEY = 'harmowhat.voiceWords'
 
 interface Saved {
