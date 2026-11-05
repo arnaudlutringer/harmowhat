@@ -108,13 +108,30 @@ const report: string[] = []
 let t0 = 0
 const copied = ref(false)
 
-/** La note à lire en ce moment, et où elle est par rapport à la barre (en temps : -1,5 = à un temps et demi de la barre). */
-function where(at = performance.now()): string {
+/** Où est la note à lire par rapport à la barre à l'instant `at` (en temps : -1,5 = à un temps et demi de la barre). */
+function lateness(at = performance.now()): number | undefined {
   const n = sight.current.value
   const staff = sight.notes.value.find((s) => s.note === n)
-  if (!n || !staff) return 'aucune note à lire'
-  const late = sight.position.value - (performance.now() - at) * (sight.tempo.value / 60000) - staff.index
+  if (!n || !staff) return undefined
+  return sight.position.value - (performance.now() - at) * (sight.tempo.value / 60000) - staff.index
+}
+
+/** La note à lire en ce moment, et où elle est par rapport à la barre. */
+function where(at = performance.now()): string {
+  const n = sight.current.value
+  const late = lateness(at)
+  if (!n || late === undefined) return 'aucune note à lire'
   return `à lire : ${noteName(n)} (${late >= 0 ? '+' : ''}${late.toFixed(2)} temps)`
+}
+
+/**
+ * Réponse fausse dite tôt (la note à plus d'un temps et demi de la barre) : sans doute une exclamation (« oula ! »)
+ * plutôt qu'une réponse ; ignorée. Le joueur a encore le temps de dire la bonne note.
+ */
+const EARLY_BEATS = 1.5
+function earlyWrong(pc: number, at: number): boolean {
+  const late = lateness(at)
+  return pc !== sight.current.value?.pc && late !== undefined && late < -EARLY_BEATS
 }
 
 function log(line: string, at = performance.now()) {
@@ -311,12 +328,22 @@ function learn(list: Learned[]) {
   rebuild()
 }
 
+/** Fin de la dernière syllabe avec de la voix qui n'a pas été prise comme note (exclamation, mot incertain). */
+let otherEnd = -Infinity
+/** Une syllabe qui commence moins de 150 ms après elle en est la suite (même mot). */
+const WORD_GAP_MS = 150
+
 function onSyllable(s: Syllable) {
   if (sight.phase.value !== 'running') return
   const head = `syllabe ${Math.round(s.end - s.start)} ms, voix ${s.voiced} ms · ${where(s.start)}`
   // Souffle, toux, seconde moitié de « dièse » : ignorés.
   if (s.voiced < MIN_VOICED_MS) return log(`${head} · souffle ou bruit : ignoré`, s.start)
   if (s.start < skipUntil) return log(`${head} · fin de « dièse » / « bémol » : ignoré`, s.start)
+  // Collée à une syllabe qui n'était pas une note (« ou-la ! ») : la suite d'un autre mot, pas une réponse.
+  if (s.start - otherEnd < WORD_GAP_MS) {
+    otherEnd = s.end
+    return log(`${head} · suite d'un mot qui n'est pas une note : ignoré`, s.start)
+  }
 
   // Une note attend son altération : la syllabe qui suit ne peut être que « dièse » ou « bémol » (sinon, « di » se
   // confond avec « si »). Collée à la note (« do-dièse » d'un trait), ou clairement une altération, on juge les deux
@@ -332,6 +359,7 @@ function onSyllable(s: Syllable) {
         clearTimeout(held.timer)
         const { pc, letter, accidental } = pair.best
         held = null
+        if (earlyWrong(pc, s.start)) return log('  réponse fausse dite tôt : ignorée (une exclamation ?)')
         heard.value = `${SOUND_LABELS[letter]} ${SOUND_LABELS[accidental]}`
         return judge(pc, [
           { key: letter, features: pair.f1 },
@@ -368,6 +396,7 @@ function onSyllable(s: Syllable) {
   if (split?.best && split.cost / 2 < (best?.distance ?? Infinity)) {
     const { pc, letter, accidental } = split.best
     log(`${head}${scores} · coupé en deux : ${split.text}`, s.start)
+    if (earlyWrong(pc, s.start)) return log('  réponse fausse dite tôt : ignorée (une exclamation ?)')
     if (pc !== lastPc) {
       sight.onset(s.start)
       heard.value = `${SOUND_LABELS[letter]} ${SOUND_LABELS[accidental]}`
@@ -380,6 +409,7 @@ function onSyllable(s: Syllable) {
   // Bruit, ou deux notes presque à égalité : pas de réponse (le joueur peut redire la note).
   if (!best || best.noise || (best.margin < MIN_MARGIN && !altered)) {
     if (best && !best.noise) heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
+    otherEnd = s.end
     return log(`${head}${scores} · ${best?.noise ? 'trop loin de tes mots' : 'pas sûr'} : ignoré`, s.start)
   }
   // Une autre note que celle à lire, mais pas nettement plus proche qu'elle : pas assez sûr pour compter une erreur ;
@@ -388,6 +418,7 @@ function onSyllable(s: Syllable) {
     const exp = ranked(s.features, noteTemplates).find((r) => r.key === expected)
     if (exp && exp.distance - best.distance < WRONG_MARGIN) {
       heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
+      otherEnd = s.end
       return log(`${head}${scores} · ${expected} à ${exp.distance.toFixed(1)} : pas assez net pour une erreur, ignoré`, s.start)
     }
   }
@@ -396,6 +427,10 @@ function onSyllable(s: Syllable) {
   const pc = SOUND_PCS[best.key]
   // La note redite (déjà validée) n'est pas une réponse pour la suivante : pas d'attaque à dater.
   if (pc === lastPc) return log(`  ${pitchClassName(pc)} redit : ignoré`)
+  if (!altered && earlyWrong(pc, s.start)) {
+    otherEnd = s.end
+    return log('  réponse fausse dite tôt : ignorée (une exclamation ?)')
+  }
   // La réponse est datée du début de la syllabe.
   sight.onset(s.start)
   // On n'attend une altération que si elle peut donner la note à lire (« fa » quand c'est fa dièse) ; sinon la note est
@@ -417,6 +452,7 @@ async function begin(): Promise<number> {
   lastPc = -1
   recognizing.value = false
   skipUntil = 0
+  otherEnd = -Infinity
   report.length = 0
   t0 = performance.now()
   log('départ (la première note arrive à la barre dans 3 temps)')
