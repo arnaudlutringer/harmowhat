@@ -258,7 +258,24 @@ function decodePair(f1: Features, f2: Features) {
     best = wanted
   }
   const label = (o?: (typeof options)[number]) => (o ? `${SOUND_LABELS[o.letter]} ${SOUND_LABELS[o.accidental]} (${o.cost.toFixed(1)})` : '—')
-  return { best, f1, text: `meilleur ${label(options[0])}, puis ${label(second)}${tie}` }
+  return { best, f1, f2, cost: options[0]?.cost ?? Infinity, text: `meilleur ${label(options[0])}, puis ${label(second)}${tie}` }
+}
+
+/** Au-delà de 40 trames (400 ms), un son peut contenir la note et son altération dites d'un trait (« si-bémol »). */
+const SPLIT_FRAMES = 40
+
+/**
+ * Note altérée dite d'un seul tenant : on essaie de couper le son à différents endroits (entre 30 et 70 %), chaque
+ * moitié jugée comme note puis altération. Renvoie la meilleure coupe, ou null si le son est trop court.
+ */
+function decodeSplit(f: Features) {
+  if (f.length < SPLIT_FRAMES) return null
+  let best: ReturnType<typeof decodePair> | null = null
+  for (let cut = Math.round(f.length * 0.3); cut <= Math.round(f.length * 0.7); cut += 3) {
+    const pair = decodePair(f.slice(0, cut), f.slice(cut))
+    if (pair.best && (!best || pair.cost < best.cost)) best = pair
+  }
+  return best
 }
 
 function release() {
@@ -345,6 +362,21 @@ function onSyllable(s: Syllable) {
   }
   // Note à lire altérée : une note même incertaine est gardée, pour être jugée avec l'altération qui suit.
   const altered = accidentals && (sight.current.value?.note.alter ?? 0) !== 0
+  // Note à lire altérée et son long : peut-être la note et son altération d'un seul tenant (« si-bémol »). Si une coupe
+  // en note + altération ressemble mieux (en moyenne) que le son entier comme note seule, c'est elle qui est retenue.
+  const split = altered ? decodeSplit(s.features) : null
+  if (split?.best && split.cost / 2 < (best?.distance ?? Infinity)) {
+    const { pc, letter, accidental } = split.best
+    log(`${head}${scores} · coupé en deux : ${split.text}`, s.start)
+    if (pc !== lastPc) {
+      sight.onset(s.start)
+      heard.value = `${SOUND_LABELS[letter]} ${SOUND_LABELS[accidental]}`
+      return judge(pc, [
+        { key: letter, features: split.f1 },
+        { key: accidental, features: split.f2 },
+      ])
+    }
+  }
   // Bruit, ou deux notes presque à égalité : pas de réponse (le joueur peut redire la note).
   if (!best || best.noise || (best.margin < MIN_MARGIN && !altered)) {
     if (best && !best.noise) heard.value = `${SOUND_LABELS[best.key] ?? '?'} ?`
