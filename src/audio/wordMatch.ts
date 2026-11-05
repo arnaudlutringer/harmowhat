@@ -177,21 +177,25 @@ export const MIN_SYLLABLE_MS = 180
 export const MIN_MARGIN = 1
 
 /** Durée de voix « chantée » (son régulier, avec une hauteur) exigée dans une syllabe : souffle et toux n'en ont presque pas. */
-export const MIN_VOICED_MS = 80
+export const MIN_VOICED_MS = 45
 /** Au-delà de cette part de la distance habituelle entre deux enregistrements d'un même mot : ce n'est aucun des mots. */
 const NOISE_FACTOR = 1.8
 /** Écart à partir duquel un mot se détache nettement des autres. */
 const CLEAR_MARGIN = 3
 
-/** Durée de voix avec une hauteur nette dans un son à 16 kHz (fenêtres de 40 ms). */
+/**
+ * Durée de voix avec une hauteur nette dans un son à 16 kHz : fenêtres de 30 ms qui se chevauchent (une toutes les
+ * 15 ms), pour ne pas manquer la voyelle brève d'un « ré » dit vite.
+ */
 export function voicedMs(samples: Float32Array): number {
-  const win = 640
+  const win = 480
+  const step = 240
   let voiced = 0
-  for (let start = 0; start + win <= samples.length; start += win) {
+  for (let start = 0; start + win <= samples.length; start += step) {
     const p = detectPitch(samples.subarray(start, start + win), RATE)
-    if (p && p.clarity >= 0.75 && p.frequency >= 70 && p.frequency <= 500) voiced++
+    if (p && p.clarity >= 0.65 && p.frequency >= 70 && p.frequency <= 500) voiced++
   }
-  return voiced * 40
+  return voiced * 15
 }
 
 /** Enregistrements du joueur : plusieurs par syllabe. */
