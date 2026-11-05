@@ -155,7 +155,9 @@ function judge(pc: number, heardSyllables: Learned[] = []) {
   const taken = sight.submit(pc, `Tu as dit ${pitchClassName(pc)}`)
   const right = taken && sight.read.value > before
   const verdict = !taken ? 'pas pris en compte' : right ? 'JUSTE ✓' : 'FAUX ✗'
-  log(`→ réponse ${pitchClassName(pc)} · ${context} · ${verdict}`)
+  // Nom de la réponse : celui de la note à lire quand c'est la même (« Mi♭ » plutôt que « Ré♯ »).
+  const target = [...sight.notes.value].reverse().find((n) => n.state === 'ok' && n.note.pc === pc)?.note
+  log(`→ réponse ${right && target ? noteName(target) : pitchClassName(pc)} · ${context} · ${verdict}`)
   // Réponse juste : ses syllabes, dites en jeu, rejoignent les enregistrements (la reconnaissance s'habitue à ta voix en jeu).
   if (right) learn(heardSyllables)
 }
@@ -310,7 +312,7 @@ function onSyllable(s: Syllable) {
         clearTimeout(held.timer)
         const { pc, letter, accidental } = pair.best
         held = null
-        heard.value = pitchClassName(pc)
+        heard.value = `${SOUND_LABELS[letter]} ${SOUND_LABELS[accidental]}`
         return judge(pc, [
           { key: letter, features: pair.f1 },
           { key: accidental, features: s.features },
