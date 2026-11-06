@@ -67,8 +67,8 @@ export const SOUND_RULES = {
   clearMargin: 2,
   /** Syllabe qui suit la note de moins de 250 ms : elle fait partie de la même réponse (« do-dièse » dit d'un trait). */
   gluedMs: 250,
-  /** Une coupe d'un son long en note + altération doit ressembler nettement mieux que le son entier. */
-  splitGain: 0.85,
+  /** Une coupe d'un son long en note + altération doit ressembler mieux que le son entier (en moyenne). */
+  splitGain: 1,
   /** Durée minimale (en trames de 10 ms) d'un son qui peut contenir une note et son altération. */
   splitFrames: 50,
   /** Une syllabe qui commence moins de 150 ms après un son qui n'était pas une note en est la suite (même mot). */

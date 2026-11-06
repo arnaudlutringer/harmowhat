@@ -267,7 +267,7 @@ export interface SyllableListening {
 }
 
 /** Creux de voix entre deux syllabes : longueur minimale de la syllabe (en 10 ms), profondeur du creux et remontée qui suit. */
-export const CUT_RULES = { minHops: 12, dip: 0.55, rise: 1.8, back: 0.45 }
+export const CUT_RULES = { minHops: 18, dip: 0.55, rise: 1.8, back: 0.45 }
 
 /** Réglages du micro pour la reconnaissance par le son (les mêmes pour le jeu, « Ma voix » et le banc d'essai). */
 export const SOUND_MIC: MediaTrackConstraints = { echoCancellation: false, noiseSuppression: true, autoGainControl: true }
