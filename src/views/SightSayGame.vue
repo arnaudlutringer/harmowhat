@@ -11,6 +11,8 @@
     :score-ratio="sight.points.value / SIGHT_MEDAL_POINTS"
     :live-points="sight.points.value"
     :progress-label="readLabel"
+    :note-marks="noteMarks"
+    :music-label="musicLabel"
   >
     <template #player>
       <div class="player">
@@ -48,7 +50,7 @@ import { useQuiz } from '@/composables/useQuiz'
 import { useSightReading } from '@/composables/useSightReading'
 import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
 import { pitchClassName } from '@/music/notes'
-import { clefLabel, noteName, parseSightSettings, parseSpokenNotes, SAY_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
+import { clefLabel, noteName, parseSightSettings, notesForMedal, parseSpokenNotes, SAY_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 import { online } from '@/player/online'
@@ -284,6 +286,12 @@ watch(sight.phase, (phase) => {
 })
 
 const readLabel = computed(() => `${sight.read.value} note${sight.read.value > 1 ? 's' : ''} lue${sight.read.value > 1 ? 's' : ''}`)
+/** Écran de fin : une note verte par note lue, puis une rouge pour celle qui a arrêté la partie. */
+const noteMarks = computed(() => [...Array.from({ length: sight.read.value }, () => true), false])
+const medalNotes = notesForMedal(settings.level, SAY_LEVELS)
+const musicLabel = computed(() =>
+  sight.read.value >= medalNotes ? 'médaille atteinte : joué sans une fausse note' : `${sight.read.value} note${sight.read.value > 1 ? 's' : ''} sur ${medalNotes} pour la médaille`,
+)
 const summary = computed(() => `${readLabel.value}, jusqu'à ♩ = ${sight.topTempo.value}`)
 const status = computed(() => {
   if (sight.phase.value === 'over') return sight.reason.value

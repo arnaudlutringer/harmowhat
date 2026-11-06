@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NoteStream, notePoints, parseSightSettings, parseSpokenNotes, SAY_LEVELS, setLearnedWords, SungNotes, tempoAfter } from './sightReading'
+import { NoteStream, notePoints, parseSightSettings, parseSpokenNotes, notesForMedal, SAY_LEVELS, setLearnedWords, SungNotes, tempoAfter } from './sightReading'
 
 describe('Lecture en défilement', () => {
   it('reconnaît les noms de notes dits, avec leurs altérations et quelques homophones', () => {
@@ -31,6 +31,9 @@ describe('Lecture en défilement', () => {
     // « Lecture continue » : +1 à chaque note, à tous les niveaux.
     for (const level of ['debutant', 'normal', 'expert'] as const) expect(SAY_LEVELS[level].step).toBe(1)
     expect(tempoAfter('normal', 5, undefined, SAY_LEVELS.normal.step)).toBe(41)
+    // Médaille (10 000 points) : 22 notes en Normal à +1, 19 à +2.
+    expect(notesForMedal('normal', SAY_LEVELS)).toBe(22)
+    expect(notesForMedal('normal')).toBe(19)
     expect(notePoints(54)).toBe(540)
   })
 

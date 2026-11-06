@@ -104,6 +104,14 @@ export const notePoints = (tempo: number) => Math.round(tempo * 10)
 export const SIGHT_MEDAL_POINTS = 10000
 export const SIGHT_GOAT_POINTS = 30000
 
+/** Nombre de notes à lire d'affilée pour la médaille du niveau. */
+export function notesForMedal(level: Level, levels: Record<Level, SightLevel> = SIGHT_LEVELS): number {
+  let points = 0
+  let read = 0
+  while (points < SIGHT_MEDAL_POINTS) points += notePoints(tempoAfter(level, read++, undefined, levels[level].step))
+  return read
+}
+
 export interface SightNote {
   clef: ClefId
   note: SpelledNote

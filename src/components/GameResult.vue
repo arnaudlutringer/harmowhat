@@ -57,14 +57,22 @@
     </form>
 
     <ol class="notes" aria-label="Détail des réponses">
-      <li
-        v-for="(r, i) in results"
-        :key="i"
-        :class="r.correct ? 'ok' : 'ko'"
-        :title="`Question ${i + 1} : ${r.correct ? `juste, ${r.points} pts` : 'fausse'}`"
-      >
-        <ion-icon :icon="musicalNote" :aria-label="`Question ${i + 1} ${r.correct ? 'juste' : 'fausse'}`" />
-      </li>
+      <!-- Jeu d'un seul tenant (« Lecture continue ») : une note par note lue, plutôt qu'une par question. -->
+      <template v-if="noteMarks">
+        <li v-for="(correct, i) in noteMarks" :key="i" :class="correct ? 'ok' : 'ko'" :title="`Note ${i + 1} : ${correct ? 'lue' : 'manquée'}`">
+          <ion-icon :icon="musicalNote" :aria-label="`Note ${i + 1} ${correct ? 'lue' : 'manquée'}`" />
+        </li>
+      </template>
+      <template v-else>
+        <li
+          v-for="(r, i) in results"
+          :key="i"
+          :class="r.correct ? 'ok' : 'ko'"
+          :title="`Question ${i + 1} : ${r.correct ? `juste, ${r.points} pts` : 'fausse'}`"
+        >
+          <ion-icon :icon="musicalNote" :aria-label="`Question ${i + 1} ${r.correct ? 'juste' : 'fausse'}`" />
+        </li>
+      </template>
     </ol>
 
     <button class="elise" :class="{ 'is-playing': elise.playing.value }" @click="toggleElise">
@@ -72,6 +80,7 @@
       <span>
         <strong>{{ ending.title }}</strong>
         <small v-if="ending.recording">{{ ending.composer }}</small>
+        <small v-else-if="musicLabel">{{ ending.composer }} · {{ musicLabel }}</small>
         <small v-else>
           {{ ending.composer }} ·
           {{ wrongPercent ? `${wrongPercent} % d'erreurs : le musicien a un peu trop fêté ça` : 'joué sans une fausse note' }}
@@ -122,6 +131,10 @@ const props = defineProps<{
   answersLabel?: string
   /** Réussite de 0 à 1, à la place de la part de bonnes réponses (image de fin et musique). */
   scoreRatio?: number
+  /** Détail de la partie, à la place d'une note par question : vrai pour une note lue, faux pour une note manquée. */
+  noteMarks?: boolean[]
+  /** Texte sous le titre de la musique, à la place du pourcentage d'erreurs. */
+  musicLabel?: string
 }>()
 const emit = defineEmits<{ restart: [] }>()
 

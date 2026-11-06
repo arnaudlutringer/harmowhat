@@ -28,6 +28,8 @@
         :total="endless ? quiz.results.value.length : quiz.total"
         :answers-label="answersLabel"
         :score-ratio="scoreRatio"
+        :note-marks="noteMarks"
+        :music-label="musicLabel"
         :board="board"
         :settings-href="settingsHref"
         :fork-available="!noTuningFork"
@@ -117,6 +119,10 @@ const props = defineProps<{
   livePoints?: number
   /** Avancée de la partie, à la place de « Question n / total » et du total (« 12 notes lues »). */
   progressLabel?: string
+  /** Écran de fin : une note par note lue (vrai) ou manquée (faux), à la place d'une par question. */
+  noteMarks?: boolean[]
+  /** Écran de fin : texte sous le titre de la musique, à la place du pourcentage d'erreurs. */
+  musicLabel?: string
 }>()
 
 /** Pendant les questions (ni compte à rebours ni écran de fin) : en-tête et pied fixes. */
