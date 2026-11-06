@@ -58,15 +58,8 @@ setLearnedWords(voiceWords.value.words)
 export type Recognition = 'son' | 'google'
 const RECOGNITION_KEY = 'harmowhat.recognition'
 
-function loadRecognition(): Recognition {
-  try {
-    return localStorage.getItem(RECOGNITION_KEY) === 'google' ? 'google' : 'son'
-  } catch {
-    return 'son'
-  }
-}
-
-export const recognition = ref<Recognition>(loadRecognition())
+// Toujours par le son : le choix a disparu des réglages, un ancien choix « Google » enregistré n'est plus lu.
+export const recognition = ref<Recognition>('son')
 
 export function setRecognition(r: Recognition) {
   recognition.value = r
