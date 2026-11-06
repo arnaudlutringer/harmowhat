@@ -12,6 +12,8 @@ import { currentInstrument, fitToRange, nearestSample as nearestInstrumentSample
 
 let ctx: AudioContext | null = null
 let master: GainNode | null = null
+/** L'appli n'est plus à l'écran : aucun son ne doit repartir tant qu'elle n'y revient pas. */
+let inBackground = false
 const buffers = new Map<string, Promise<AudioBuffer>>()
 
 function audio(): { ctx: AudioContext; out: GainNode } {
@@ -25,7 +27,7 @@ function audio(): { ctx: AudioContext; out: GainNode } {
     master.connect(ctx.destination)
   }
   // Les navigateurs (et iOS) suspendent l'audio tant qu'il n'y a pas eu de geste utilisateur.
-  if (ctx.state === 'suspended') void ctx.resume()
+  if (ctx.state === 'suspended' && !inBackground) void ctx.resume()
   return { ctx, out: master! }
 }
 
@@ -132,6 +134,18 @@ export function stopAll(): void {
   fadeOutVoices(active)
   active.clear()
   stopListeners.forEach((fn) => fn())
+}
+
+/**
+ * L'appli quitte l'écran (bouton de la barre de navigation, autre appli, écran éteint) ou y revient. En partant, tout est
+ * coupé net, sans fondu : le contexte audio est mis en pause, et il ne repart qu'au retour.
+ */
+export function setAppInBackground(background: boolean): void {
+  inBackground = background
+  if (background) {
+    stopAll()
+    void ctx?.suspend()
+  } else if (ctx?.state === 'suspended') void ctx.resume()
 }
 
 /** Prévient quand tout est coupé (pour éteindre les effets visuels). Renvoie de quoi se désabonner. */

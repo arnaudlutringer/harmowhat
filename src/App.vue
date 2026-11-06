@@ -14,7 +14,7 @@ import SplashScreen from '@/components/SplashScreen.vue'
 import TrophyAnnouncer from '@/components/TrophyAnnouncer.vue'
 import { useRouter } from 'vue-router'
 import { App } from '@capacitor/app'
-import { stopAll } from '@/audio/engine'
+import { setAppInBackground, stopAll } from '@/audio/engine'
 import { syncWorldScores } from '@/games/worldScores'
 import { online } from '@/player/online'
 import { featureEnabled } from '@/config/features'
@@ -26,6 +26,11 @@ const ionRouter = useIonRouter()
 // Bouton retour du téléphone (Android). Sans écouteur, Capacitor ne prévient pas Ionic et l'appli se ferme :
 // avec cet écouteur, le bouton passe par les gestionnaires ci-dessous (et par la popin des jeux en cours).
 void App.addListener('backButton', () => {}).catch(() => {})
+
+// En quittant l'appli (barre de navigation, autre appli, écran éteint), toute musique en cours est coupée.
+void App.addListener('pause', () => setAppInBackground(true)).catch(() => {})
+void App.addListener('resume', () => setAppInBackground(false)).catch(() => {})
+document.addEventListener('visibilitychange', () => setAppInBackground(document.visibilityState === 'hidden'))
 
 // Classement mondial : au lancement et au retour dans l'appli, les scores en attente partent (et, une fois
 // pour toutes, ceux déjà sur l'appareil), puis les classements sont chargés en cache.
