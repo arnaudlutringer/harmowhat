@@ -135,6 +135,11 @@ export class SoundJudge {
         best = { key: expected, distance: exp.distance, margin: MIN_MARGIN, noise: false }
       }
     }
+    // La note à lire est déjà la plus proche, presque à égalité avec une autre : c'est elle aussi.
+    if (best && best.key === expected && (best.noise || best.margin < MIN_MARGIN) && best.distance <= noiseLimit(this.notes) * SOUND_RULES.tieLimit) {
+      tieBreak = ` · hésitation : ${expected} retenu`
+      best = { ...best, margin: MIN_MARGIN, noise: false }
+    }
     // Collé à la réponse d'avant, et pas net : la fin du même mot (un « do » tenu, coupé en deux), pas la note suivante.
     const late = host.lateness(s.start)
     const farAhead = late === undefined || late < -SOUND_RULES.tailBeats

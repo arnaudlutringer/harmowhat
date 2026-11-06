@@ -78,6 +78,14 @@ describe('Lecture continue, jugement par le son', () => {
     expect(answers).toEqual([0])
   })
 
+  it('retient la note à lire quand elle est la plus proche, même presque à égalité', () => {
+    const { judge, answers, learned } = setup([DO])
+    // Un peu plus près de do que de ré : l'écart est faible, mais c'est la note à lire.
+    judge.syllable(syllable(2.4, 0))
+    expect(answers).toEqual([0])
+    expect(learned).toEqual([])
+  })
+
   it('ne prend pas la fin d’un mot pour la note suivante', () => {
     const { judge, answers, notUnderstood } = setup([DO, RE])
     judge.syllable(syllable(0, 0))
