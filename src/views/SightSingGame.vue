@@ -43,7 +43,7 @@ import { useSightReading } from '@/composables/useSightReading'
 import { listenToMicrophone, type Listening } from '@/audio/microphone'
 import { midiOf } from '@/audio/pitch'
 import { pitchClassName } from '@/music/notes'
-import { clefLabel, parseSightSettings, SIGHT_MEDAL_POINTS, tempoAfter, SungNotes, trialTempo } from '@/games/sightReading'
+import { clefLabel, parseSightSettings, SIGHT_MEDAL_POINTS, SING_LEVELS, tempoAfter, SungNotes, trialTempo } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 
@@ -61,7 +61,7 @@ const quiz = useQuiz({
 // Une voix met un peu de temps à se poser sur la note : 0,5 s de marge après la barre.
 // Essai rapide : on part de ♩ = 120, pour s'entraîner à enchaîner les notes.
 const fastStart = trialTempo(quiz.trial, route.query.tempo)
-const sight = useSightReading(quiz, settings.level, 0.5, fastStart)
+const sight = useSightReading(quiz, settings.level, 0.5, fastStart, SING_LEVELS)
 
 const sung = new SungNotes()
 const hold = ref(0)

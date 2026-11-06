@@ -24,6 +24,10 @@ export interface SightLevel {
   start: number
   /** Accélération à chaque bonne réponse, en battements par minute. */
   step: number
+  /** La première note est un la (la note du diapason, pour se repérer). */
+  firstLa?: boolean
+  /** Écart le plus grand entre deux notes de suite, en demi-tons. */
+  maxInterval?: number
 }
 
 export const SIGHT_LEVELS: Record<Level, SightLevel> = {
@@ -67,6 +71,23 @@ export const SAY_LEVELS: Record<Level, SightLevel> = {
   debutant: { ...SIGHT_LEVELS.debutant, step: 1, description: 'Clé de sol, sans dièse ni bémol. On part à 30 à la noire, +1 à chaque note lue.' },
   normal: { ...SIGHT_LEVELS.normal, accidentals: false, step: 1, description: 'Clés de sol et de fa, sans dièse ni bémol. On part à 36, +1 à chaque note lue.' },
   expert: { ...SIGHT_LEVELS.expert, accidentals: false, step: 1, description: 'Toutes les clés (sol, fa, ut 1re, 3e et 4e ligne), sans dièse ni bémol. On part à 44, +1 à chaque note lue.' },
+}
+
+/** « Chante en continu » : on part toujours d'un la, et les intervalles sont limités en débutant (tierce majeure) et en normal (quinte juste). */
+export const SING_LEVELS: Record<Level, SightLevel> = {
+  debutant: {
+    ...SIGHT_LEVELS.debutant,
+    firstLa: true,
+    maxInterval: 4,
+    description: 'Clé de sol, sans dièse ni bémol, une tierce majeure au plus entre deux notes. On part à 30 à la noire, +2 à chaque note lue.',
+  },
+  normal: {
+    ...SIGHT_LEVELS.normal,
+    firstLa: true,
+    maxInterval: 7,
+    description: 'Clés de sol et de fa, avec des dièses et des bémols, une quinte juste au plus entre deux notes. On part à 36, +2 à chaque note lue.',
+  },
+  expert: { ...SIGHT_LEVELS.expert, firstLa: true },
 }
 
 /** Pas de nombre de questions : la partie dure tant que le joueur lit juste. */
@@ -121,6 +142,9 @@ export interface SightNote {
   fullName: string
 }
 
+/** Nom écrit du la (0 = do ... 6 = si). */
+const LA_LETTER = 5
+
 /** Nombre de notes écrites avec la même clé avant de passer à une autre. */
 const CLEF_RUN = [8, 10] as const
 
@@ -133,17 +157,25 @@ export class NoteStream {
   private left = 0
   private started = false
   private lastPc = -1
+  private lastMidi: number | null = null
 
   constructor(
     private level: Level,
-    /** Notes altérées (par défaut, selon le niveau). */
-    private accidentals = SIGHT_LEVELS[level].accidentals,
+    /** Niveaux du jeu (clés, altérations, intervalles). */
+    private levels: Record<Level, SightLevel> = SIGHT_LEVELS,
   ) {
-    this.clef = SIGHT_LEVELS[level].clefs[0]
+    this.clef = levels[level].clefs[0]
+  }
+
+  private pick(note: SpelledNote): SightNote {
+    const pc = ((note.midi % 12) + 12) % 12
+    this.lastPc = pc
+    this.lastMidi = note.midi
+    return { clef: this.clef, note, pc, fullName: spelledName(note) }
   }
 
   next(): SightNote {
-    const cfg = SIGHT_LEVELS[this.level]
+    const cfg = this.levels[this.level]
     if (this.left <= 0) {
       // Toutes les 8 à 10 notes, la clé change (pour une autre des clés du niveau) ; la première est tirée au hasard.
       const others = this.started ? cfg.clefs.filter((c) => c !== this.clef) : cfg.clefs
@@ -153,14 +185,23 @@ export class NoteStream {
     }
     this.left--
     const { low, high } = stepRange(this.clef, cfg.ledgerLines)
-    for (;;) {
+    // Première note : un la de la portée (peu importe l'octave).
+    if (cfg.firstLa && this.lastMidi === null) {
+      const las: number[] = []
+      for (let step = low; step <= high; step++) if (((step % 7) + 7) % 7 === LA_LETTER) las.push(step)
+      return this.pick(noteAt(las[randomInt(0, las.length - 1)], 0))
+    }
+    // Après un changement de clé, il arrive qu'aucune note de la nouvelle clé ne soit assez proche de la précédente
+    // (clé de sol aiguë, puis clé de fa) : au bout d'un moment, on n'exige plus que l'écart. Le joueur chante à l'octave qu'il veut.
+    for (let attempt = 0; ; attempt++) {
       const step = randomInt(low, high)
       const letter = ((step % 7) + 7) % 7
-      const note = noteAt(step, this.accidentals ? randomAlter(letter) : 0)
+      const note = noteAt(step, cfg.accidentals ? randomAlter(letter) : 0)
       const pc = ((note.midi % 12) + 12) % 12
       if (pc === this.lastPc) continue
-      this.lastPc = pc
-      return { clef: this.clef, note, pc, fullName: spelledName(note) }
+      const near = cfg.maxInterval === undefined || this.lastMidi === null || Math.abs(note.midi - this.lastMidi) <= cfg.maxInterval
+      if (!near && attempt < 200) continue
+      return this.pick(note)
     }
   }
 }

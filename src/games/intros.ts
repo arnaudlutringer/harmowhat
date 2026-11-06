@@ -62,7 +62,7 @@ export const INTROS: Record<GameId, string[]> = {
     'En débutant, choisis parmi 4 tempos ronds ; ensuite, règle le métronome (de 40 à 200) : il faut tomber à 10 près en normal, à 4 près en expert.',
   ],
   'lis-chante': [
-    'Des notes défilent sur une portée, une par temps : chante chacune, à n’importe quelle octave, avant qu’elle n’atteigne la barre violette. Tu peux prendre de l’avance.',
+    'Des notes défilent sur une portée, une par temps : chante chacune, à n’importe quelle octave, avant qu’elle n’atteigne la barre violette. Tu peux prendre de l’avance. La première note est toujours un la.',
     'Chaque note lue accélère le tempo et rapporte dix fois le tempo en points. La partie s’arrête à la première note fausse ou oubliée. Le micro écoute pendant toute la partie : chante, puis change de note ou reprends ton souffle.',
   ],
   'lis-dis': [

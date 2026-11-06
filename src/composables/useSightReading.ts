@@ -38,7 +38,7 @@ export function useSightReading(
   /** Fin de partie : ce qui s'est passé. */
   const reason = ref('')
   let target = 0
-  let stream = new NoteStream(level, levels[level].accidentals)
+  let stream = new NoteStream(level, levels)
   let frame: number | undefined
   let last = 0
   let endTimer: ReturnType<typeof setTimeout> | undefined
@@ -118,7 +118,7 @@ export function useSightReading(
   function start(): Promise<number> {
     stopLoop()
     clearTimeout(endTimer)
-    stream = new NoteStream(level, levels[level].accidentals)
+    stream = new NoteStream(level, levels)
     notes.value = []
     target = 0
     read.value = 0
