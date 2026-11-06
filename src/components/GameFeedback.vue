@@ -4,7 +4,7 @@
     <template v-if="quiz.feedback.value">
       <strong v-if="endless">{{ quiz.feedback.value.correct ? 'Palier tenu !' : 'Perdu !' }}</strong>
       <strong v-else>{{ quiz.feedback.value.correct ? 'Bonne réponse !' : 'Mauvaise réponse' }}</strong>
-      <span>{{ quiz.feedback.value.message }}</span>
+      <span v-if="quiz.feedback.value.message">{{ quiz.feedback.value.message }}</span>
       <!-- Passage automatique : une barre se remplit jusqu'à la question suivante. -->
       <!-- Essai : pas de question suivante, on revient aux réglages quand on a compris. -->
       <ion-button v-if="quiz.trial" class="understood" @click="emit('understood')">J'ai compris</ion-button>

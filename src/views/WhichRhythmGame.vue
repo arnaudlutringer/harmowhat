@@ -1,7 +1,8 @@
 <template>
   <game-shell
     title="Quel rythme ?"
-    prompt="Quel est ce rythme ? Choisis les 3 temps, dans l'ordre."
+    prompt="Quel est ce rythme ?"
+    compact
     :quiz="quiz"
     :board="{ game: 'quel-rythme', level: settings.level, questions: settings.questions }"
     settings-href="/games/quel-rythme"
@@ -118,7 +119,8 @@ function slotState(i: number) {
 
 function validate() {
   const ok = q.value.cells.every((c, i) => selected.value[i] === c)
-  quiz.answer(ok, ok ? 'Bien entendu !' : `C'était : ${rhythmLabel.value.toLowerCase()}.`)
+  // Pas de phrase sous « Bonne réponse » ou « Mauvaise réponse » : la portée montre déjà le vrai rythme, et l'écran reste sans défilement.
+  quiz.answer(ok, '')
   void quiz.listen()
 }
 </script>
@@ -204,5 +206,29 @@ function validate() {
 }
 .validate {
   margin-top: 14px;
+}
+/* Petit écran (Samsung A10) : tout tient sans défilement, en réduisant le bouton de lecture et les cases. */
+@media (max-height: 740px) {
+  .player :deep(.card) {
+    height: 96px;
+  }
+  .player :deep(.front) {
+    width: 84px;
+    height: 84px;
+    font-size: 40px;
+  }
+  .player :deep(.hint) {
+    margin: 2px 0 6px;
+  }
+  .slot,
+  .choice {
+    height: 54px;
+  }
+  .slots {
+    margin-bottom: 8px;
+  }
+  .validate {
+    margin-top: 6px;
+  }
 }
 </style>
