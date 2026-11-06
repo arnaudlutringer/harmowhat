@@ -25,13 +25,13 @@ import { computed, ref } from 'vue'
 import { onIonViewWillEnter, useIonRouter } from '@ionic/vue'
 import GameSettings from '@/components/GameSettings.vue'
 import { parseSightSettings, SAY_LEVELS, SIGHT_QUESTION_COUNTS } from '@/games/sightReading'
-import { voiceReady, voiceWords } from '@/games/voiceWords'
+import { voiceReady } from '@/games/voiceWords'
 
 const router = useIonRouter()
 // Recalculé au retour de « Ma voix » (les enregistrements par le son sont sur l'appareil, pas réactifs).
 const refresh = ref(0)
 onIonViewWillEnter(() => refresh.value++)
-const ready = computed(() => (refresh.value, voiceWords.value, voiceReady()))
+const ready = computed(() => (refresh.value, voiceReady()))
 
 /** Première partie : d'abord « Ma voix », qui ouvre ensuite la partie. */
 function nextPath(s: { questions: number; level: string }) {

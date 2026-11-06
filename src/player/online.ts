@@ -2,8 +2,7 @@ import { ref } from 'vue'
 import { Network } from '@capacitor/network'
 
 /**
- * Connexion à Internet, suivie en direct : les écrans qui en ont besoin (reconnaissance vocale de « Lecture continue »,
- * classements monde et pays) se bloquent sans elle et se réactivent dès qu'elle revient.
+ * Connexion à Internet, suivie en direct : les classements monde et pays se bloquent sans elle et se rechargent dès qu'elle revient.
  */
 export const online = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
 

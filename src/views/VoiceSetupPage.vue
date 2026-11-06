@@ -5,16 +5,14 @@
       <div class="voice">
         <template v-if="step < prompts.length">
           <p class="how">
-            Dis chaque mot quand il s'affiche, normalement.
-            {{ bySound ? 'L’appli enregistre le son de ta voix pour reconnaître les notes pendant « Lecture continue », sans Internet.' : 'L’appli retient comment la reconnaissance vocale comprend ta voix, pour mieux te comprendre pendant « Lecture continue ».' }}
+            Dis chaque mot quand il s'affiche, normalement. L'appli enregistre le son de ta voix pour reconnaître les notes pendant « Lecture continue », sans Internet.
           </p>
-          <p v-if="!bySound && !online" class="error">📶 Connecte-toi à Internet : la reconnaissance vocale en a besoin.</p>
           <p class="progress">Mot {{ step + 1 }} / {{ prompts.length }}</p>
           <p class="word" aria-live="polite">{{ prompts[step].label }}</p>
           <p class="state" :class="feedback?.kind">{{ feedback?.text ?? (listening ? 'Je t’écoute…' : ' ') }}</p>
-          <div v-if="bySound && listening" class="level" aria-hidden="true"><span :style="{ width: `${level * 100}%` }" /></div>
+          <div v-if="listening" class="level" aria-hidden="true"><span :style="{ width: `${level * 100}%` }" /></div>
           <div class="buttons">
-            <ion-button v-if="!listening" :disabled="!bySound && !online" @click="start">Commencer</ion-button>
+            <ion-button v-if="!listening" @click="start">Commencer</ion-button>
             <ion-button v-else fill="outline" @click="skip">Passer ce mot</ion-button>
           </div>
           <p v-if="error" class="error">{{ error }}</p>
@@ -49,11 +47,8 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { alertController, IonButton, IonContent, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
-import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
-import { markVoiceOwner, recognition, saveVoiceWords, toLearn, voiceOwnerChanged, voiceReady, VOICE_TAKES, VOICE_WORDS, type VoiceWord } from '@/games/voiceWords'
+import { markVoiceOwner, voiceOwnerChanged, voiceReady, VOICE_TAKES, VOICE_WORDS, type VoiceWord } from '@/games/voiceWords'
 import { AMBIENT_MS, listenToSyllables, loadTemplates, MIN_VOICED_MS, saveTemplates, type Features, type Syllable, type SyllableListening } from '@/audio/wordMatch'
-import { spokenWords } from '@/games/sightReading'
-import { online } from '@/player/online'
 import { featureEnabled } from '@/config/features'
 
 const route = useRoute()
@@ -61,8 +56,6 @@ const router = useIonRouter()
 /** Écran à ouvrir ensuite (la partie demandée), avec l'essai s'il en est un. */
 const suite = typeof route.query.suite === 'string' && route.query.suite.startsWith('/games/') ? route.query.suite : ''
 
-/** Par le son : on enregistre la voix elle-même ; sinon, ce que Google en comprend. */
-const bySound = recognition.value === 'son'
 /** Le nom du joueur a changé depuis le dernier enregistrement. */
 const newPlayer = voiceOwnerChanged()
 const debug = featureEnabled('testMicro')
@@ -85,44 +78,25 @@ onMounted(async () => {
 /** Chaque mot, deux fois. */
 const prompts: VoiceWord[] = VOICE_WORDS.flatMap((w) => Array.from({ length: VOICE_TAKES }, () => w))
 const level = ref(0)
-/** Enregistrements par le son, par syllabe. */
+/** Enregistrements, par mot. */
 const sounds: Record<string, Features[]> = {}
 let syllables: SyllableListening | null = null
 const step = ref(0)
 const listening = ref(false)
 const feedback = ref<{ kind: 'ok' | 'ko'; text: string } | null>(null)
 const error = ref('')
-/** Ce que la reconnaissance a écrit pour chaque syllabe. */
-const heard: Record<string, string[]> = {}
-let speech: SpeechListening | null = null
 /** Pause après un mot entendu, avant le suivant : on ignore ce qui arrive pendant ce temps. */
 let waiting = false
-/** Dernier résultat partiel de la phrase en cours (si la phrase finit sans résultat final). */
-let partial = ''
 
 function stopListening() {
-  speech?.stop()
-  speech = null
   syllables?.stop()
   syllables = null
   level.value = 0
   listening.value = false
 }
 
-function take(text: string) {
-  if (waiting || step.value >= prompts.length) return
-  const word = prompts[step.value]
-  const said = text.trim()
-  if (!said) return
-  ;(heard[word.key] ??= []).push(said)
-  const exact = spokenWords(said).join(' ') === word.key
-  feedback.value = { kind: 'ok', text: `Entendu : « ${said} »${exact ? ' ✓' : ''}` }
-  next()
-}
-
 function next() {
   waiting = true
-  partial = ''
   setTimeout(() => {
     waiting = false
     feedback.value = null
@@ -136,19 +110,7 @@ function skip() {
   next()
 }
 
-function onSpeech(text: string, _session: number, final: boolean) {
-  if (final) take(text)
-  else partial = text
-}
-
-function onEvent(e: SpeechEvent) {
-  // Phrase finie sans résultat final : on garde le dernier résultat partiel ; rien du tout : on redemande.
-  if (e.type !== 'error' || waiting) return
-  if (partial) return take(partial)
-  if (e.message === 'rien compris') feedback.value = { kind: 'ko', text: `Je n'ai pas compris, redis « ${prompts[step.value]?.label} ».` }
-}
-
-/** Par le son : la première syllabe avec de la voix (pas un souffle) est l'enregistrement du mot. */
+/** La première syllabe avec de la voix (pas un souffle) est l'enregistrement du mot. */
 function onSyllable(s: Syllable) {
   if (waiting || step.value >= prompts.length || s.voiced < MIN_VOICED_MS) return
   const prompt = prompts[step.value]
@@ -161,62 +123,31 @@ async function start() {
   error.value = ''
   listening.value = true
   try {
-    if (bySound) {
-      syllables = await listenToSyllables(onSyllable, (l) => (level.value = l))
-      // Le bruit ambiant est mesuré au début : on demande le silence pendant ce temps.
-      feedback.value = { kind: 'ko', text: 'Ne parle pas encore : je mesure le bruit autour de toi…' }
-      setTimeout(() => (feedback.value = null), AMBIENT_MS)
-    }
-    else speech = await listenToSpeech(onSpeech, onEvent)
+    syllables = await listenToSyllables(onSyllable, (l) => (level.value = l))
+    // Le bruit ambiant est mesuré au début : on demande le silence pendant ce temps.
+    feedback.value = { kind: 'ko', text: 'Ne parle pas encore : je mesure le bruit autour de toi…' }
+    setTimeout(() => (feedback.value = null), AMBIENT_MS)
   } catch {
     listening.value = false
-    error.value = 'La reconnaissance vocale n’est pas accessible : autorise le micro pour cette appli, puis réessaie.'
+    error.value = 'Le micro n’est pas accessible : autorise-le pour cette appli, puis réessaie.'
   }
 }
 
-/** Transcriptions retenues : celles qu'on ne comprenait pas déjà, et pas pour deux syllabes à la fois. */
-function learnedWords(): Record<string, string[]> {
-  const out: Record<string, string[]> = {}
-  for (const [key, texts] of Object.entries(heard)) {
-    const list = texts.map(toLearn).filter((t): t is string => !!t)
-    if (list.length) out[key] = [...new Set(list)]
-  }
-  const owners = new Map<string, string[]>()
-  for (const [key, list] of Object.entries(out)) for (const t of list) owners.set(t, [...(owners.get(t) ?? []), key])
-  for (const [key, list] of Object.entries(out)) out[key] = list.filter((t) => owners.get(t)?.length === 1)
-  return out
-}
-
-let saved: Record<string, string[]> = {}
 function finish() {
   stopListening()
-  if (bySound) {
-    // Les mots passés gardent leurs enregistrements précédents.
-    // Autre joueur : les enregistrements du précédent ne sont pas gardés, même pour un mot passé.
-    saveTemplates(newPlayer ? sounds : { ...loadTemplates(), ...sounds })
-    markVoiceOwner()
-    complete.value = voiceReady()
-    return
-  }
-  saved = learnedWords()
-  saveVoiceWords(saved)
+  // Les mots passés gardent leurs enregistrements précédents.
+  // Autre joueur : les enregistrements du précédent ne sont pas gardés, même pour un mot passé.
+  saveTemplates(newPlayer ? sounds : { ...loadTemplates(), ...sounds })
   markVoiceOwner()
   complete.value = voiceReady()
 }
 
 function summaryOf(key: string): string {
-  if (bySound) {
-    const n = sounds[key]?.length ?? 0
-    return n ? `${n} enregistrement${n > 1 ? 's' : ''}` : newPlayer ? 'passé' : 'passé (enregistrements précédents gardés)'
-  }
-  const texts = heard[key] ?? []
-  if (!texts.length) return 'passé'
-  const extra = saved[key] ?? []
-  return extra.length ? `compris « ${extra.join(' », « ')} » : accepté désormais` : 'bien compris'
+  const n = sounds[key]?.length ?? 0
+  return n ? `${n} enregistrement${n > 1 ? 's' : ''}` : newPlayer ? 'passé' : 'passé (enregistrements précédents gardés)'
 }
 
 function restart() {
-  for (const k of Object.keys(heard)) delete heard[k]
   for (const k of Object.keys(sounds)) delete sounds[k]
   step.value = 0
   feedback.value = null

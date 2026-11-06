@@ -6,7 +6,7 @@ import { CLEFS, noteAt, randomAlter, stepRange, type ClefId } from './readNote'
  * Lecture en défilement : les notes passent sur une portée, de droite à gauche, au rythme du tempo
  * (une note par temps). Le joueur lit chaque note avant qu'elle ne franchisse la barre de lecture :
  * - « Chante en continu » : il la chante (à n'importe quelle octave) ;
- * - « Lecture continue » : il dit son nom au micro (« do », « fa dièse », « si bémol »…).
+ * - « Lecture continue » : il dit son nom au micro (« do », « sol »…).
  * Chaque bonne réponse accélère le tempo ; la partie s'arrête à la première erreur ou à la première note oubliée.
  */
 
@@ -167,107 +167,6 @@ export class NoteStream {
 
 export const clefLabel = (clef: ClefId) => CLEFS[clef].label
 export const noteName = (n: SightNote) => spelledPitchName(n.note)
-
-// ——— Reconnaissance des noms de notes dans ce que le joueur a dit ———
-
-/** Ce que la reconnaissance vocale écrit pour chaque nom de note (sans accents, en minuscules), homophones compris. */
-const SPOKEN_LETTERS: [number, string[]][] = [
-  [0, ['do', 'dos', 'doh', 'dot', 'deau', 'domino']],
-  [2, ['re', 'rai', 'raie', 'rais', 'rait', 'ray', 'rez', 'ret', 'rey', 'arret', 'arrete', 'arrets']],
-  [4, ['mi', 'mie', 'mis', 'mit', 'mii', 'my', 'me']],
-  [5, ['fa', 'fas', 'far', 'fat', 'fah', 'pha', 'phas', 'faps']],
-  [7, ['sol', 'sole', 'sols', 'saule', 'sel', 'seul', 'soul', 'sold', 'sal']],
-  [9, ['la', 'las', 'lat', 'lah']],
-  [11, ['si', 'scie', 'six', 'ci', 'sis', 'sy', 'see', '6']],
-]
-const LETTER_OF = new Map<string, number>(SPOKEN_LETTERS.flatMap(([pc, words]) => words.map((w) => [w, pc] as [string, number])))
-const SHARP = new Set(['diese', 'dieses', 'dieze', 'diez', 'yes', 'dies', '#'])
-const FLAT = new Set(['bemol', 'bemols', 'bemolle', 'b'])
-
-/** Une note dite : sa classe (0 = Do), et si une altération la suit (jugement possible tout de suite). */
-export interface SpokenNote {
-  pc: number
-  /** Une altération a été dite après la lettre. */
-  altered: boolean
-}
-
-/** Retire les accents et la ponctuation, sépare en mots (« Ré bémol, mi ! » → ['re', 'bemol', 'mi']). */
-function words(text: string): string[] {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9#]+/g, ' ')
-    .trim()
-    .split(' ')
-    .filter(Boolean)
-}
-
-/** Syllabes qu'on peut trouver collées en un seul mot par la reconnaissance vocale (« doré », « solla », « fadièse »). */
-const GLUED = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si', 'diese', 'bemol']
-
-/** Découpe un mot en noms de notes collés (« dore » → do, re), ou null s'il n'en est pas fait. */
-function unglue(word: string): string[] | null {
-  if (!word) return []
-  for (const syllable of GLUED) {
-    if (!word.startsWith(syllable)) continue
-    const rest = unglue(word.slice(syllable.length))
-    if (rest) return [syllable, ...rest]
-  }
-  return null
-}
-
-/** Les mots d'une phrase, sans accents ni ponctuation (pour comparer des transcriptions). */
-export const spokenWords = words
-
-/** Le mot est déjà compris tel quel : nom de note (homophones compris), dièse ou bémol. */
-export const isKnownWord = (w: string) => LETTER_OF.has(w) || SHARP.has(w) || FLAT.has(w)
-
-/**
- * Transcriptions apprises de la voix du joueur (écran « Ma voix ») : ce que la reconnaissance a écrit quand il disait
- * une syllabe (« les » pour ré, « des yeux » pour dièse), remplacé par cette syllabe avant la lecture. Les plus longues d'abord.
- */
-let learned: { words: string[]; syllable: string }[] = []
-
-/** Remplace les transcriptions apprises (syllabe : do, re, mi, fa, sol, la, si, diese, bemol → ses transcriptions). */
-export function setLearnedWords(map: Partial<Record<string, string[]>>) {
-  learned = Object.entries(map)
-    .flatMap(([syllable, phrases]) => (phrases ?? []).map((p) => ({ words: words(p), syllable })))
-    .filter((l) => l.words.length)
-    .sort((a, b) => b.words.length - a.words.length)
-}
-
-/** Remplace dans la suite de mots les transcriptions apprises par leur syllabe. */
-function applyLearned(list: string[]): string[] {
-  if (!learned.length) return list
-  const out: string[] = []
-  for (let i = 0; i < list.length; ) {
-    const hit = learned.find((l) => l.words.every((w, j) => list[i + j] === w))
-    if (hit) {
-      out.push(hit.syllable)
-      i += hit.words.length
-    } else out.push(list[i++])
-  }
-  return out
-}
-
-/** Les noms de notes reconnus dans une phrase, dans l'ordre (« do dièse ré » → Do♯, Ré). */
-export function parseSpokenNotes(text: string): SpokenNote[] {
-  const out: SpokenNote[] = []
-  const all = applyLearned(words(text)).flatMap((w) => (isKnownWord(w) ? [w] : (unglue(w) ?? [w])))
-  for (const w of all) {
-    const pc = LETTER_OF.get(w)
-    if (pc !== undefined) {
-      out.push({ pc, altered: false })
-      continue
-    }
-    const last = out[out.length - 1]
-    if (!last || last.altered) continue
-    if (SHARP.has(w)) out[out.length - 1] = { pc: (last.pc + 1) % 12, altered: true }
-    else if (FLAT.has(w)) out[out.length - 1] = { pc: (last.pc + 11) % 12, altered: true }
-  }
-  return out
-}
 
 // ——— Notes chantées ———
 

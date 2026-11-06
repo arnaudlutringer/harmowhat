@@ -202,7 +202,7 @@ export function useSightReading(
     onsets.push(t)
   }
 
-  /** Oublie les attaques d'avant `t` restées sans mot (fin d'une phrase de la reconnaissance vocale). */
+  /** Oublie les attaques d'avant `t` restées sans mot (syllabe déjà jugée). */
   function forgetOnsets(t: number) {
     onsets = onsets.filter((o) => o >= t)
   }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { saveProfile } from '@/player/profile'
 import { saveTemplates } from '@/audio/wordMatch'
-import { markVoiceOwner, setRecognition, voiceOwnerChanged, voiceReady, VOICE_WORDS } from './voiceWords'
+import { markVoiceOwner, voiceOwnerChanged, voiceReady, VOICE_WORDS } from './voiceWords'
 
 const allWords = () => Object.fromEntries(VOICE_WORDS.map((w) => [w.key, [[new Array(12).fill(0)]]]))
 
@@ -12,7 +12,6 @@ describe('« Ma voix » : à qui appartient la voix enregistrée', () => {
       getItem: (k: string) => store.get(k) ?? null,
       setItem: (k: string, v: string) => void store.set(k, v),
     })
-    setRecognition('son')
     saveProfile({ name: 'Arno' })
   })
 

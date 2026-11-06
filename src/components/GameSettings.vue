@@ -77,13 +77,11 @@
 
     <!-- En bas, toujours à portée du pouce : l'essai d'une question et le départ. -->
     <ion-footer class="ion-no-border">
-      <!-- Jeu qui a besoin d'Internet (reconnaissance vocale) : boutons bloqués hors connexion, réactivés dès son retour. -->
-      <p v-if="offline" class="offline">📶 Connecte-toi à Internet pour jouer : la reconnaissance vocale en a besoin.</p>
       <div class="actions">
-        <button class="trial" :disabled="offline" @click="start(true)">Un<br />essai</button>
+        <button class="trial" @click="start(true)">Un<br />essai</button>
         <!-- Matchs (fonctionnalité en préparation) : jouer la partie comme un défi, que d'autres pourront relever. -->
-        <button v-if="matchs" class="trial" :disabled="offline" @click="start(false, true)">⚔️<br />Défier</button>
-        <button class="start" :disabled="offline" @click="start()">C'est parti&nbsp;!</button>
+        <button v-if="matchs" class="trial" @click="start(false, true)">⚔️<br />Défier</button>
+        <button class="start" @click="start()">C'est parti&nbsp;!</button>
       </div>
     </ion-footer>
   </ion-page>
@@ -103,7 +101,6 @@ import { featureEnabled } from '@/config/features'
 import { matchesAvailable } from '@/games/matches'
 import { newSeed } from '@/games/seed'
 import { confirmSoundOn } from '@/audio/volume'
-import { online } from '@/player/online'
 import { earnedTrophies, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
 
 /**
@@ -127,13 +124,10 @@ const props = defineProps<{
   extra?: Record<string, string>
   /** Niveau du classement, s'il diffère du niveau choisi (harmonies : niveau et précision). */
   boardLevel?: (level: string) => string
-  /** Le jeu a besoin d'Internet (reconnaissance vocale de « Lecture continue »). */
-  needsOnline?: boolean
   /** Le jeu ne joue aucun son : pas besoin de vérifier le volume du téléphone. */
   silent?: boolean
 }>()
 
-const offline = computed(() => !!props.needsOnline && !online.value)
 
 const TABS = [
   { id: 'jouer', label: 'Jouer' },
@@ -373,21 +367,6 @@ h2 {
   border: none;
   font-family: inherit;
   cursor: pointer;
-}
-.actions button:disabled {
-  opacity: 0.4;
-  box-shadow: none;
-  cursor: default;
-}
-.offline {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 10px 16px 0;
-  background: var(--ion-background-color);
-  color: var(--ion-color-danger);
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
 }
 .trial {
   width: 64px;

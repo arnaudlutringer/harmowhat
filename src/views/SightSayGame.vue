@@ -27,8 +27,8 @@
         />
         <p class="status" :class="{ ko: sight.phase.value === 'over', again: askAgain }" aria-live="polite">{{ status }}</p>
         <p v-if="micError" class="error">{{ micError }}</p>
-        <!-- Ce que la reconnaissance vocale a entendu, pour comprendre une réponse refusée. -->
-        <p class="heard">{{ recognizing ? 'Je t’ai entendu, je reconnais le mot…' : heard ? `« ${heard} »` : ' ' }}</p>
+        <!-- Ce qui a été reconnu, pour comprendre une réponse refusée. -->
+        <p class="heard">{{ heard ? `« ${heard} »` : ' ' }}</p>
         <!-- Partie finie (essai compris) : le compte rendu de tout ce qui a été entendu et jugé. -->
         <button v-if="debug && sight.phase.value === 'over'" class="report" @click="copyReport">{{ copied ? 'Compte rendu copié ✓' : 'Copier le compte rendu' }}</button>
       </div>
@@ -48,15 +48,11 @@ import GameShell from '@/components/GameShell.vue'
 import ScrollingStaff from '@/components/ScrollingStaff.vue'
 import { useQuiz } from '@/composables/useQuiz'
 import { useSightReading } from '@/composables/useSightReading'
-import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
 import { pitchClassName } from '@/music/notes'
-import { clefLabel, noteName, parseSightSettings, notesForMedal, parseSpokenNotes, SAY_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
+import { clefLabel, noteName, parseSightSettings, notesForMedal, SAY_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
-import { online } from '@/player/online'
 import { featureEnabled } from '@/config/features'
-// Mots appris de la voix du joueur (« Ma voix ») : chargés pour la lecture de ce qu'il dit.
-import { recognition, soundReady } from '@/games/voiceWords'
 import { listenToSyllables, loadTemplates, saveTemplates, type Syllable, type SyllableListening } from '@/audio/wordMatch'
 import { SoundJudge, type Learned } from '@/games/soundJudge'
 
@@ -70,8 +66,7 @@ const quiz = useQuiz({
   untimed: true,
   advanceDelay: null,
 })
-// La reconnaissance vocale rend le mot avec un peu de retard. Sur Android, chaque note est jugée au moment où le joueur a commencé
-// à la dire (attaque de la voix) ; ailleurs, ou sans attaque repérée, on compte 1,1 s de reconnaissance.
+// Chaque note est jugée au moment où le joueur a commencé à la dire (début de la syllabe).
 // Essai rapide : on part de ♩ = 120, pour s'entraîner à enchaîner les notes.
 const fastStart = trialTempo(quiz.trial, route.query.tempo)
 const sight = useSightReading(quiz, settings.level, 1.1, fastStart, SAY_LEVELS)
@@ -83,21 +78,13 @@ const debug = featureEnabled('testMicro')
 const askAgain = ref(false)
 let askAgainTimer: ReturnType<typeof setTimeout> | undefined
 const ASK_AGAIN_MS = 1500
-/** La voix du joueur vient d'être entendue : le mot est en cours de reconnaissance. */
-const recognizing = ref(false)
 const micError = ref('')
-let speech: SpeechListening | null = null
-/** Séance de reconnaissance en cours, et nombre de notes déjà jugées dans son texte. */
-let session = -1
-let consumed = 0
 
-function stopSpeech() {
-  speech?.stop()
-  speech = null
+function stopListening() {
   syllables?.stop()
   syllables = null
 }
-onBeforeUnmount(stopSpeech)
+onBeforeUnmount(stopListening)
 
 // ——— Compte rendu : tout ce qui est entendu et jugé, à copier en fin de partie pour comprendre une erreur ———
 
@@ -139,8 +126,8 @@ async function copyReport() {
   const t = loadTemplates()
   const lines = [
     `Lecture continue · ${new Date().toLocaleString('fr-FR')} · version du ${new Date(__BUILD_TIME__).toLocaleString('fr-FR')}`,
-    `Niveau ${SAY_LEVELS[settings.level].label} · tempo de départ ${tempoAfter(settings.level, 0, fastStart)} · reconnaissance ${bySound ? 'par le son' : 'Google'}`,
-    bySound ? `Enregistrements : ${Object.entries(t).map(([k, l]) => `${k} ${l.length}`).join(', ')}` : '',
+    `Niveau ${SAY_LEVELS[settings.level].label} · tempo de départ ${tempoAfter(settings.level, 0, fastStart)}`,
+    `Enregistrements : ${Object.entries(t).map(([k, l]) => `${k} ${l.length}`).join(', ')}`,
     `Résultat : ${readLabel.value}, jusqu'à ♩ = ${sight.topTempo.value} · ${sight.reason.value}`,
     '',
     ...report,
@@ -158,11 +145,8 @@ async function copyReport() {
 let lastPc = -1
 
 function judge(pc: number, heardSyllables: Learned[] = []) {
-  consumed++
-  recognizing.value = false
   askAgain.value = false
-  // Deux notes de suite n'ont jamais le même nom : la note qu'on vient de valider, redite (le joueur la répète parce
-  // que le mot tarde à être reconnu, ou la phrase précédente revient en retard), n'est pas une réponse pour la suivante.
+  // Deux notes de suite n'ont jamais le même nom : la note qu'on vient de valider, redite, n'est pas une réponse pour la suivante.
   if (pc === lastPc) return log(`  ${pitchClassName(pc)} redit : ignoré`)
   lastPc = pc
   const before = sight.read.value
@@ -177,43 +161,8 @@ function judge(pc: number, heardSyllables: Learned[] = []) {
   if (right) soundJudge.learn(heardSyllables)
 }
 
-function onSpeech(text: string, s: number, final: boolean, alternatives: string[] = [text]) {
-  if (sight.phase.value !== 'running') return
-  if (s !== session) {
-    session = s
-    consumed = 0
-  }
-  heard.value = text
-  log(`Google ${final ? 'final' : 'partiel'} : ${alternatives.map((a) => `« ${a} »`).join(', ')}`)
-  // Parmi les transcriptions possibles, celle où l'on trouve le plus de noms de notes (la plus probable à égalité).
-  const said = alternatives.map(parseSpokenNotes).reduce((best, notes) => (notes.length > best.length ? notes : best), parseSpokenNotes(text))
-  for (let i = consumed; i < said.length && sight.phase.value === 'running'; i++) judge(said[i].pc)
-}
+// ——— Reconnaissance par le son : chaque syllabe comparée aux enregistrements du joueur, sans Internet ———
 
-/** Instant d'un événement du module vocal (horloge Date.now()) sur l'horloge du jeu (performance.now()). */
-const perfTime = (at: number) => performance.now() - (Date.now() - at)
-/** Fin de la dernière parole entendue par la reconnaissance. */
-let speechEnd = 0
-
-function onEvent(e: SpeechEvent) {
-  if (e.type === 'onset') {
-    if (sight.phase.value === 'running') log(`attaque de la voix · ${where(perfTime(e.at))}`, perfTime(e.at))
-    sight.onset(perfTime(e.at))
-    if (sight.phase.value === 'running') recognizing.value = true
-  }
-  if (e.type === 'end') speechEnd = perfTime(e.at)
-  // Phrase terminée : ses attaques restées sans nom de note (bruit, « euh ») sont oubliées, après le jugement de ses mots.
-  if (e.type === 'final' || e.type === 'error') {
-    const end = speechEnd
-    setTimeout(() => (recognizing.value = false))
-    setTimeout(() => sight.forgetOnsets(end))
-  }
-}
-
-// ——— Reconnaissance par le son (par défaut) : chaque syllabe comparée aux enregistrements du joueur, sans Internet ———
-
-/** Par le son, si le joueur a enregistré ses mots (sinon, Google). */
-const bySound = recognition.value === 'son' && soundReady()
 let syllables: SyllableListening | null = null
 const soundJudge = new SoundJudge(
   loadTemplates(),
@@ -265,28 +214,15 @@ async function begin(): Promise<number> {
   micError.value = ''
   heard.value = ''
   lastPc = -1
-  recognizing.value = false
   soundJudge.reset()
   report.length = 0
   t0 = performance.now()
   log('départ (la première note arrive à la barre dans 3 temps)')
-  if (bySound) {
-    if (!syllables) {
-      try {
-        syllables = await listenToSyllables(onSyllable, undefined, onVoiceStart)
-      } catch {
-        micError.value = 'Le micro n’est pas accessible : autorise-le pour cette appli, puis réessaie.'
-      }
-    }
-    return started
-  }
-  // Arrivé ici sans connexion (bouton « Jouer » des classements, par exemple) : la reconnaissance vocale ne marchera pas.
-  if (!online.value) micError.value = 'Pas de connexion à Internet : la reconnaissance vocale ne peut pas comprendre les notes.'
-  if (!speech) {
+  if (!syllables) {
     try {
-      speech = await listenToSpeech(onSpeech, onEvent)
+      syllables = await listenToSyllables(onSyllable, undefined, onVoiceStart)
     } catch {
-      micError.value = 'La reconnaissance vocale n’est pas accessible : autorise le micro pour cette appli, puis réessaie.'
+      micError.value = 'Le micro n’est pas accessible : autorise-le pour cette appli, puis réessaie.'
     }
   }
   return started
@@ -295,7 +231,7 @@ async function begin(): Promise<number> {
 watch(sight.phase, (phase) => {
   if (phase !== 'over') return
   log(`FIN : ${sight.reason.value}`)
-  stopSpeech()
+  stopListening()
   if (!fastStart) trophyEvent({ type: 'sight-run', game: 'lis-dis', notes: sight.read.value, tempo: tempoAfter(settings.level, Math.max(0, sight.read.value - 1), undefined, SAY_LEVELS[settings.level].step) })
 })
 

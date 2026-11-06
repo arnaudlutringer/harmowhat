@@ -3,7 +3,7 @@
   <section class="sound">
     <h2>Par le son (essai)</h2>
     <p class="how">
-      Sans Internet ni Google : enregistre chaque nom de note (trois fois chacun), puis l'appli compare chaque syllabe
+      Sans Internet : enregistre chaque nom de note (trois fois chacun), puis l'appli compare chaque syllabe
       que tu dis à tes enregistrements. La réponse est presque immédiate.
     </p>
 
@@ -45,8 +45,6 @@ const props = defineProps<{
   /** Classe de la note affichée (0 = Do), pour le verdict. */
   expected: number
 }>()
-/** L'écoute commence : le Test du micro arrête la reconnaissance vocale (un seul utilisateur du micro). */
-const emit = defineEmits<{ start: [] }>()
 
 const NOTES = [
   { key: 'do', label: 'do', pc: 0 },
@@ -84,7 +82,6 @@ function stop() {
 
 async function listen(onSyllable: (s: Syllable) => void) {
   error.value = ''
-  emit('start')
   try {
     listening = await listenToSyllables(onSyllable, (l) => (level.value = l))
   } catch {

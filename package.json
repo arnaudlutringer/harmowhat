@@ -11,7 +11,6 @@
     "samples": "node scripts/fetch-samples.mjs"
   },
   "dependencies": {
-    "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
@@ -24,7 +23,6 @@
     "@ionic/vue": "^9.0.7",
     "@ionic/vue-router": "^9.0.7",
     "ionicons": "^8.1.0",
-    "loreille-speech": "file:plugins/speech",
     "loreille-volume": "file:plugins/volume",
     "vexflow": "^5.0.0",
     "vue": "^3.5.44",
