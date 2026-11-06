@@ -13,14 +13,16 @@ const RE: SoundTarget = { pc: 2, letter: 1 }
 
 function setup(wanted: SoundTarget[]) {
   const answers: number[] = []
+  const learned: string[] = []
   let index = 0
   const judge = new SoundJudge(templates(), {
     target: () => wanted[index] ?? null,
     early: () => false,
     lastPc: () => (index ? wanted[index - 1].pc : -1),
     onset: () => {},
-    answer(pc) {
+    answer(pc, syllables) {
       answers.push(pc)
+      learned.push(...syllables.map((s) => s.key))
       if (pc === wanted[index]?.pc) index++
     },
     heard: () => {},
@@ -28,27 +30,36 @@ function setup(wanted: SoundTarget[]) {
     label: String,
     where: () => '',
   })
-  return { judge, answers }
+  return { judge, answers, learned }
 }
 
 describe('Lecture continue, jugement par le son', () => {
-  it('prend une note nette', () => {
-    const { judge, answers } = setup([RE])
+  it('prend une note nette, et l’apprend', () => {
+    const { judge, answers, learned } = setup([RE])
     judge.syllable(syllable(4, 0))
     expect(answers).toEqual([2])
+    expect(learned).toEqual(['re'])
   })
 
   it('compte une note nettement différente de la note à lire', () => {
     const { judge, answers } = setup([RE])
-    judge.syllable(syllable(0, 0))
-    expect(answers).toEqual([0])
+    judge.syllable(syllable(40, 0))
+    expect(answers).toEqual([4])
+  })
+
+  it('ignore une autre note, si elle n’est pas assez nettement plus proche que la note à lire', () => {
+    const { judge, answers } = setup([RE])
+    judge.syllable(syllable(1.5, 0))
+    expect(answers).toEqual([])
   })
 
   it('tranche une hésitation en faveur de la note à lire', () => {
-    const { judge, answers } = setup([RE])
+    const { judge, answers, learned } = setup([RE])
     // À mi-chemin entre do (1) et ré (4), un peu plus près de do : l'écart de distances reste sous le seuil.
     judge.syllable(syllable(2.4, 0))
     expect(answers).toEqual([2])
+    // Une hésitation tranchée n'est pas apprise.
+    expect(learned).toEqual([])
   })
 
   it('ne laisse pas une syllabe ratée emporter la note suivante, même collée', () => {

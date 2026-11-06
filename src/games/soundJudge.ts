@@ -45,7 +45,7 @@ const LEARNED = 4
 
 export const SOUND_RULES = {
   /** Pour compter une erreur, la note entendue doit être plus proche que la note à lire d'au moins cet écart. */
-  wrongMargin: 2.5,
+  wrongMargin: 4,
   /** Note à lire plus loin que la plus proche de moins de cet écart : hésitation, on retient la note à lire. */
   tieMargin: 2,
   /** Au-delà de ce multiple de la limite de bruit, la note à lire est trop loin pour être retenue, même à égalité. */
@@ -146,6 +146,7 @@ export class SoundJudge {
     }
     // La réponse est datée du début de la syllabe.
     host.onset(s.start)
-    host.answer(pc, [{ key: best.key, features: s.features }])
+    // Seule une syllabe sans ambiguïté enrichit les enregistrements : apprendre d'une hésitation tranchée mélangerait les notes.
+    host.answer(pc, !tieBreak && best.margin >= SOUND_RULES.clearMargin ? [{ key: best.key, features: s.features }] : [])
   }
 }
