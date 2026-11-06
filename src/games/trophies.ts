@@ -4,6 +4,7 @@ import { endingsFor } from '@/music/endings'
 import type { QuestionResult } from './scoring'
 import type { Board, GameId } from './highScores'
 import { gameEnabled } from '@/config/features'
+import { MIN_REWARD_QUESTIONS } from './questionCounts'
 import { SIGHT_GOAT_POINTS, SIGHT_MEDAL_POINTS } from './sightReading'
 
 /**
@@ -111,7 +112,7 @@ export const TROPHIES: Trophy[] = [
   { id: 'oreille-de-lynx', family: 'sans-faute', icon: '🐆', title: 'Oreille de lynx', condition: 'Termine un questionnaire sans faute en expert' },
   { id: 'sans-filet', family: 'sans-faute', icon: '🎪', title: 'Sans filet', condition: 'Termine un questionnaire sans faute sans toucher au diapason (quand il est proposé)' },
   { id: 'marathonien', family: 'sans-faute', icon: '🏃', title: 'Marathonien', condition: 'Termine un questionnaire de 30 questions sans faute' },
-  { id: 'impossible', family: 'sans-faute', icon: '💎', title: "L'impossible n'existe pas", condition: 'Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question' },
+  { id: 'impossible', family: 'sans-faute', icon: '💎', title: "L'impossible n'existe pas", condition: 'Débloque un niveau Impossible : un questionnaire expert d\'au moins 10 questions sans faute, à plus de 9 000 points par question' },
   { id: 'grand-chelem', family: 'sans-faute', icon: '👑', title: 'Grand chelem', condition: `Fais au moins un sans faute dans chacun des ${ALL_GAMES.length} jeux` },
 
   { id: 'rapide', family: 'rapidite', icon: '🐇', title: 'Rapide', condition: "Donne toutes les réponses d'un questionnaire à 7 000 points ou plus" },
@@ -127,7 +128,7 @@ export const TROPHIES: Trophy[] = [
     title: GOAT_TITLES[game],
     condition: SIGHT_GAMES.includes(game)
       ? `${GAME_NAMES[game]} : marque ${SIGHT_GOAT_POINTS.toLocaleString('fr-FR')} points en une partie`
-      : `${GAME_NAMES[game]} : donne chaque réponse d'un questionnaire à ${GOAT_POINTS.toLocaleString('fr-FR')} points`,
+      : `${GAME_NAMES[game]} : donne chaque réponse d'un questionnaire d'au moins ${MIN_REWARD_QUESTIONS} questions à ${GOAT_POINTS.toLocaleString('fr-FR')} points`,
     game,
   })),
 
@@ -392,19 +393,21 @@ export function evaluateGame(ctx: GameContext): void {
     ['catastrophe', sight ? runPoints === 0 : results.length > 0 && correct === 0],
   ]
   for (const [id, ok] of rules) if (ok) award(state, id)
-  if ((sight ? runPoints >= SIGHT_GOAT_POINTS : atLeast(GOAT_POINTS)) && TIER_ORDER.includes(level)) award(state, `goat-${board.game}`, level)
+  // Médaille, GOAT et niveau Impossible : pas sur un questionnaire trop court (les jeux d'un seul tenant n'ont pas de questions).
+  const longEnough = sight || board.game === 'garde-tempo' || board.questions >= MIN_REWARD_QUESTIONS
+  if (longEnough && (sight ? runPoints >= SIGHT_GOAT_POINTS : atLeast(GOAT_POINTS)) && TIER_ORDER.includes(level)) award(state, `goat-${board.game}`, level)
   // Médaille du niveau joué : un questionnaire complet sans faute (« intermédiaire » compte comme normal).
   const medalTier = (level as string) === 'intermediaire' ? 'normal' : level
   const won = s.levelMedals[board.game] ?? []
   // « Garde le tempo » se termine toujours sur une erreur : sa médaille vient d'un palier de 30 secondes tenu.
   const perfect = board.game === 'garde-tempo' ? results.some((r) => r.correct) : sight ? allCorrect : allCorrect && results.length >= board.questions
-  if (perfect && TIER_ORDER.includes(medalTier) && !won.includes(medalTier)) {
+  if (longEnough && perfect && TIER_ORDER.includes(medalTier) && !won.includes(medalTier)) {
     s.levelMedals = { ...s.levelMedals, [board.game]: [...won, medalTier] }
     state.pending.push({ id: `medal-${board.game}`, tier: medalTier })
   }
   // Exploit en expert (questionnaire complet, sans faute, plus de 9 000 points à chaque question) : le niveau Impossible se débloque.
   const exploit = level === 'expert' && results.length >= board.questions && results.every((r) => r.correct && r.points > IMPOSSIBLE_POINTS)
-  if (exploit && !NO_IMPOSSIBLE.includes(board.game) && !s.impossible.includes(board.game)) {
+  if (longEnough && exploit && !NO_IMPOSSIBLE.includes(board.game) && !s.impossible.includes(board.game)) {
     s.impossible = [...s.impossible, board.game]
     state.pending.push({ id: `impossible-${board.game}` })
     award(state, 'impossible')

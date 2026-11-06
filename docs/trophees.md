@@ -23,7 +23,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Oreille de lynx | Un questionnaire sans faute en expert |
 | Sans filet | Un questionnaire sans faute sans toucher au diapason |
 | Marathonien | Un questionnaire de 30 questions sans faute |
-| L'impossible n'existe pas | Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question |
+| L'impossible n'existe pas | Débloque un niveau Impossible : un questionnaire expert d'au moins 10 questions sans faute, à plus de 9 000 points par question |
 | Grand chelem | Au moins un sans faute dans chacun des 16 jeux |
 
 ## 3. Rapidité (5)
@@ -36,7 +36,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Éclair | Une bonne réponse à 10 000 points |
 | Réflexe | 10 bonnes réponses de suite à 9 000 points ou plus |
 
-## 4. GOAT, 10 000 points à chaque question d'un questionnaire (16 jeux, 💎 en impossible quand le jeu en a un)
+## 4. GOAT, 10 000 points à chaque question d'un questionnaire d'au moins 10 questions (16 jeux, 💎 en impossible quand le jeu en a un)
 
 Les 10 000 points s'obtiennent en répondant pendant la marge de 0,3 s qui précède le décompte des points (GRACE_MS dans src/games/scoring.ts).
 
@@ -136,4 +136,4 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 
 ## Médailles de niveau (hors trophées)
 
-Chaque jeu a une médaille par niveau, affichée sur sa carte de l'accueil et sur les tuiles de ses réglages : 🥉 pour un questionnaire complet sans faute en débutant, 🥈 en normal (ou intermédiaire), 🥇 en expert, 👑 en impossible. La médaille du GOAT, elle, est le diamant 💎, avec le niveau le plus haut où il a été gagné.
+Chaque jeu a une médaille par niveau, affichée sur sa carte de l'accueil et sur les tuiles de ses réglages : 🥉 pour un questionnaire complet d'au moins 10 questions sans faute en débutant, 🥈 en normal (ou intermédiaire), 🥇 en expert, 👑 en impossible. La médaille du GOAT, elle, est le diamant 💎, avec le niveau le plus haut où il a été gagné.

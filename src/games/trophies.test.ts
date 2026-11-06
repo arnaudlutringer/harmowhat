@@ -11,7 +11,8 @@ globalThis.localStorage = {
   length: 0,
 } as Storage
 
-const { evaluateGame, takePendingTrophies, trophyEvent, TROPHIES, GOAT_POINTS, earnedTrophies } = await import('./trophies')
+const { evaluateGame, takePendingTrophies, trophyEvent, TROPHIES, GOAT_POINTS, earnedTrophies, levelMedals } = await import('./trophies')
+const earned = (id: string) => earnedTrophies.value[id]
 
 const results = (points: number[], correct = true) => points.map((p) => ({ correct, points: correct ? p : 0 }))
 const game = (over: Partial<Parameters<typeof evaluateGame>[0]> = {}) =>
@@ -142,5 +143,18 @@ describe('Trophées', () => {
   it('La catastrophe : aucune bonne réponse', () => {
     game({ results: results(Array(10).fill(0), false) })
     expect(ids()).toContain('catastrophe')
+  })
+
+  it('ne donne ni médaille, ni GOAT, ni niveau Impossible sur un questionnaire de moins de 10 questions', () => {
+    const short = { game: 'accords' as const, level: 'expert', questions: 5 }
+    game({ board: short, results: results(Array(5).fill(GOAT_POINTS)) })
+    expect(earned('goat-accords')).toBeUndefined()
+    expect(levelMedals.value.accords ?? []).not.toContain('expert')
+    expect(earned('impossible')).toBeUndefined()
+    const full = { ...short, questions: 10 }
+    game({ board: full, results: results(Array(10).fill(GOAT_POINTS)) })
+    expect(earned('goat-accords')).toBeDefined()
+    expect(levelMedals.value.accords).toContain('expert')
+    expect(earned('impossible')).toBeDefined()
   })
 })

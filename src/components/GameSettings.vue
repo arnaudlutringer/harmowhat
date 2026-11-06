@@ -24,6 +24,7 @@
                 {{ n }}
               </button>
             </div>
+            <p v-if="questions < MIN_REWARD_QUESTIONS" class="short-hint">À {{ questions }} questions, pas de médaille ni de GOAT : il en faut {{ MIN_REWARD_QUESTIONS }} au moins.</p>
           </template>
 
           <h2>Niveau</h2>
@@ -89,6 +90,7 @@
 
 <script setup lang="ts">
 import { withTrial } from '@/games/ready'
+import { MIN_REWARD_QUESTIONS } from '@/games/questionCounts'
 import { computed, ref, watch } from 'vue'
 import { IonButton, IonContent, IonFooter, IonPage, useIonRouter } from '@ionic/vue'
 import { useRoute } from 'vue-router'
@@ -259,6 +261,11 @@ h2 {
   font-weight: 600;
   box-shadow: 0 2px 6px rgba(45, 48, 71, 0.06);
   cursor: pointer;
+}
+.short-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--ion-color-medium);
 }
 .chips .on {
   background: var(--ion-color-primary);
