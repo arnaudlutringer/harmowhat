@@ -208,6 +208,7 @@ export function cleanName(raw: string): string {
 /** Écran de jeu pour rejouer avec les réglages d'un classement. */
 export function playHref({ game, level, questions }: Board): string {
   if (game === 'quelle-note' || game === 'chante-note') return afterSettings(game, level === 'expert', `questions=${questions}&level=${level}`)
+  if (game === 'lis-chante') return afterSettings(game, true, `questions=${questions}&level=${level}`)
   if (game === 'harmonies') {
     const [lvl, precision] = level.split('-')
     return `/games/harmonies/jouer?questions=${questions}&level=${lvl}&precision=${precision}`

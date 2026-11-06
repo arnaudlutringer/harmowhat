@@ -11,7 +11,7 @@
         </button>
         <h2>Le diapason : La3, 440 Hz</h2>
         <p>
-          <strong>Pas de diapason pendant les questions.</strong>
+          <strong>Pas de diapason pendant le jeu.</strong>
           C'est ici, et seulement ici, que tu peux l'écouter. Écoute-le autant de fois que tu veux, puis lance-toi.
         </p>
         <ion-button expand="block" size="large" @click="start">Je suis prêt</ion-button>

@@ -6,6 +6,7 @@ describe('Écran « Je suis prêt »', () => {
     expect(afterSettings('quelle-note', true, 'level=expert')).toBe('/games/quelle-note/pret?level=expert')
     expect(afterSettings('quelle-note', false, 'level=normal')).toBe('/games/quelle-note/jouer?level=normal')
     expect(afterSettings('chante-note', true, 'level=expert')).toBe('/games/chante-note/pret?level=expert')
+    expect(afterSettings('lis-chante', true, 'level=normal')).toBe('/games/lis-chante/pret?level=normal')
   })
 
   it('ajoute le mode essai à l’adresse du jeu', () => {
