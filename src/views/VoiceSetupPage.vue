@@ -46,7 +46,7 @@ import { useRoute } from 'vue-router'
 import { IonButton, IonContent, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
 import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
-import { recognition, saveVoiceWords, SOUND_PROMPTS, toLearn, VOICE_TAKES, VOICE_WORDS, type SoundPrompt } from '@/games/voiceWords'
+import { recognition, saveVoiceWords, toLearn, VOICE_TAKES, VOICE_WORDS, type VoiceWord } from '@/games/voiceWords'
 import { AMBIENT_MS, listenToSyllables, loadTemplates, MIN_VOICED_MS, saveTemplates, type Features, type Syllable, type SyllableListening } from '@/audio/wordMatch'
 import { spokenWords } from '@/games/sightReading'
 import { online } from '@/player/online'
@@ -59,7 +59,7 @@ const suite = typeof route.query.suite === 'string' && route.query.suite.startsW
 /** Par le son : on enregistre la voix elle-même ; sinon, ce que Google en comprend. */
 const bySound = recognition.value === 'son'
 /** Chaque mot, deux fois. */
-const prompts: SoundPrompt[] = (bySound ? SOUND_PROMPTS : VOICE_WORDS).flatMap((w) => Array.from({ length: VOICE_TAKES }, () => w))
+const prompts: VoiceWord[] = VOICE_WORDS.flatMap((w) => Array.from({ length: VOICE_TAKES }, () => w))
 const level = ref(0)
 /** Enregistrements par le son, par syllabe. */
 const sounds: Record<string, Features[]> = {}
@@ -108,8 +108,6 @@ function next() {
 }
 
 function skip() {
-  if (phrase) clearTimeout(phrase.timer)
-  phrase = null
   feedback.value = { kind: 'ko', text: 'Mot passé.' }
   next()
 }
@@ -126,41 +124,10 @@ function onEvent(e: SpeechEvent) {
   if (e.message === 'rien compris') feedback.value = { kind: 'ko', text: `Je n'ai pas compris, redis « ${prompts[step.value]?.label} ».` }
 }
 
-/** Note altérée en cours d'enregistrement : ses syllabes, jusqu'à un court silence. */
-let phrase: { syllables: Features[]; timer: ReturnType<typeof setTimeout> } | null = null
-/** Silence qui termine une note altérée. */
-const PHRASE_END_MS = 600
-
-/**
- * Note altérée (« fa dièse ») : la première syllabe enrichit la note, les suivantes (« di-èse », « bé-mol ») donnent
- * l'altération telle qu'on la dit enchaînée. En deux syllabes seulement, on ne sait pas où finit la note : seule la
- * seconde est gardée, pour l'altération. En une seule (tout fondu), on redemande.
- */
-function endPhrase(prompt: SoundPrompt) {
-  const list = phrase?.syllables ?? []
-  phrase = null
-  if (!prompt.phrase || waiting) return
-  if (list.length < 2) {
-    feedback.value = { kind: 'ko', text: `Redis « ${prompt.label} » en détachant un peu les mots.` }
-    return
-  }
-  if (list.length >= 3) (sounds[prompt.phrase.note] ??= []).push(list[0])
-  ;(sounds[prompt.phrase.accidental] ??= []).push(...list.slice(1))
-  feedback.value = { kind: 'ok', text: 'Enregistré ✓' }
-  next()
-}
-
 /** Par le son : la première syllabe avec de la voix (pas un souffle) est l'enregistrement du mot. */
 function onSyllable(s: Syllable) {
   if (waiting || step.value >= prompts.length || s.voiced < MIN_VOICED_MS) return
   const prompt = prompts[step.value]
-  if (prompt.phrase) {
-    phrase ??= { syllables: [], timer: setTimeout(() => {}) }
-    phrase.syllables.push(s.features)
-    clearTimeout(phrase.timer)
-    phrase.timer = setTimeout(() => endPhrase(prompt), PHRASE_END_MS)
-    return
-  }
   ;(sounds[prompt.key] ??= []).push(s.features)
   feedback.value = { kind: 'ok', text: 'Enregistré ✓' }
   next()
@@ -201,11 +168,7 @@ function finish() {
   stopListening()
   if (bySound) {
     // Les mots passés gardent leurs enregistrements précédents.
-    const merged = { ...loadTemplates(), ...sounds }
-    // Mot réenregistré d'une seule syllabe : l'ancienne seconde syllabe ne vaut plus.
-    // Les anciens enregistrements à part de la seconde syllabe (« -èse ») sont remplacés par ceux des notes altérées.
-    for (const k of ['diese', 'bemol']) if (sounds[k]) delete merged[`${k}2`]
-    saveTemplates(merged)
+    saveTemplates({ ...loadTemplates(), ...sounds })
     return
   }
   saved = learnedWords()

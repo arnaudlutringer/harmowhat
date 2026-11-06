@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NoteStream, notePoints, parseSightSettings, parseSpokenNotes, setLearnedWords, SungNotes, tempoAfter } from './sightReading'
+import { NoteStream, notePoints, parseSightSettings, parseSpokenNotes, SAY_LEVELS, setLearnedWords, SungNotes, tempoAfter } from './sightReading'
 
 describe('Lecture en défilement', () => {
   it('reconnaît les noms de notes dits, avec leurs altérations et quelques homophones', () => {
@@ -59,6 +59,13 @@ describe('Lecture en défilement', () => {
     }
     const easy = new NoteStream('debutant')
     for (let i = 0; i < 50; i++) expect(easy.next().note.alter).toBe(0)
+    // « Lecture continue » : aucune altération, à tous les niveaux, et la clé change toujours.
+    for (const level of ['normal', 'expert'] as const) {
+      const said = new NoteStream(level, SAY_LEVELS[level].accidentals)
+      const list = Array.from({ length: 100 }, () => said.next())
+      expect(list.every((n) => n.note.alter === 0)).toBe(true)
+      expect(new Set(list.map((n) => n.clef)).size).toBeGreaterThan(1)
+    }
   })
 
   it('retient une note chantée tenue, une seule fois tant qu’elle dure', () => {

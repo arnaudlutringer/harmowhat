@@ -25,6 +25,8 @@ export function useSightReading(
   latency: number,
   /** Tempo de départ imposé (essai rapide) ; sinon celui du niveau. */
   startTempo?: number,
+  /** Notes altérées (par défaut, selon le niveau). */
+  accidentals?: boolean,
 ) {
   type Phase = 'waiting' | 'running' | 'over'
   const phase = ref<Phase>('waiting')
@@ -36,7 +38,7 @@ export function useSightReading(
   /** Fin de partie : ce qui s'est passé. */
   const reason = ref('')
   let target = 0
-  let stream = new NoteStream(level)
+  let stream = new NoteStream(level, accidentals)
   let frame: number | undefined
   let last = 0
   let endTimer: ReturnType<typeof setTimeout> | undefined
@@ -116,7 +118,7 @@ export function useSightReading(
   function start(): Promise<number> {
     stopLoop()
     clearTimeout(endTimer)
-    stream = new NoteStream(level)
+    stream = new NoteStream(level, accidentals)
     notes.value = []
     target = 0
     read.value = 0

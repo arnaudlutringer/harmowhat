@@ -1,10 +1,10 @@
-import { SOUND_PROMPTS, VOICE_TAKES } from './voiceWords'
+import { VOICE_TAKES, VOICE_WORDS } from './voiceWords'
 
 /**
  * Banc d'essai de la reconnaissance par le son : une liste de choses à dire, enregistrée d'un seul tenant et envoyée
  * pour être rejouée hors du téléphone (voir tools/soundBench.ts).
  * - « voix » : les mêmes mots que « Ma voix » (ils servent d'enregistrements de référence) ;
- * - « test » : chaque note, avec et sans altération, dans un ordre mélangé ;
+ * - « test » : chaque note, plusieurs fois, dans un ordre mélangé ;
  * - « enchaine » : des notes dites à la suite, sans s'arrêter ;
  * - « bruit » : ce qui ne doit pas compter comme une note.
  */
@@ -49,15 +49,9 @@ function shuffled<T>(list: T[]): T[] {
 }
 
 export const BENCH_PROMPTS: BenchPrompt[] = [
-  ...SOUND_PROMPTS.flatMap((p) => Array.from({ length: VOICE_TAKES }, (): BenchPrompt => ({ kind: 'voix', text: p.label, ms: 2500 }))),
-  ...shuffled([
-    ...NOTES,
-    ...NOTES,
-    ...NOTES,
-    ...NOTES.map((n) => `${n} dièse`),
-    ...NOTES.map((n) => `${n} bémol`),
-  ]).map((text): BenchPrompt => ({ kind: 'test', text, ms: 2200 })),
-  ...['do ré mi fa', 'sol la si do', 'fa dièse sol la', 'si bémol do ré', 'mi bémol fa sol', 'do dièse ré mi'].map((text): BenchPrompt => ({ kind: 'enchaine', text, ms: 4000 })),
+  ...VOICE_WORDS.flatMap((p) => Array.from({ length: VOICE_TAKES }, (): BenchPrompt => ({ kind: 'voix', text: p.label, ms: 2500 }))),
+  ...shuffled([...NOTES, ...NOTES, ...NOTES, ...NOTES, ...NOTES]).map((text): BenchPrompt => ({ kind: 'test', text, ms: 2200 })),
+  ...['do ré mi fa', 'sol la si do', 'fa sol la si', 'mi fa sol la', 'do sol ré la', 'mi si fa do'].map((text): BenchPrompt => ({ kind: 'enchaine', text, ms: 4000 })),
   { kind: 'bruit', text: 'Tousse', ms: 3000 },
   { kind: 'bruit', text: 'Souffle fort', ms: 3000 },
   { kind: 'bruit', text: 'Dis « oula ! »', ms: 3000 },

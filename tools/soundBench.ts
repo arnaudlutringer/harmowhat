@@ -128,28 +128,17 @@ for (const l of meta.labels.filter((x) => x.kind === 'bruit')) {
 const PCS: Record<string, number> = { do: 0, re: 2, mi: 4, fa: 5, sol: 7, la: 9, si: 11 }
 const LETTERS = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si']
 
-/** Les notes à lire d'une consigne (« fa dièse sol » → Fa♯, Sol). */
+/** Les notes à lire d'une consigne (« do sol » → Do, Sol). */
 function targets(text: string): SoundTarget[] {
-  const out: SoundTarget[] = []
-  for (const key of text.split(' ').map((w) => KEYS[w])) {
-    if (key in PCS) out.push({ pc: PCS[key], letter: LETTERS.indexOf(key), alter: 0 })
-    else if (out.length) {
-      const last = out[out.length - 1]
-      last.alter = key === 'diese' ? 1 : -1
-      last.pc = (last.pc + last.alter + 12) % 12
-    }
-  }
-  return out
+  return text.split(' ').map((w) => KEYS[w]).filter((key) => key in PCS).map((key) => ({ pc: PCS[key], letter: LETTERS.indexOf(key) }))
 }
 
 /** Rejoue une consigne ; renvoie les notes lues dans l'ordre, et la réponse fausse s'il y en a une. */
 function play(label: BenchLabel, wanted: SoundTarget[], trace = false) {
-  let at = 0
   let index = 0
   let lastPc = -1
   let wrong: number | null = null
-  const timers: { due: number; run: () => void; off: boolean }[] = []
-  const judge = new SoundJudge(structuredClone(templates), true, {
+  const judge = new SoundJudge(structuredClone(templates), {
     target: () => (wrong === null ? (wanted[index] ?? null) : null),
     early: () => false,
     lastPc: () => lastPc,
@@ -162,28 +151,12 @@ function play(label: BenchLabel, wanted: SoundTarget[], trace = false) {
     },
     heard: () => {},
     log: (line) => trace && console.log(`      ${line}`),
-    timer(run, ms) {
-      const t = { due: at + ms, run, off: false }
-      timers.push(t)
-      return () => (t.off = true)
-    },
     label: (pc) => String(pc),
     where: () => `à lire : ${wanted[index]?.pc ?? '—'}`,
   })
-  const fire = (until: number) => {
-    for (const t of timers) {
-      if (t.off || t.due > until) continue
-      t.off = true
-      at = t.due
-      t.run()
-    }
-  }
   for (const s of inLabel(label)) {
-    fire(s.end)
-    at = s.end
     if (wrong === null) judge.syllable(s)
   }
-  fire(Infinity)
   return { read: index, wrong }
 }
 
@@ -192,7 +165,8 @@ let right = 0
 let wrongs = 0
 let silent = 0
 const misses: string[] = []
-const test = meta.labels.filter((x) => x.kind === 'test')
+// Les anciens fichiers contiennent aussi des notes altérées : le jeu n'en a plus.
+const test = meta.labels.filter((x) => x.kind === 'test' && !x.text.includes(' '))
 for (const l of test) {
   const wanted = targets(l.text)
   const { read, wrong } = play(l, wanted)
@@ -214,7 +188,7 @@ if (misses.length) console.log(`  ${misses.join(' ; ')}`)
 
 let chainRead = 0
 let chainTotal = 0
-for (const l of meta.labels.filter((x) => x.kind === 'enchaine')) {
+for (const l of meta.labels.filter((x) => x.kind === 'enchaine' && !/dièse|bémol/.test(x.text))) {
   const wanted = targets(l.text)
   const { read, wrong } = play(l, wanted, trace)
   chainRead += read
@@ -252,18 +226,3 @@ for (const l of naturals) {
 }
 const asked = naturals.length * 3
 console.log(`Fausses notes dites exprès : comptées fausses ${pct(caught, asked)}, ignorées ${pct(ignored, asked)}, validées à tort ${pct(accepted, asked)}`)
-
-// Mauvaise altération : « fa dièse » dit pour Fa♭. Le jeu ne doit pas le valider.
-let altCaught = 0
-let altAccepted = 0
-let altIgnored = 0
-const altereds = test.filter((l) => l.text.includes(' '))
-for (const l of altereds) {
-  const said = targets(l.text)[0]
-  const other = { pc: (said.pc - 2 * said.alter + 12) % 12, letter: said.letter, alter: -said.alter }
-  const { read, wrong } = play(l, [other])
-  if (read) altAccepted++
-  else if (wrong !== null) altCaught++
-  else altIgnored++
-}
-console.log(`Mauvaise altération dite exprès : comptée fausse ${pct(altCaught, altereds.length)}, ignorée ${pct(altIgnored, altereds.length)}, validée à tort ${pct(altAccepted, altereds.length)}`)

@@ -48,7 +48,7 @@ import { useQuiz } from '@/composables/useQuiz'
 import { useSightReading } from '@/composables/useSightReading'
 import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
 import { pitchClassName } from '@/music/notes'
-import { clefLabel, noteName, parseSightSettings, parseSpokenNotes, SIGHT_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
+import { clefLabel, noteName, parseSightSettings, parseSpokenNotes, SAY_LEVELS, SIGHT_MEDAL_POINTS, tempoAfter, trialTempo } from '@/games/sightReading'
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 import { online } from '@/player/online'
@@ -59,7 +59,6 @@ import { SoundJudge, type Learned } from '@/games/soundJudge'
 
 const route = useRoute()
 const settings = parseSightSettings(route.query)
-const { accidentals } = SIGHT_LEVELS[settings.level]
 
 const quiz = useQuiz({
   total: 1,
@@ -72,7 +71,7 @@ const quiz = useQuiz({
 // à la dire (attaque de la voix) ; ailleurs, ou sans attaque repérée, on compte 1,1 s de reconnaissance.
 // Essai rapide : on part de ♩ = 120, pour s'entraîner à enchaîner les notes.
 const fastStart = trialTempo(quiz.trial, route.query.tempo)
-const sight = useSightReading(quiz, settings.level, 1.1, fastStart)
+const sight = useSightReading(quiz, settings.level, 1.1, fastStart, false)
 
 const heard = ref('')
 /** La voix du joueur vient d'être entendue : le mot est en cours de reconnaissance. */
@@ -82,17 +81,12 @@ let speech: SpeechListening | null = null
 /** Séance de reconnaissance en cours, et nombre de notes déjà jugées dans son texte. */
 let session = -1
 let consumed = 0
-/** Une lettre seule en fin de phrase (« fa… ») : on attend un instant un éventuel « dièse » ou « bémol ». */
-let pending: ReturnType<typeof setTimeout> | undefined
-const ACCIDENTAL_WAIT_MS = 350
 
 function stopSpeech() {
-  clearTimeout(pending)
   speech?.stop()
   speech = null
   syllables?.stop()
   syllables = null
-  soundJudge.stop()
 }
 onBeforeUnmount(stopSpeech)
 
@@ -136,7 +130,7 @@ async function copyReport() {
   const t = loadTemplates()
   const lines = [
     `Lecture continue · ${new Date().toLocaleString('fr-FR')} · version du ${new Date(__BUILD_TIME__).toLocaleString('fr-FR')}`,
-    `Niveau ${SIGHT_LEVELS[settings.level].label} · tempo de départ ${tempoAfter(settings.level, 0, fastStart)} · reconnaissance ${bySound ? 'par le son' : 'Google'}`,
+    `Niveau ${SAY_LEVELS[settings.level].label} · tempo de départ ${tempoAfter(settings.level, 0, fastStart)} · reconnaissance ${bySound ? 'par le son' : 'Google'}`,
     bySound ? `Enregistrements : ${Object.entries(t).map(([k, l]) => `${k} ${l.length}`).join(', ')}` : '',
     `Résultat : ${readLabel.value}, jusqu'à ♩ = ${sight.topTempo.value} · ${sight.reason.value}`,
     '',
@@ -181,19 +175,9 @@ function onSpeech(text: string, s: number, final: boolean, alternatives: string[
   }
   heard.value = text
   log(`Google ${final ? 'final' : 'partiel'} : ${alternatives.map((a) => `« ${a} »`).join(', ')}`)
-  clearTimeout(pending)
   // Parmi les transcriptions possibles, celle où l'on trouve le plus de noms de notes (la plus probable à égalité).
   const said = alternatives.map(parseSpokenNotes).reduce((best, notes) => (notes.length > best.length ? notes : best), parseSpokenNotes(text))
-  for (let i = consumed; i < said.length && sight.phase.value === 'running'; i++) {
-    const n = said[i]
-    if (accidentals && !n.altered && !final && i === said.length - 1) {
-      pending = setTimeout(() => {
-        if (session === s && consumed === i && sight.phase.value === 'running') judge(n.pc)
-      }, ACCIDENTAL_WAIT_MS)
-      return
-    }
-    judge(n.pc)
-  }
+  for (let i = consumed; i < said.length && sight.phase.value === 'running'; i++) judge(said[i].pc)
 }
 
 /** Instant d'un événement du module vocal (horloge Date.now()) sur l'horloge du jeu (performance.now()). */
@@ -223,11 +207,10 @@ const bySound = recognition.value === 'son' && soundReady()
 let syllables: SyllableListening | null = null
 const soundJudge = new SoundJudge(
   loadTemplates(),
-  accidentals,
   {
     target() {
       const n = sight.current.value
-      return n && { pc: n.pc, letter: n.note.letter, alter: n.note.alter }
+      return n && { pc: n.pc, letter: n.note.letter }
     },
     early: earlyWrong,
     lastPc: () => lastPc,
@@ -235,10 +218,6 @@ const soundJudge = new SoundJudge(
     answer: (pc, list) => judge(pc, list),
     heard: (text) => (heard.value = text),
     log,
-    timer(run, ms) {
-      const t = setTimeout(run, ms)
-      return () => clearTimeout(t)
-    },
     label: pitchClassName,
     where,
   },
@@ -293,7 +272,7 @@ const summary = computed(() => `${readLabel.value}, jusqu'à ♩ = ${sight.topTe
 const status = computed(() => {
   if (sight.phase.value === 'over') return sight.reason.value
   if (sight.position.value < 0) return 'Les notes arrivent… prépare-toi à les nommer.'
-  return 'Dis les notes avant la barre, aussi vite que tu peux : « do », « fa dièse », « si bémol »…'
+  return 'Dis les notes avant la barre, aussi vite que tu peux : « do », « sol », « si »…'
 })
 </script>
 

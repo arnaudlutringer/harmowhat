@@ -62,6 +62,13 @@ export const SIGHT_LEVELS: Record<Level, SightLevel> = {
  */
 export const READ_AHEAD_BEATS = 3.4
 
+/** « Lecture continue » : les mêmes niveaux, sans aucune altération. */
+export const SAY_LEVELS: Record<Level, SightLevel> = {
+  debutant: SIGHT_LEVELS.debutant,
+  normal: { ...SIGHT_LEVELS.normal, accidentals: false, description: 'Clés de sol et de fa, sans dièse ni bémol. On part à 36, +2 à chaque note lue.' },
+  expert: { ...SIGHT_LEVELS.expert, accidentals: false, description: 'Toutes les clés (sol, fa, ut 1re, 3e et 4e ligne), sans dièse ni bémol. On part à 44, +3 à chaque note lue.' },
+}
+
 /** Pas de nombre de questions : la partie dure tant que le joueur lit juste. */
 export const SIGHT_QUESTION_COUNTS = [1] as const
 /** Tempo le plus rapide. */
@@ -119,7 +126,11 @@ export class NoteStream {
   private started = false
   private lastPc = -1
 
-  constructor(private level: Level) {
+  constructor(
+    private level: Level,
+    /** Notes altérées (par défaut, selon le niveau). */
+    private accidentals = SIGHT_LEVELS[level].accidentals,
+  ) {
     this.clef = SIGHT_LEVELS[level].clefs[0]
   }
 
@@ -137,7 +148,7 @@ export class NoteStream {
     for (;;) {
       const step = randomInt(low, high)
       const letter = ((step % 7) + 7) % 7
-      const note = noteAt(step, cfg.accidentals ? randomAlter(letter) : 0)
+      const note = noteAt(step, this.accidentals ? randomAlter(letter) : 0)
       const pc = ((note.midi % 12) + 12) % 12
       if (pc === this.lastPc) continue
       this.lastPc = pc

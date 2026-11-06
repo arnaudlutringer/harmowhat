@@ -7,14 +7,14 @@ const frames = (v: number): Features => Array.from({ length: 10 }, () => new Arr
 const syllable = (v: number, start: number): Syllable => ({ features: frames(v), voiced: 200, start, end: start + 200 })
 
 /** do autour de 0, ré autour de 4 (deux enregistrements chacun : la distance habituelle est faible). */
-const templates = () => ({ do: [frames(0), frames(1)], re: [frames(4), frames(5)], mi: [frames(40), frames(41)], diese: [frames(80), frames(81)], bemol: [frames(120), frames(121)] })
-const DO: SoundTarget = { pc: 0, letter: 0, alter: 0 }
-const RE: SoundTarget = { pc: 2, letter: 1, alter: 0 }
+const templates = () => ({ do: [frames(0), frames(1)], re: [frames(4), frames(5)], mi: [frames(40), frames(41)] })
+const DO: SoundTarget = { pc: 0, letter: 0 }
+const RE: SoundTarget = { pc: 2, letter: 1 }
 
 function setup(wanted: SoundTarget[]) {
   const answers: number[] = []
   let index = 0
-  const judge = new SoundJudge(templates(), false, {
+  const judge = new SoundJudge(templates(), {
     target: () => wanted[index] ?? null,
     early: () => false,
     lastPc: () => (index ? wanted[index - 1].pc : -1),
@@ -25,7 +25,6 @@ function setup(wanted: SoundTarget[]) {
     },
     heard: () => {},
     log: () => {},
-    timer: () => () => {},
     label: String,
     where: () => '',
   })

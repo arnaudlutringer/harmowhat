@@ -3,8 +3,7 @@ import { isKnownWord, setLearnedWords, spokenWords } from './sightReading'
 import { loadTemplates } from '@/audio/wordMatch'
 
 /**
- * « Ma voix » : avant la première partie de « Lecture continue », le joueur dit chaque nom de note (et « dièse »,
- * « bémol »). Quand la reconnaissance vocale écrit autre chose que le mot attendu (« les » pour ré), cette
+ * « Ma voix » : avant la première partie de « Lecture continue », le joueur dit chaque nom de note. Quand la reconnaissance vocale écrit autre chose que le mot attendu (« les » pour ré), cette
  * transcription est retenue sur l'appareil, et comprise ensuite comme la bonne syllabe.
  */
 
@@ -23,30 +22,10 @@ export const VOICE_WORDS: VoiceWord[] = [
   { key: 'sol', label: 'sol' },
   { key: 'la', label: 'la' },
   { key: 'si', label: 'si' },
-  { key: 'diese', label: 'dièse' },
-  { key: 'bemol', label: 'bémol' },
 ]
 
 /** Nombre de fois que chaque mot est demandé. */
 export const VOICE_TAKES = 2
-
-/** Un mot à dire pour l'enregistrement par le son : une note seule, ou une note altérée dite d'un trait. */
-export interface SoundPrompt extends VoiceWord {
-  /** Note altérée : la note (début de l'enregistrement) et son altération (la suite). */
-  phrase?: { note: string; accidental: 'diese' | 'bemol' }
-}
-
-/**
- * Enregistrement par le son : les sept notes, puis quelques notes altérées dites d'un trait. « Dièse » et « bémol »
- * y sont enregistrés tels qu'on les dit vraiment, enchaînés après une note.
- */
-export const SOUND_PROMPTS: SoundPrompt[] = [
-  ...VOICE_WORDS.slice(0, 7),
-  { key: 'fa-diese', label: 'fa dièse', phrase: { note: 'fa', accidental: 'diese' } },
-  { key: 'do-diese', label: 'do dièse', phrase: { note: 'do', accidental: 'diese' } },
-  { key: 'si-bemol', label: 'si bémol', phrase: { note: 'si', accidental: 'bemol' } },
-  { key: 'mi-bemol', label: 'mi bémol', phrase: { note: 'mi', accidental: 'bemol' } },
-]
 
 const STORAGE_KEY = 'harmowhat.voiceWords'
 

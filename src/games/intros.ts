@@ -66,7 +66,7 @@ export const INTROS: Record<GameId, string[]> = {
     'Chaque note lue accélère le tempo et rapporte dix fois le tempo en points. La partie s’arrête à la première note fausse ou oubliée. Le micro écoute pendant toute la partie : chante, puis change de note ou reprends ton souffle.',
   ],
   'lis-dis': [
-    'Des notes défilent sur une portée, une par temps : dis le nom de chacune au micro (« sol », « fa dièse », « si bémol »…) avant qu’elle n’atteigne la barre violette. Tu peux prendre de l’avance.',
+    'Des notes défilent sur une portée, une par temps : dis le nom de chacune au micro (« do », « sol », « si »…) avant qu’elle n’atteigne la barre violette. Tu peux prendre de l’avance.',
     'Chaque note lue accélère le tempo et rapporte dix fois le tempo en points. La partie s’arrête à la première note fausse ou oubliée. Parle distinctement, une note après l’autre.',
   ],
 }
