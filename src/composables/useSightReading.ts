@@ -1,6 +1,6 @@
 import { computed, onBeforeUnmount, ref, shallowRef } from 'vue'
 import type { StaffNote } from '@/components/ScrollingStaff.vue'
-import { NoteStream, notePoints, noteName, tempoAfter, READ_AHEAD_BEATS, type Level } from '@/games/sightReading'
+import { NoteStream, notePoints, noteName, SIGHT_LEVELS, tempoAfter, READ_AHEAD_BEATS, type Level, type SightLevel } from '@/games/sightReading'
 import type { useQuiz } from './useQuiz'
 
 /** Temps d'approche avant que la première note n'atteigne la barre de lecture. */
@@ -25,20 +25,20 @@ export function useSightReading(
   latency: number,
   /** Tempo de départ imposé (essai rapide) ; sinon celui du niveau. */
   startTempo?: number,
-  /** Notes altérées (par défaut, selon le niveau). */
-  accidentals?: boolean,
+  /** Niveaux du jeu (altérations, accélération). */
+  levels: Record<Level, SightLevel> = SIGHT_LEVELS,
 ) {
   type Phase = 'waiting' | 'running' | 'over'
   const phase = ref<Phase>('waiting')
   const notes = shallowRef<StaffNote[]>([])
   const position = ref(-LEAD_IN_BEATS)
-  const tempo = ref(tempoAfter(level, 0, startTempo))
+  const tempo = ref(tempoAfter(level, 0, startTempo, levels[level].step))
   const read = ref(0)
   const points = ref(0)
   /** Fin de partie : ce qui s'est passé. */
   const reason = ref('')
   let target = 0
-  let stream = new NoteStream(level, accidentals)
+  let stream = new NoteStream(level, levels[level].accidentals)
   let frame: number | undefined
   let last = 0
   let endTimer: ReturnType<typeof setTimeout> | undefined
@@ -118,13 +118,13 @@ export function useSightReading(
   function start(): Promise<number> {
     stopLoop()
     clearTimeout(endTimer)
-    stream = new NoteStream(level, accidentals)
+    stream = new NoteStream(level, levels[level].accidentals)
     notes.value = []
     target = 0
     read.value = 0
     points.value = 0
     reason.value = ''
-    tempo.value = tempoAfter(level, 0, startTempo)
+    tempo.value = tempoAfter(level, 0, startTempo, levels[level].step)
     topTempo.value = tempo.value
     position.value = -LEAD_IN_BEATS
     history = []
@@ -169,7 +169,7 @@ export function useSightReading(
     mark(target, 'ok')
     points.value += notePoints(tempo.value)
     read.value++
-    tempo.value = tempoAfter(level, read.value, startTempo)
+    tempo.value = tempoAfter(level, read.value, startTempo, levels[level].step)
     topTempo.value = Math.max(topTempo.value, tempo.value)
     target++
     fill()

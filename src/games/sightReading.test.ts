@@ -28,6 +28,9 @@ describe('Lecture en défilement', () => {
     expect(tempoAfter('debutant', 0)).toBe(30)
     expect(tempoAfter('debutant', 5)).toBe(40)
     expect(tempoAfter('expert', 1000)).toBe(200)
+    // « Lecture continue » : +1 à chaque note, à tous les niveaux.
+    for (const level of ['debutant', 'normal', 'expert'] as const) expect(SAY_LEVELS[level].step).toBe(1)
+    expect(tempoAfter('normal', 5, undefined, SAY_LEVELS.normal.step)).toBe(41)
     expect(notePoints(54)).toBe(540)
   })
 

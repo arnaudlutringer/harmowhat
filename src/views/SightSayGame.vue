@@ -71,7 +71,7 @@ const quiz = useQuiz({
 // à la dire (attaque de la voix) ; ailleurs, ou sans attaque repérée, on compte 1,1 s de reconnaissance.
 // Essai rapide : on part de ♩ = 120, pour s'entraîner à enchaîner les notes.
 const fastStart = trialTempo(quiz.trial, route.query.tempo)
-const sight = useSightReading(quiz, settings.level, 1.1, fastStart, false)
+const sight = useSightReading(quiz, settings.level, 1.1, fastStart, SAY_LEVELS)
 
 const heard = ref('')
 /** La voix du joueur vient d'être entendue : le mot est en cours de reconnaissance. */
@@ -280,7 +280,7 @@ watch(sight.phase, (phase) => {
   if (phase !== 'over') return
   log(`FIN : ${sight.reason.value}`)
   stopSpeech()
-  if (!fastStart) trophyEvent({ type: 'sight-run', game: 'lis-dis', notes: sight.read.value, tempo: tempoAfter(settings.level, Math.max(0, sight.read.value - 1)) })
+  if (!fastStart) trophyEvent({ type: 'sight-run', game: 'lis-dis', notes: sight.read.value, tempo: tempoAfter(settings.level, Math.max(0, sight.read.value - 1), undefined, SAY_LEVELS[settings.level].step) })
 })
 
 const readLabel = computed(() => `${sight.read.value} note${sight.read.value > 1 ? 's' : ''} lue${sight.read.value > 1 ? 's' : ''}`)

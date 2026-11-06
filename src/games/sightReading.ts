@@ -62,11 +62,11 @@ export const SIGHT_LEVELS: Record<Level, SightLevel> = {
  */
 export const READ_AHEAD_BEATS = 3.4
 
-/** « Lecture continue » : les mêmes niveaux, sans aucune altération. */
+/** « Lecture continue » : les mêmes niveaux, sans aucune altération, et le tempo monte de 1 à chaque note lue. */
 export const SAY_LEVELS: Record<Level, SightLevel> = {
-  debutant: SIGHT_LEVELS.debutant,
-  normal: { ...SIGHT_LEVELS.normal, accidentals: false, description: 'Clés de sol et de fa, sans dièse ni bémol. On part à 36, +2 à chaque note lue.' },
-  expert: { ...SIGHT_LEVELS.expert, accidentals: false, description: 'Toutes les clés (sol, fa, ut 1re, 3e et 4e ligne), sans dièse ni bémol. On part à 44, +3 à chaque note lue.' },
+  debutant: { ...SIGHT_LEVELS.debutant, step: 1, description: 'Clé de sol, sans dièse ni bémol. On part à 30 à la noire, +1 à chaque note lue.' },
+  normal: { ...SIGHT_LEVELS.normal, accidentals: false, step: 1, description: 'Clés de sol et de fa, sans dièse ni bémol. On part à 36, +1 à chaque note lue.' },
+  expert: { ...SIGHT_LEVELS.expert, accidentals: false, step: 1, description: 'Toutes les clés (sol, fa, ut 1re, 3e et 4e ligne), sans dièse ni bémol. On part à 44, +1 à chaque note lue.' },
 }
 
 /** Pas de nombre de questions : la partie dure tant que le joueur lit juste. */
@@ -88,8 +88,8 @@ export function parseSightSettings(raw: { questions?: unknown; level?: unknown }
 }
 
 /** Tempo après `read` notes lues (en partant de `start` : le tempo de départ du niveau, sauf essai rapide). */
-export const tempoAfter = (level: Level, read: number, start = SIGHT_LEVELS[level].start) =>
-  Math.min(MAX_TEMPO, start + read * SIGHT_LEVELS[level].step)
+export const tempoAfter = (level: Level, read: number, start = SIGHT_LEVELS[level].start, step = SIGHT_LEVELS[level].step) =>
+  Math.min(MAX_TEMPO, start + read * step)
 
 /** Tempo de départ de l'essai rapide (écran Test du micro), pour tester les notes enchaînées ; hors records et trophées. */
 export const FAST_TRIAL_TEMPO = 120
