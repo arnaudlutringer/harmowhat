@@ -8,6 +8,7 @@
             Dis chaque mot quand il s'affiche, normalement.
             {{ bySound ? 'L’appli enregistre le son de ta voix pour reconnaître les notes pendant « Lecture continue », sans Internet.' : 'L’appli retient comment la reconnaissance vocale comprend ta voix, pour mieux te comprendre pendant « Lecture continue ».' }}
           </p>
+          <p v-if="newPlayer" class="how">Le nom du joueur a changé : enregistre ta voix pour que le jeu te reconnaisse.</p>
           <p v-if="!bySound && !online" class="error">📶 Connecte-toi à Internet : la reconnaissance vocale en a besoin.</p>
           <p class="progress">Mot {{ step + 1 }} / {{ prompts.length }}</p>
           <p class="word" aria-live="polite">{{ prompts[step].label }}</p>
@@ -46,7 +47,7 @@ import { useRoute } from 'vue-router'
 import { IonButton, IonContent, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
 import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
-import { recognition, saveVoiceWords, toLearn, VOICE_TAKES, VOICE_WORDS, type VoiceWord } from '@/games/voiceWords'
+import { markVoiceOwner, recognition, saveVoiceWords, toLearn, voiceOwnerChanged, VOICE_TAKES, VOICE_WORDS, type VoiceWord } from '@/games/voiceWords'
 import { AMBIENT_MS, listenToSyllables, loadTemplates, MIN_VOICED_MS, saveTemplates, type Features, type Syllable, type SyllableListening } from '@/audio/wordMatch'
 import { spokenWords } from '@/games/sightReading'
 import { online } from '@/player/online'
@@ -58,6 +59,8 @@ const suite = typeof route.query.suite === 'string' && route.query.suite.startsW
 
 /** Par le son : on enregistre la voix elle-même ; sinon, ce que Google en comprend. */
 const bySound = recognition.value === 'son'
+/** Le nom du joueur a changé depuis le dernier enregistrement. */
+const newPlayer = voiceOwnerChanged()
 /** Chaque mot, deux fois. */
 const prompts: VoiceWord[] = VOICE_WORDS.flatMap((w) => Array.from({ length: VOICE_TAKES }, () => w))
 const level = ref(0)
@@ -168,17 +171,20 @@ function finish() {
   stopListening()
   if (bySound) {
     // Les mots passés gardent leurs enregistrements précédents.
-    saveTemplates({ ...loadTemplates(), ...sounds })
+    // Autre joueur : les enregistrements du précédent ne sont pas gardés, même pour un mot passé.
+    saveTemplates(newPlayer ? sounds : { ...loadTemplates(), ...sounds })
+    markVoiceOwner()
     return
   }
   saved = learnedWords()
   saveVoiceWords(saved)
+  markVoiceOwner()
 }
 
 function summaryOf(key: string): string {
   if (bySound) {
     const n = sounds[key]?.length ?? 0
-    return n ? `${n} enregistrement${n > 1 ? 's' : ''}` : 'passé (enregistrements précédents gardés)'
+    return n ? `${n} enregistrement${n > 1 ? 's' : ''}` : newPlayer ? 'passé' : 'passé (enregistrements précédents gardés)'
   }
   const texts = heard[key] ?? []
   if (!texts.length) return 'passé'

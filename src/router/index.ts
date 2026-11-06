@@ -67,11 +67,16 @@ const router = createRouter({
 
 // Première ouverture : le tutoriel passe avant l'accueil.
 // Un jeu dont l'interrupteur est coupé n'existe pas : retour à l'accueil.
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   if (to.path === '/home' && !isTutorialDone()) return '/tutoriel'
   const game = /^\/(?:games|scores)\/([^/]+)/.exec(to.path)?.[1]
   if (game && !gameEnabled(game as GameId)) return '/home'
   if (to.path.startsWith('/debug/') && !featureEnabled('testMicro')) return '/home'
+  // « Lecture continue » : d'où qu'on vienne (réglages, classements, Test du micro), pas de partie sans « Ma voix ».
+  if (to.path === '/games/lis-dis/jouer') {
+    const { voiceReady } = await import('@/games/voiceWords')
+    if (!voiceReady()) return { path: '/games/lis-dis/voix', query: { suite: to.fullPath } }
+  }
   return true
 })
 

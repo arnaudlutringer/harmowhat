@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { isKnownWord, setLearnedWords, spokenWords } from './sightReading'
 import { loadTemplates } from '@/audio/wordMatch'
+import { profile } from '@/player/profile'
 
 /**
  * « Ma voix » : avant la première partie de « Lecture continue », le joueur dit chaque nom de note. Quand la reconnaissance vocale écrit autre chose que le mot attendu (« les » pour ré), cette
@@ -83,7 +84,41 @@ export const soundReady = () => {
 }
 
 /** Le joueur a déjà enregistré sa voix (pour la reconnaissance choisie). */
-export const voiceReady = () => (recognition.value === 'son' ? soundReady() : voiceWords.value.done)
+export const voiceReady = () => !voiceOwnerChanged() && (recognition.value === 'son' ? soundReady() : voiceWords.value.done)
+
+const OWNER_KEY = 'harmowhat.voiceOwner'
+
+/** Le joueur à qui appartient la voix enregistrée, d'après son nom. */
+function readOwner(): string | null {
+  try {
+    return localStorage.getItem(OWNER_KEY)
+  } catch {
+    return null
+  }
+}
+
+/** La voix enregistrée appartient désormais au joueur actuel. */
+export function markVoiceOwner() {
+  try {
+    localStorage.setItem(OWNER_KEY, profile.value.name)
+  } catch {
+    // Stockage indisponible : valable pour cette session seulement.
+  }
+}
+
+/**
+ * Le nom du joueur a changé depuis l'enregistrement : c'est sans doute quelqu'un d'autre, sa voix est à enregistrer.
+ * Un premier nom donné à un joueur qui n'en avait pas (ou une voix enregistrée avant ce suivi) n'est pas un changement.
+ */
+export function voiceOwnerChanged(): boolean {
+  const owner = readOwner()
+  if (owner === profile.value.name) return false
+  if (owner === null || owner === '') {
+    markVoiceOwner()
+    return false
+  }
+  return true
+}
 
 /**
  * Transcription à retenir pour une syllabe, ou null : seulement si aucun de ses mots n'est déjà compris
