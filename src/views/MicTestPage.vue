@@ -37,6 +37,13 @@
           <ion-button fill="outline" :disabled="!online" router-link="/games/lis-dis/jouer?questions=1&level=debutant&tempo=120&essai=1">Lecture à ♩ = {{ FAST_TRIAL_TEMPO }}</ion-button>
         </div>
 
+        <!-- Banc d'essai : une liste à lire, enregistrée pour rejouer la voix du joueur hors du téléphone. -->
+        <h2>Banc d'essai</h2>
+        <p class="how">Une liste de notes à lire, environ 3 minutes. Le fichier obtenu permet de mesurer et d'améliorer la reconnaissance sur ta voix.</p>
+        <div class="buttons">
+          <ion-button fill="outline" router-link="/debug/banc">Ouvrir le banc d'essai</ion-button>
+        </div>
+
         <sound-match-test ref="soundTest" :expected="pc" @start="listening && stop()" />
 
         <h2>

@@ -266,14 +266,164 @@ export interface SyllableListening {
   stop: () => void
 }
 
+/** Réglages du micro pour la reconnaissance par le son (les mêmes pour le jeu, « Ma voix » et le banc d'essai). */
+export const SOUND_MIC: MediaTrackConstraints = { echoCancellation: false, noiseSuppression: true, autoGainControl: true }
+
 /**
- * Écoute le micro et découpe la voix en syllabes : une syllabe commence quand l'énergie monte nettement au-dessus du
- * bruit de fond, et finit après 60 ms de silence, à un creux de voix (notes enchaînées) ou au bout de 700 ms.
- * `onLevel` reçoit le niveau (0 à 1) pour l'affichage.
+ * Découpe un son en syllabes : une syllabe commence quand l'énergie monte nettement au-dessus du bruit de fond, et finit
+ * après 60 ms de silence, à un creux de voix (notes enchaînées) ou au bout de 700 ms. Ne dépend ni du micro ni de l'horloge :
+ * le banc d'essai y rejoue un enregistrement.
  */
+export class SyllableCutter {
+  private hop: number
+  private pending = new Float32Array(0)
+  /** Son récent (pour garder un peu avant l'attaque) et son de la syllabe en cours. */
+  private history: Float32Array[] = []
+  private voice: Float32Array[] | null = null
+  /** Énergie de chaque morceau de 10 ms de la syllabe en cours (pour la couper à son creux). */
+  private levels: number[] = []
+  private floor = 0.002
+  private peak = 0
+  private dipMin = 0
+  private quiet = 0
+  private length = 0
+  private startedAt = 0
+  private lastLevel = 0
+  // Bruit ambiant (gymnase, voix autour) : mesuré pendant la première seconde, une syllabe doit ensuite le dépasser
+  // nettement pour commencer (la voix du joueur, proche du micro, est bien plus forte).
+  private ambient: number[] = []
+  private listenedFrom: number | null = null
+  private threshold = 0.01
+  /**
+   * Son sans voix (un « s », un « ch ») gardé un instant : s'il est suivi de près d'une syllabe avec de la voix, c'est
+   * sa consonne (« s » + « i » = « si »), et les deux sont réunis ; sinon c'est un souffle.
+   */
+  private unvoiced: { chunks: Float32Array[]; start: number; end: number } | null = null
+
+  constructor(
+    private rate: number,
+    private onSyllable: (s: Syllable) => void,
+    private onLevel?: (level: number) => void,
+  ) {
+    this.hop = Math.round((rate * HOP) / RATE)
+  }
+
+  private emit(chunks: Float32Array[], start: number, end: number) {
+    let audio = concat(chunks)
+    let low = downsample(audio, this.rate)
+    const voiced = voicedMs(low)
+    if (voiced < MIN_VOICED_MS) {
+      this.unvoiced = { chunks, start, end }
+      return
+    }
+    if (this.unvoiced && start - this.unvoiced.end < CONSONANT_GAP_MS) {
+      audio = concat([...this.unvoiced.chunks, ...chunks])
+      low = downsample(audio, this.rate)
+      start = this.unvoiced.start
+    }
+    this.unvoiced = null
+    // Trop court : un claquement, un souffle ou un bout de mot, pas une syllabe.
+    if (audio.length < (this.rate * MIN_SYLLABLE_MS) / 1000) return
+    this.onSyllable({ features: features(low), voiced, start, end })
+  }
+
+  private close(now: number) {
+    if (!this.voice) return
+    const chunks = this.voice
+    const lv = this.levels
+    this.voice = null
+    this.levels = []
+    // Long son d'un seul tenant (« si-bémol » dit d'un trait) : coupé en deux au creux d'énergie le plus net du milieu.
+    if (chunks.length > LONG_HOPS) {
+      let cut = -1
+      for (let i = EDGE_HOPS; i < chunks.length - EDGE_HOPS; i++) if (cut < 0 || lv[i] < lv[cut]) cut = i
+      const top = Math.max(...lv)
+      if (cut > 0 && lv[cut] < top * 0.6) {
+        const middle = this.startedAt + cut * 10
+        this.emit(chunks.slice(0, cut), this.startedAt, middle)
+        this.emit(chunks.slice(cut), middle, now)
+        return
+      }
+    }
+    this.emit(chunks, this.startedAt, now)
+  }
+
+  /** Nouveau son du micro ; `time` : l'instant de sa fin, en ms. */
+  push(input: Float32Array, time: number) {
+    const merged = new Float32Array(this.pending.length + input.length)
+    merged.set(this.pending)
+    merged.set(input, this.pending.length)
+    const msPerSample = 1000 / this.rate
+    let i = 0
+    for (; i + this.hop <= merged.length; i += this.hop) {
+      const chunk = merged.slice(i, i + this.hop)
+      let energy = 0
+      for (let k = 0; k < chunk.length; k++) energy += chunk[k] * chunk[k]
+      const rms = Math.sqrt(energy / chunk.length)
+      const now = time - (merged.length - i - this.hop) * msPerSample
+      this.listenedFrom ??= now
+      // Niveau pour l'affichage : 20 fois par seconde suffisent.
+      if (now - this.lastLevel > 50) {
+        this.lastLevel = now
+        this.onLevel?.(Math.min(1, rms * 20))
+      }
+      this.history.push(chunk)
+      if (this.history.length > 4) this.history.shift()
+      if (now - this.listenedFrom < AMBIENT_MS) {
+        this.ambient.push(rms)
+        continue
+      }
+      if (this.ambient.length) {
+        const sorted = [...this.ambient].sort((a, b) => a - b)
+        this.threshold = Math.max(0.01, sorted[Math.floor(sorted.length * 0.9)] * AMBIENT_FACTOR)
+        this.ambient.length = 0
+      }
+      if (!this.voice) {
+        this.floor = rms < this.floor ? rms : this.floor + 0.01 * (rms - this.floor)
+        if (rms > Math.max(this.floor * 4, this.threshold)) {
+          this.voice = [...this.history]
+          this.levels = this.history.map(() => rms)
+          this.startedAt = now - this.history.length * 10
+          this.peak = rms
+          this.dipMin = rms
+          this.quiet = 0
+          this.length = this.history.length
+        }
+        continue
+      }
+      this.voice.push(chunk)
+      this.levels.push(rms)
+      this.length++
+      if (rms > this.peak) {
+        this.peak = rms
+        this.dipMin = rms
+      } else this.dipMin = Math.min(this.dipMin, rms)
+      if (rms < Math.max(this.floor * 2, 0.005)) this.quiet++
+      else this.quiet = 0
+      // Creux de voix puis remontée (« do-ré », « si-bé-mol ») : la syllabe s'arrête au creux, la suivante commence.
+      if (this.length > 12 && this.dipMin < this.peak * 0.55 && rms > this.dipMin * 1.8 && rms > this.peak * 0.45) {
+        this.voice.pop()
+        this.levels.pop()
+        this.close(now)
+        this.voice = [chunk]
+        this.levels = [rms]
+        this.startedAt = now
+        this.peak = rms
+        this.dipMin = rms
+        this.length = 1
+        continue
+      }
+      // Fin de syllabe après 60 ms de silence : la réponse part vite.
+      if (this.quiet >= 6 || this.length >= 70) this.close(now)
+    }
+    this.pending = merged.slice(i)
+  }
+}
+
+/** Écoute le micro et découpe la voix en syllabes. `onLevel` reçoit le niveau (0 à 1) pour l'affichage. */
 export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLevel?: (level: number) => void): Promise<SyllableListening> {
   if (!navigator.mediaDevices?.getUserMedia) throw new Error('Micro indisponible')
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true } })
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: SOUND_MIC })
   const ctx = audioContext()
   const source = ctx.createMediaStreamSource(stream)
   const processor = ctx.createScriptProcessor(1024, 1, 1)
@@ -282,139 +432,8 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
   source.connect(processor)
   processor.connect(mute)
   mute.connect(ctx.destination)
-
-  const hop = Math.round((ctx.sampleRate * HOP) / RATE)
-  let pending = new Float32Array(0)
-  /** Son récent (pour garder un peu avant l'attaque) et son de la syllabe en cours. */
-  const history: Float32Array[] = []
-  let voice: Float32Array[] | null = null
-  /** Énergie de chaque morceau de 10 ms de la syllabe en cours (pour la couper à son creux). */
-  let levels: number[] = []
-  let floor = 0.002
-  let peak = 0
-  let dipMin = 0
-  let quiet = 0
-  let length = 0
-  let startedAt = 0
-  let lastLevel = 0
-  // Bruit ambiant (gymnase, voix autour) : mesuré pendant la première seconde, une syllabe doit ensuite le dépasser
-  // nettement pour commencer (la voix du joueur, proche du micro, est bien plus forte).
-  const ambient: number[] = []
-  const listenedFrom = performance.now()
-  let threshold = 0.01
-
-  /**
-   * Son sans voix (un « s », un « ch ») gardé un instant : s'il est suivi de près d'une syllabe avec de la voix, c'est
-   * sa consonne (« s » + « i » = « si »), et les deux sont réunis ; sinon c'est un souffle.
-   */
-  let unvoiced: { chunks: Float32Array[]; start: number; end: number } | null = null
-
-  function emit(chunks: Float32Array[], start: number, end: number) {
-    let audio = concat(chunks)
-    let low = downsample(audio, ctx.sampleRate)
-    const voiced = voicedMs(low)
-    if (voiced < MIN_VOICED_MS) {
-      unvoiced = { chunks, start, end }
-      return
-    }
-    if (unvoiced && start - unvoiced.end < CONSONANT_GAP_MS) {
-      audio = concat([...unvoiced.chunks, ...chunks])
-      low = downsample(audio, ctx.sampleRate)
-      start = unvoiced.start
-    }
-    unvoiced = null
-    // Trop court : un claquement, un souffle ou un bout de mot, pas une syllabe.
-    if (audio.length < (ctx.sampleRate * MIN_SYLLABLE_MS) / 1000) return
-    onSyllable({ features: features(low), voiced, start, end })
-  }
-
-  function close(now: number) {
-    if (!voice) return
-    const chunks = voice
-    const lv = levels
-    voice = null
-    levels = []
-    // Long son d'un seul tenant (« si-bémol » dit d'un trait) : coupé en deux au creux d'énergie le plus net du milieu.
-    if (chunks.length > LONG_HOPS) {
-      let cut = -1
-      for (let i = EDGE_HOPS; i < chunks.length - EDGE_HOPS; i++) if (cut < 0 || lv[i] < lv[cut]) cut = i
-      const top = Math.max(...lv)
-      if (cut > 0 && lv[cut] < top * 0.6) {
-        const middle = startedAt + cut * 10
-        emit(chunks.slice(0, cut), startedAt, middle)
-        emit(chunks.slice(cut), middle, now)
-        return
-      }
-    }
-    emit(chunks, startedAt, now)
-  }
-
-  processor.onaudioprocess = (e) => {
-    const input = e.inputBuffer.getChannelData(0)
-    const merged = new Float32Array(pending.length + input.length)
-    merged.set(pending)
-    merged.set(input, pending.length)
-    let i = 0
-    for (; i + hop <= merged.length; i += hop) {
-      const chunk = merged.slice(i, i + hop)
-      const rms = Math.sqrt(chunk.reduce((s, v) => s + v * v, 0) / chunk.length)
-      const now = performance.now()
-      // Niveau pour l'affichage : 20 fois par seconde suffisent.
-      if (now - lastLevel > 50) {
-        lastLevel = now
-        onLevel?.(Math.min(1, rms * 20))
-      }
-      history.push(chunk)
-      if (history.length > 4) history.shift()
-      if (now - listenedFrom < AMBIENT_MS) {
-        ambient.push(rms)
-        continue
-      }
-      if (ambient.length) {
-        const sorted = [...ambient].sort((a, b) => a - b)
-        threshold = Math.max(0.01, sorted[Math.floor(sorted.length * 0.9)] * AMBIENT_FACTOR)
-        ambient.length = 0
-      }
-      if (!voice) {
-        floor = rms < floor ? rms : floor + 0.01 * (rms - floor)
-        if (rms > Math.max(floor * 4, threshold)) {
-          voice = [...history]
-          levels = history.map(() => rms)
-          startedAt = now - history.length * 10
-          peak = rms
-          dipMin = rms
-          quiet = 0
-          length = history.length
-        }
-        continue
-      }
-      voice.push(chunk)
-      levels.push(rms)
-      length++
-      if (rms > peak) {
-        peak = rms
-        dipMin = rms
-      } else dipMin = Math.min(dipMin, rms)
-      if (rms < Math.max(floor * 2, 0.005)) quiet++
-      else quiet = 0
-      // Creux de voix puis remontée (« do-ré », « si-bé-mol ») : la syllabe s'arrête au creux, la suivante commence.
-      if (length > 12 && dipMin < peak * 0.55 && rms > dipMin * 1.8 && rms > peak * 0.45) {
-        voice.pop()
-        levels.pop()
-        close(now)
-        voice = [chunk]
-        levels = [rms]
-        startedAt = now
-        peak = rms
-        dipMin = rms
-        length = 1
-        continue
-      }
-      // Fin de syllabe après 60 ms de silence : la réponse part vite.
-      if (quiet >= 6 || length >= 70) close(now)
-    }
-    pending = merged.slice(i)
-  }
+  const cutter = new SyllableCutter(ctx.sampleRate, onSyllable, onLevel)
+  processor.onaudioprocess = (e) => cutter.push(e.inputBuffer.getChannelData(0), performance.now())
 
   return {
     stop() {

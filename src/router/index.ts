@@ -57,6 +57,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/games/lis-dis/voix', component: () => import('@/views/VoiceSetupPage.vue') },
   // Test du micro (interrupteur testMicro).
   { path: '/debug/micro', component: () => import('@/views/MicTestPage.vue') },
+  { path: '/debug/banc', component: () => import('@/views/SoundBenchPage.vue') },
 ]
 
 const router = createRouter({

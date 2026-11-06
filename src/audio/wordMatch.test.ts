@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { closest, distance, downsample, features, voicedMs } from './wordMatch'
+import { decodeWav, encodeWav } from './wav'
+import { closest, distance, downsample, features, MIN_VOICED_MS, SyllableCutter, voicedMs } from './wordMatch'
 
 /** Son de synthèse à 16 kHz : une voyelle grossière (fondamentale et deux formants), sur `ms` millisecondes. */
 function vowel(f1: number, f2: number, ms: number, pitch = 120): Float32Array {
@@ -36,6 +37,35 @@ describe('Reconnaissance par le son', () => {
     const breath = Float32Array.from({ length: 16 * 300 }, () => (Math.random() - 0.5) * 0.5)
     expect(voicedMs(vowel(500, 1500, 300))).toBeGreaterThanOrEqual(200)
     expect(voicedMs(breath)).toBeLessThan(80)
+  })
+
+  it('découpe un son en syllabes, après la mesure du bruit ambiant', () => {
+    const silence = (ms: number) => new Float32Array(16 * ms)
+    const parts = [silence(1000), vowel(500, 1500, 300), silence(400), vowel(300, 2300, 300), silence(400)]
+    const heard: { start: number; end: number; voiced: number }[] = []
+    const cutter = new SyllableCutter(16000, (s) => heard.push(s))
+    let time = 0
+    for (const part of parts) {
+      for (let at = 0; at < part.length; at += 1024) {
+        const block = part.subarray(at, at + 1024)
+        time += block.length / 16
+        cutter.push(block, time)
+      }
+    }
+    expect(heard).toHaveLength(2)
+    expect(heard[0].start).toBeGreaterThan(900)
+    expect(heard[0].start).toBeLessThan(1050)
+    expect(heard[1].start).toBeGreaterThan(1650)
+    expect(heard[0].voiced).toBeGreaterThanOrEqual(MIN_VOICED_MS)
+  })
+
+  it('garde le son et les consignes dans le fichier du banc d’essai', () => {
+    const samples = Float32Array.from([0, 0.5, -0.5, 1])
+    const out = decodeWav<{ text: string }>(encodeWav(samples, 48000, { text: 'fa dièse' }))
+    expect(out.rate).toBe(48000)
+    expect(out.labels).toEqual({ text: 'fa dièse' })
+    expect(out.samples[1]).toBeCloseTo(0.5, 3)
+    expect(out.samples[3]).toBeCloseTo(1, 3)
   })
 
   it('rééchantillonne à 16 kHz', () => {
