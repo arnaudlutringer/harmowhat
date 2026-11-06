@@ -1,6 +1,7 @@
 import { randomInt } from '@/music/notes'
 import { isBlackKey, randomSpelling, spell, spelledPitchName } from '@/music/spelling'
 import { centsFromPitchClass, midiOf, type Pitch } from '@/audio/pitch'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « Chante la note » : le diapason (La3) sonne, puis le joueur chante dans le micro la note demandée.
@@ -46,7 +47,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
   },
 }
 
-export const QUESTION_COUNTS = [5, 10, 20] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface SingTheNoteSettings {
   questions: number

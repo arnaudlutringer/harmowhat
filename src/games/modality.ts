@@ -1,5 +1,6 @@
 import { randomInt } from '@/music/notes'
 import { spellWithLetter, type Alter, type SpelledNote } from '@/music/spelling'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « La modalité » : une gamme est jouée dans l'un des sept modes (ionien, dorien, phrygien, lydien,
@@ -77,7 +78,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
   },
 }
 
-export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface ModalitySettings {
   questions: number

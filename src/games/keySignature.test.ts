@@ -57,7 +57,7 @@ describe('La tonalité', () => {
   })
 
   it('lit les réglages avec repli sur les valeurs par défaut', () => {
-    expect(parseSettings({ questions: '50', level: 'normal' })).toEqual({ questions: 50, level: 'normal' })
+    expect(parseSettings({ questions: '30', level: 'normal' })).toEqual({ questions: 30, level: 'normal' })
     expect(parseSettings({})).toEqual({ questions: 20, level: 'debutant' })
   })
 })

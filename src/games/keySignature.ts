@@ -1,6 +1,7 @@
 import { randomInt } from '@/music/notes'
 import { LETTERS, type Alter } from '@/music/spelling'
 import { CLEFS, type ClefId } from './readNote'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « La tonalité » : une portée montre une armure (dièses, bémols ou rien) ; on trouve la tonalité.
@@ -110,7 +111,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
   },
 }
 
-export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface KeySignatureSettings {
   questions: number

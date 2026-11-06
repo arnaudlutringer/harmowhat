@@ -2,6 +2,7 @@ import { randomInt } from '@/music/notes'
 import { LETTERS, spellWithLetter, type SpelledNote } from '@/music/spelling'
 import { INTERVALS, type Interval } from './intervals'
 import { CHOICES, CLEFS, noteAt, randomAlter, stepRange, type ClefId } from './readNote'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « Fais l'harmonie » : une note de départ est écrite sur une portée, avec sa clé ; on cherche la note qui
@@ -65,7 +66,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
   },
 }
 
-export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface MakeHarmonySettings {
   questions: number

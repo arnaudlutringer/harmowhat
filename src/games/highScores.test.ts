@@ -36,7 +36,9 @@ describe('Meilleurs scores', () => {
     expect(parseBoard('quelle-note', { level: 'toto', questions: '7' })).toEqual({ game: 'quelle-note', level: 'debutant', questions: 20 })
     expect(parseBoard('accords', {})).toEqual({ game: 'accords', level: 'debutant', questions: 20 })
     expect(GAMES['grave-ou-aigu'].levels.map((l) => l.id)).toEqual(['debutant', 'normal', 'expert', 'impossible'])
-    expect(GAMES.accords.questionCounts).toEqual([10, 20, 30, 50])
+    expect(GAMES.accords.questionCounts).toEqual([5, 10, 20, 30])
+    // Tous les jeux à questions proposent les mêmes nombres.
+    for (const info of Object.values(GAMES)) if (info.questionCounts.length > 1) expect(info.questionCounts).toEqual([5, 10, 20, 30])
   })
 
   it('range les anciens scores « niveau unique » au niveau Normal', () => {
@@ -54,7 +56,7 @@ describe('Meilleurs scores', () => {
     expect(playHref({ game: 'quelle-note', level: 'expert', questions: 30 })).toBe('/games/quelle-note/pret?questions=30&level=expert')
     expect(playHref({ game: 'accords', level: 'expert', questions: 10 })).toBe('/games/accords/jouer?questions=10&level=expert')
     expect(playHref({ game: 'grave-ou-aigu', level: 'normal', questions: 20 })).toBe('/games/grave-ou-aigu/jouer?questions=20&level=normal')
-    expect(playHref({ game: 'lecture-note', level: 'intermediaire', questions: 50 })).toBe('/games/lecture-note/jouer?questions=50&level=intermediaire')
+    expect(playHref({ game: 'lecture-note', level: 'intermediaire', questions: 30 })).toBe('/games/lecture-note/jouer?questions=30&level=intermediaire')
     expect(scoresHref({ game: 'accords', level: 'unique', questions: 20 }, 2)).toBe('/scores/accords?level=unique&questions=20&rang=2')
   })
 })

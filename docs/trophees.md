@@ -22,7 +22,7 @@ Un « questionnaire » est une partie complète (hors mode essai). Tout est calc
 | Sans faute | Un questionnaire sans aucune erreur |
 | Oreille de lynx | Un questionnaire sans faute en expert |
 | Sans filet | Un questionnaire sans faute sans toucher au diapason |
-| Marathonien | Un questionnaire de 50 questions sans faute |
+| Marathonien | Un questionnaire de 30 questions sans faute |
 | L'impossible n'existe pas | Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question |
 | Grand chelem | Au moins un sans faute dans chacun des 16 jeux |
 

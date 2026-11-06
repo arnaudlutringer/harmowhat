@@ -2,6 +2,7 @@ import { randomInt } from '@/music/notes'
 import { randomSpelling, spell, spellWithLetter, type SpelledNote } from '@/music/spelling'
 import { centsFromPitchClass, midiOf } from '@/audio/pitch'
 import { INTERVALS, intervalName, type Interval } from './intervals'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « Chante l'harmonie » : une note de l'octave 3 est jouée, et le joueur chante la note qui forme avec
@@ -56,7 +57,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
 /** Écart toléré avec la note attendue, en cents : il s'agit de trouver la note, pas de chanter au cent près. */
 export const TOLERANCE = 50
 
-export const QUESTION_COUNTS = [5, 10, 20] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface SingHarmonySettings {
   questions: number

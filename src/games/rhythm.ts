@@ -1,4 +1,5 @@
 import { randomInt, shuffle } from '@/music/notes'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * Jeux de rythme (« Quel rythme ? », « Joue le rythme ») : une mesure de 3 temps, chaque temps rempli
@@ -85,7 +86,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
 /** Nombre de temps de la mesure (et de cellules à trouver). */
 export const BEATS = 3
 
-export const QUESTION_COUNTS = [5, 10, 20] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface RhythmSettings {
   questions: number

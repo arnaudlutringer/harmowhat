@@ -1,6 +1,7 @@
 import { randomInt, shuffle } from '@/music/notes'
 import { currentInstrument, rangeFor, type Instrument } from '@/audio/instruments'
 import { randomSpelling, spell, spellWithLetter, type SpelledNote } from '@/music/spelling'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « Les harmonies » : deux notes jouées l'une après l'autre, on nomme l'intervalle.
@@ -88,7 +89,7 @@ export const PRECISIONS: Record<Precision, { label: string; description: string 
   precise: { label: 'Précise', description: 'Avec la qualité : tierce mineure, quarte augmentée, sixte majeure...' },
 }
 
-export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface IntervalSettings {
   questions: number

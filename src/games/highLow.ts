@@ -1,5 +1,6 @@
 import { A440, randomInt } from '@/music/notes'
 import { currentInstrument, type Instrument } from '@/audio/instruments'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « Grave ou aigu ? » : une note est jouée, plus grave ou plus aiguë que le La3 du diapason.
@@ -29,7 +30,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
   },
 }
 
-export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface HighLowSettings {
   questions: number

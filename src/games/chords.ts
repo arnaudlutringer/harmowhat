@@ -1,6 +1,7 @@
 import { randomInt, shuffle } from '@/music/notes'
 import { randomSpelling, spell, type SpelledNote } from '@/music/spelling'
 import { currentInstrument, rangeFor, type Instrument } from '@/audio/instruments'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /** Tessiture des accords : La2 (220 Hz) à La4 (880 Hz). */
 export const CHORD_LOW = 57
@@ -30,7 +31,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
 /** Nombre de notes des accords d'un niveau. */
 export const chordSize = (level: Level) => LEVELS[level].size ?? CHORD_SIZE
 
-export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface ChordSettings {
   questions: number

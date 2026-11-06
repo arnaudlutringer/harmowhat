@@ -1,5 +1,6 @@
 import { randomInt, shuffle } from '@/music/notes'
 import { createRhythmQuestion, melodyPitches, onsets, type CellId } from './rhythm'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * Jeux de tempo :
@@ -110,7 +111,7 @@ export const FIND_LEVELS: Record<Level, FindLevel> = {
   },
 }
 
-export const FIND_QUESTION_COUNTS = [5, 10, 20] as const
+export const FIND_QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface FindQuestion {
   tempo: number

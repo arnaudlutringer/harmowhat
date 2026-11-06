@@ -110,7 +110,7 @@ export const TROPHIES: Trophy[] = [
   { id: 'sans-faute', family: 'sans-faute', icon: '✅', title: 'Sans faute', condition: 'Termine un questionnaire sans aucune erreur' },
   { id: 'oreille-de-lynx', family: 'sans-faute', icon: '🐆', title: 'Oreille de lynx', condition: 'Termine un questionnaire sans faute en expert' },
   { id: 'sans-filet', family: 'sans-faute', icon: '🎪', title: 'Sans filet', condition: 'Termine un questionnaire sans faute sans toucher au diapason (quand il est proposé)' },
-  { id: 'marathonien', family: 'sans-faute', icon: '🏃', title: 'Marathonien', condition: 'Termine un questionnaire de 50 questions sans faute' },
+  { id: 'marathonien', family: 'sans-faute', icon: '🏃', title: 'Marathonien', condition: 'Termine un questionnaire de 30 questions sans faute' },
   { id: 'impossible', family: 'sans-faute', icon: '💎', title: "L'impossible n'existe pas", condition: 'Débloque un niveau Impossible : un questionnaire expert sans faute, à plus de 9 000 points par question' },
   { id: 'grand-chelem', family: 'sans-faute', icon: '👑', title: 'Grand chelem', condition: `Fais au moins un sans faute dans chacun des ${ALL_GAMES.length} jeux` },
 
@@ -383,7 +383,7 @@ export function evaluateGame(ctx: GameContext): void {
     ['virtuose', allCorrect],
     ['oreille-de-lynx', allCorrect && level === 'expert'],
     ['sans-filet', allCorrect && ctx.forkAvailable && !ctx.forkUsed],
-    ['marathonien', allCorrect && board.questions >= 50],
+    ['marathonien', allCorrect && board.questions >= 30],
     ['rapide', atLeast(7000)],
     ['tres-rapide', atLeast(8000)],
     ['fulgurant', atLeast(9000)],

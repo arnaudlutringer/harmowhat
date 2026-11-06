@@ -1,5 +1,6 @@
 import { randomInt } from '@/music/notes'
 import { spell, spelledName, spelledPitchName, type Alter, type SpelledNote } from '@/music/spelling'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « Lecture de note » : une note est écrite sur une portée, avec une clé ;
@@ -67,7 +68,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
   },
 }
 
-export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface ReadNoteSettings {
   questions: number

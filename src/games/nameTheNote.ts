@@ -1,6 +1,7 @@
 import { PIANO_HIGHEST, PIANO_LOWEST, randomInt, shuffle } from '@/music/notes'
 import { isBlackKey, randomSpelling, spell, spelledName, spelledPitchName } from '@/music/spelling'
 import { currentInstrument, rangeFor, type Instrument } from '@/audio/instruments'
+import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
 
@@ -54,7 +55,7 @@ export const LEVELS: Record<Level, LevelConfig> = {
   },
 }
 
-export const QUESTION_COUNTS = [10, 20, 30, 50] as const
+export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface NameTheNoteSettings {
   questions: number
