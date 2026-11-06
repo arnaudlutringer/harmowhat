@@ -150,6 +150,7 @@ function play(label: BenchLabel, wanted: SoundTarget[], trace = false) {
       else if (wrong === null) wrong = pc
     },
     heard: () => {},
+    notUnderstood: () => {},
     log: (line) => trace && console.log(`      ${line}`),
     label: (pc) => String(pc),
     where: () => `à lire : ${wanted[index]?.pc ?? '—'}`,

@@ -30,6 +30,8 @@ export interface SoundJudgeHost {
   onset(at: number): void
   answer(pc: number, syllables: Learned[]): void
   heard(text: string): void
+  /** Le joueur a parlé, mais sa réponse n'a pas été comprise : il peut la redire. */
+  notUnderstood(): void
   log(line: string, at?: number): void
   label(pc: number): string
   where(at: number): string
@@ -126,6 +128,7 @@ export class SoundJudge {
     if (!best || best.noise || best.margin < MIN_MARGIN) {
       if (best && !best.noise) host.heard(`${SOUND_LABELS[best.key] ?? '?'} ?`)
       this.otherEnd = s.end
+      host.notUnderstood()
       return host.log(`${head}${scores} · ${best?.noise ? 'trop loin de tes mots' : 'pas sûr'} : ignoré`, s.start)
     }
     // Une autre note que celle à lire, mais pas nettement plus proche qu'elle : pas assez sûr pour compter une erreur ;
@@ -133,6 +136,7 @@ export class SoundJudge {
     if (expected && best.key !== expected && exp && exp.distance - best.distance < SOUND_RULES.wrongMargin) {
       host.heard(`${SOUND_LABELS[best.key] ?? '?'} ?`)
       this.otherEnd = s.end
+      host.notUnderstood()
       return host.log(`${head}${scores} · ${expected} à ${exp.distance.toFixed(1)} : pas assez net pour une erreur, ignoré`, s.start)
     }
     host.log(`${head}${scores}${tieBreak}`, s.start)

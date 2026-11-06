@@ -14,6 +14,7 @@ const RE: SoundTarget = { pc: 2, letter: 1 }
 function setup(wanted: SoundTarget[]) {
   const answers: number[] = []
   const learned: string[] = []
+  const notUnderstood = { count: 0 }
   let index = 0
   const judge = new SoundJudge(templates(), {
     target: () => wanted[index] ?? null,
@@ -26,11 +27,12 @@ function setup(wanted: SoundTarget[]) {
       if (pc === wanted[index]?.pc) index++
     },
     heard: () => {},
+    notUnderstood: () => notUnderstood.count++,
     log: () => {},
     label: String,
     where: () => '',
   })
-  return { judge, answers, learned }
+  return { judge, answers, learned, notUnderstood }
 }
 
 describe('Lecture continue, jugement par le son', () => {
@@ -48,9 +50,11 @@ describe('Lecture continue, jugement par le son', () => {
   })
 
   it('ignore une autre note, si elle n’est pas assez nettement plus proche que la note à lire', () => {
-    const { judge, answers } = setup([RE])
+    const { judge, answers, notUnderstood } = setup([RE])
     judge.syllable(syllable(1.5, 0))
     expect(answers).toEqual([])
+    // Le joueur est invité à redire la note.
+    expect(notUnderstood.count).toBe(1)
   })
 
   it('tranche une hésitation en faveur de la note à lire', () => {

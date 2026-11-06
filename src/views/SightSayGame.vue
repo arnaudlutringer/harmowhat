@@ -25,7 +25,7 @@
           :clef="sight.current.value?.clef ?? 'sol'"
           :label="sight.current.value ? `${clefLabel(sight.current.value.clef)}, note à lire` : 'Portée'"
         />
-        <p class="status" :class="{ ko: sight.phase.value === 'over' }" aria-live="polite">{{ status }}</p>
+        <p class="status" :class="{ ko: sight.phase.value === 'over', again: askAgain }" aria-live="polite">{{ status }}</p>
         <p v-if="micError" class="error">{{ micError }}</p>
         <!-- Ce que la reconnaissance vocale a entendu, pour comprendre une réponse refusée. -->
         <p class="heard">{{ recognizing ? 'Je t’ai entendu, je reconnais le mot…' : heard ? `« ${heard} »` : ' ' }}</p>
@@ -76,6 +76,10 @@ const fastStart = trialTempo(quiz.trial, route.query.tempo)
 const sight = useSightReading(quiz, settings.level, 1.1, fastStart, SAY_LEVELS)
 
 const heard = ref('')
+/** Une réponse n'a pas été comprise : on invite le joueur à la redire, bien en vue. */
+const askAgain = ref(false)
+let askAgainTimer: ReturnType<typeof setTimeout> | undefined
+const ASK_AGAIN_MS = 1500
 /** La voix du joueur vient d'être entendue : le mot est en cours de reconnaissance. */
 const recognizing = ref(false)
 const micError = ref('')
@@ -153,6 +157,7 @@ let lastPc = -1
 function judge(pc: number, heardSyllables: Learned[] = []) {
   consumed++
   recognizing.value = false
+  askAgain.value = false
   // Deux notes de suite n'ont jamais le même nom : la note qu'on vient de valider, redite (le joueur la répète parce
   // que le mot tarde à être reconnu, ou la phrase précédente revient en retard), n'est pas une réponse pour la suivante.
   if (pc === lastPc) return log(`  ${pitchClassName(pc)} redit : ignoré`)
@@ -219,6 +224,11 @@ const soundJudge = new SoundJudge(
     onset: (at) => sight.onset(at),
     answer: (pc, list) => judge(pc, list),
     heard: (text) => (heard.value = text),
+    notUnderstood() {
+      askAgain.value = true
+      clearTimeout(askAgainTimer)
+      askAgainTimer = setTimeout(() => (askAgain.value = false), ASK_AGAIN_MS)
+    },
     log,
     label: pitchClassName,
     where,
@@ -295,6 +305,7 @@ const musicLabel = computed(() =>
 const summary = computed(() => `${readLabel.value}, jusqu'à ♩ = ${sight.topTempo.value}`)
 const status = computed(() => {
   if (sight.phase.value === 'over') return sight.reason.value
+  if (askAgain.value) return 'Pas compris, redis la note !'
   if (sight.position.value < 0) return 'Les notes arrivent… prépare-toi à les nommer.'
   return 'Dis les notes avant la barre, aussi vite que tu peux : « do », « sol », « si »…'
 })
@@ -328,6 +339,11 @@ const status = computed(() => {
 }
 .status.ko {
   color: var(--ion-color-danger);
+}
+.status.again:not(.ko) {
+  color: var(--ion-color-primary);
+  font-size: 20px;
+  font-weight: 800;
 }
 .error {
   text-align: center;
