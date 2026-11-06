@@ -307,6 +307,8 @@ export class SyllableCutter {
     private rate: number,
     private onSyllable: (s: Syllable) => void,
     private onLevel?: (level: number) => void,
+    /** La voix vient de démarrer à l'instant donné : la syllabe, elle, n'arrivera qu'à sa fin. */
+    private onVoiceStart?: (at: number) => void,
   ) {
     this.hop = Math.round((rate * HOP) / RATE)
   }
@@ -391,6 +393,7 @@ export class SyllableCutter {
           this.dipMin = rms
           this.quiet = 0
           this.length = this.history.length
+          this.onVoiceStart?.(this.startedAt)
         }
         continue
       }
@@ -414,6 +417,7 @@ export class SyllableCutter {
         this.peak = rms
         this.dipMin = rms
         this.length = 1
+        this.onVoiceStart?.(now)
         continue
       }
       // Fin de syllabe après 60 ms de silence : la réponse part vite.
@@ -424,7 +428,11 @@ export class SyllableCutter {
 }
 
 /** Écoute le micro et découpe la voix en syllabes. `onLevel` reçoit le niveau (0 à 1) pour l'affichage. */
-export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLevel?: (level: number) => void): Promise<SyllableListening> {
+export async function listenToSyllables(
+  onSyllable: (s: Syllable) => void,
+  onLevel?: (level: number) => void,
+  onVoiceStart?: (at: number) => void,
+): Promise<SyllableListening> {
   if (!navigator.mediaDevices?.getUserMedia) throw new Error('Micro indisponible')
   const stream = await navigator.mediaDevices.getUserMedia({ audio: SOUND_MIC })
   const ctx = audioContext()
@@ -435,7 +443,7 @@ export async function listenToSyllables(onSyllable: (s: Syllable) => void, onLev
   source.connect(processor)
   processor.connect(mute)
   mute.connect(ctx.destination)
-  const cutter = new SyllableCutter(ctx.sampleRate, onSyllable, onLevel)
+  const cutter = new SyllableCutter(ctx.sampleRate, onSyllable, onLevel, onVoiceStart)
   processor.onaudioprocess = (e) => cutter.push(e.inputBuffer.getChannelData(0), performance.now())
 
   return {

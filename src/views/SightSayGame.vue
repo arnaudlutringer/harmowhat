@@ -224,8 +224,24 @@ const soundJudge = new SoundJudge(
   saveTemplates,
 )
 
+/** Le temps d'une syllabe entière (700 ms au plus) : au-delà, la voix entendue n'a rien donné. */
+const VOICE_WAIT_MS = 900
+
+/**
+ * La voix démarre : le mot ne sera connu qu'à la fin de la syllabe, mais la note a été commencée à temps. Sans cela, une
+ * note dite juste avant la barre compterait pour oubliée avant même d'avoir été jugée.
+ */
+function onVoiceStart(at: number) {
+  if (sight.phase.value !== 'running') return
+  sight.onset(at)
+  setTimeout(() => sight.forgetOnsets(at + 1), VOICE_WAIT_MS)
+}
+
 function onSyllable(s: Syllable) {
-  if (sight.phase.value === 'running') soundJudge.syllable(s)
+  if (sight.phase.value !== 'running') return
+  soundJudge.syllable(s)
+  // La syllabe est jugée : ce qui attendait son résultat n'a plus lieu d'être.
+  sight.forgetOnsets(s.end)
 }
 
 async function begin(): Promise<number> {
@@ -241,7 +257,7 @@ async function begin(): Promise<number> {
   if (bySound) {
     if (!syllables) {
       try {
-        syllables = await listenToSyllables(onSyllable)
+        syllables = await listenToSyllables(onSyllable, undefined, onVoiceStart)
       } catch {
         micError.value = 'Le micro n’est pas accessible : autorise-le pour cette appli, puis réessaie.'
       }

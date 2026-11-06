@@ -43,7 +43,8 @@ describe('Reconnaissance par le son', () => {
     const silence = (ms: number) => new Float32Array(16 * ms)
     const parts = [silence(1000), vowel(500, 1500, 300), silence(400), vowel(300, 2300, 300), silence(400)]
     const heard: { start: number; end: number; voiced: number }[] = []
-    const cutter = new SyllableCutter(16000, (s) => heard.push(s))
+    const starts: number[] = []
+    const cutter = new SyllableCutter(16000, (s) => heard.push(s), undefined, (at) => starts.push(at))
     let time = 0
     for (const part of parts) {
       for (let at = 0; at < part.length; at += 1024) {
@@ -57,6 +58,8 @@ describe('Reconnaissance par le son', () => {
     expect(heard[0].start).toBeLessThan(1050)
     expect(heard[1].start).toBeGreaterThan(1650)
     expect(heard[0].voiced).toBeGreaterThanOrEqual(MIN_VOICED_MS)
+    // Le début de la voix est signalé tout de suite, au même instant que le début de la syllabe.
+    expect(starts).toEqual(heard.map((s) => s.start))
   })
 
   it('garde le son et les consignes dans le fichier du banc d’essai', () => {
