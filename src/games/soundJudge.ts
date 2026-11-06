@@ -59,10 +59,10 @@ export const SOUND_RULES = {
   /** Une syllabe qui commence moins de 150 ms après un son qui n'était pas une note en est la suite (même mot). */
   wordGapMs: 150,
   /**
-   * Un son qui commence moins de 100 ms après une réponse est peut-être la fin du même mot : il doit être net pour compter,
+   * Un son qui commence moins de 200 ms après une réponse est peut-être la fin du même mot : il doit être net pour compter,
    * tant que la note à lire est à plus d'un temps de la barre. Plus près, le joueur enchaîne vraiment.
    */
-  tailGapMs: 100,
+  tailGapMs: 200,
   tailBeats: 1,
 }
 
