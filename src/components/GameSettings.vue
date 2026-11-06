@@ -6,7 +6,7 @@
         <p class="summary">{{ SUMMARIES[game] }}</p>
         <!-- Ton parcours sur ce jeu : record du téléphone, parties terminées, meilleure médaille GOAT. -->
         <div class="stats">
-          <span>🏆 <b>{{ record ? record.toLocaleString('fr-FR') : '—' }}</b> record</span>
+          <button type="button" aria-label="Meilleur score sur ce téléphone" @click="explainRecord">🏆 <b>{{ record ? record.toLocaleString('fr-FR') : '—' }}</b> pts.</button>
           <span>🎮 <b>{{ plays }}</b> partie{{ plays > 1 ? 's' : '' }}</span>
           <span :class="{ off: !goat }">{{ goat ? `💎 GOAT (${TIER_LABELS[goat].label.toLowerCase()})` : '💎 GOAT à gagner' }}</span>
         </div>
@@ -92,7 +92,7 @@
 import { withTrial } from '@/games/ready'
 import { MIN_REWARD_QUESTIONS } from '@/games/questionCounts'
 import { computed, ref, watch } from 'vue'
-import { IonButton, IonContent, IonFooter, IonPage, useIonRouter } from '@ionic/vue'
+import { IonButton, IonContent, IonFooter, IonPage, toastController, useIonRouter } from '@ionic/vue'
 import { useRoute } from 'vue-router'
 import { bestScore, getScores, hasLocalScores, levelLabel, scoresHref, type Board, type GameId } from '@/games/highScores'
 import { INTROS, SUMMARIES } from '@/games/intros'
@@ -177,6 +177,12 @@ const medalWon = (key: string) => levelMedalWon(props.game, tierOf(key, keys.val
 const refresh = ref(0)
 watch(() => route.path, (path) => path === ownPath && refresh.value++)
 const record = computed(() => (refresh.value, bestScore(props.game)))
+
+/** Le chiffre du bandeau ne dit pas ce qu'il compte : on l'explique quand on le touche. */
+async function explainRecord() {
+  const toast = await toastController.create({ message: 'Meilleur score sur ce téléphone', duration: 2000, position: 'top' })
+  await toast.present()
+}
 const plays = computed(() => (refresh.value, gamesPlayed(props.game)))
 const goat = computed(() => earnedTrophies.value[`goat-${props.game}`]?.tier)
 
@@ -217,7 +223,8 @@ async function start(trial = false, challenge = false) {
   gap: 6px;
   margin-top: 12px;
 }
-.stats span {
+.stats span,
+.stats button {
   padding: 5px 10px;
   border-radius: 12px;
   /* Fond et texte du thème : lisibles en clair comme en sombre. */
@@ -225,6 +232,10 @@ async function start(trial = false, challenge = false) {
   color: var(--ion-text-color);
   font-size: 12px;
   box-shadow: 0 1px 4px rgba(45, 48, 71, 0.08);
+}
+.stats button {
+  border: none;
+  font-family: inherit;
 }
 .stats b {
   font-size: 14px;
