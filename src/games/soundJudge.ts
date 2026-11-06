@@ -24,6 +24,8 @@ export interface SoundJudgeHost {
   target(): SoundTarget | null
   /** Réponse fausse dite si tôt que ce n'en est sans doute pas une (« oula ! »). */
   early(pc: number, at: number): boolean
+  /** Où est la note à lire par rapport à la barre à l'instant `at`, en temps (-1,5 : à un temps et demi avant). */
+  lateness(at: number): number | undefined
   /** Dernière note jugée (une note redite n'est pas une réponse pour la suivante). */
   lastPc(): number
   /** Le joueur a commencé à dire sa réponse à l'instant `at`. */
@@ -56,12 +58,20 @@ export const SOUND_RULES = {
   clearMargin: 2,
   /** Une syllabe qui commence moins de 150 ms après un son qui n'était pas une note en est la suite (même mot). */
   wordGapMs: 150,
+  /**
+   * Un son qui commence moins de 100 ms après une réponse est peut-être la fin du même mot : il doit être net pour compter,
+   * tant que la note à lire est à plus d'un temps de la barre. Plus près, le joueur enchaîne vraiment.
+   */
+  tailGapMs: 100,
+  tailBeats: 1,
 }
 
 export class SoundJudge {
   private notes: Templates = {}
   /** Fin de la dernière syllabe avec de la voix qui n'a pas été prise comme note (exclamation, mot incertain). */
   private otherEnd = -Infinity
+  /** Fin de la dernière syllabe prise comme réponse. */
+  private answerEnd = -Infinity
 
   constructor(
     private templates: Templates,
@@ -78,6 +88,7 @@ export class SoundJudge {
 
   reset() {
     this.otherEnd = -Infinity
+    this.answerEnd = -Infinity
   }
 
   /** Ajoute aux enregistrements les syllabes d'une réponse juste (en remplaçant les plus anciennes apprises en jeu). */
@@ -124,6 +135,13 @@ export class SoundJudge {
         best = { key: expected, distance: exp.distance, margin: MIN_MARGIN, noise: false }
       }
     }
+    // Collé à la réponse d'avant, et pas net : la fin du même mot (un « do » tenu, coupé en deux), pas la note suivante.
+    const late = host.lateness(s.start)
+    const farAhead = late === undefined || late < -SOUND_RULES.tailBeats
+    if (farAhead && s.start - this.answerEnd < SOUND_RULES.tailGapMs && (!best || best.noise || tieBreak || best.margin < SOUND_RULES.clearMargin)) {
+      this.answerEnd = s.end
+      return host.log(`${head}${scores} · fin de la note d'avant : ignoré`, s.start)
+    }
     // Bruit, ou deux notes presque à égalité : pas de réponse (le joueur peut redire la note).
     if (!best || best.noise || best.margin < MIN_MARGIN) {
       if (best && !best.noise) host.heard(`${SOUND_LABELS[best.key] ?? '?'} ?`)
@@ -150,6 +168,7 @@ export class SoundJudge {
     }
     // La réponse est datée du début de la syllabe.
     host.onset(s.start)
+    this.answerEnd = s.end
     // Seule une syllabe sans ambiguïté enrichit les enregistrements : apprendre d'une hésitation tranchée mélangerait les notes.
     host.answer(pc, !tieBreak && best.margin >= SOUND_RULES.clearMargin ? [{ key: best.key, features: s.features }] : [])
   }

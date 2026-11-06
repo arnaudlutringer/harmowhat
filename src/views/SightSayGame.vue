@@ -220,6 +220,7 @@ const soundJudge = new SoundJudge(
       return n && { pc: n.pc, letter: n.note.letter }
     },
     early: earlyWrong,
+    lateness,
     lastPc: () => lastPc,
     onset: (at) => sight.onset(at),
     answer: (pc, list) => judge(pc, list),

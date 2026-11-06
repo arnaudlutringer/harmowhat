@@ -15,10 +15,12 @@ function setup(wanted: SoundTarget[]) {
   const answers: number[] = []
   const learned: string[] = []
   const notUnderstood = { count: 0 }
+  const late = { beats: -2 }
   let index = 0
   const judge = new SoundJudge(templates(), {
     target: () => wanted[index] ?? null,
     early: () => false,
+    lateness: () => late.beats,
     lastPc: () => (index ? wanted[index - 1].pc : -1),
     onset: () => {},
     answer(pc, syllables) {
@@ -32,7 +34,7 @@ function setup(wanted: SoundTarget[]) {
     label: String,
     where: () => '',
   })
-  return { judge, answers, learned, notUnderstood }
+  return { judge, answers, learned, notUnderstood, late }
 }
 
 describe('Lecture continue, jugement par le son', () => {
@@ -74,6 +76,27 @@ describe('Lecture continue, jugement par le son', () => {
     // Collée, mais nettement la note à lire : prise.
     judge.syllable(syllable(0, 250))
     expect(answers).toEqual([0])
+  })
+
+  it('ne prend pas la fin d’un mot pour la note suivante', () => {
+    const { judge, answers, notUnderstood } = setup([DO, RE])
+    judge.syllable(syllable(0, 0))
+    expect(answers).toEqual([0])
+    // Collé à « do », à mi-chemin entre do et ré : ni réponse, ni demande de redire.
+    judge.syllable(syllable(2.4, 200))
+    expect(answers).toEqual([0])
+    expect(notUnderstood.count).toBe(0)
+    // Un vrai « ré », même enchaîné, compte.
+    judge.syllable(syllable(4, 400))
+    expect(answers).toEqual([0, 2])
+  })
+
+  it('accepte une note enchaînée, même hésitante, quand elle approche de la barre', () => {
+    const { judge, answers, late } = setup([DO, RE])
+    late.beats = -0.5
+    judge.syllable(syllable(0, 0))
+    judge.syllable(syllable(2.4, 200))
+    expect(answers).toEqual([0, 2])
   })
 
   it('ignore une autre note collée à un mot qui n’en est pas une (« ou-la »)', () => {

@@ -141,6 +141,8 @@ function play(label: BenchLabel, wanted: SoundTarget[], trace = false) {
   const judge = new SoundJudge(structuredClone(templates), {
     target: () => (wrong === null ? (wanted[index] ?? null) : null),
     early: () => false,
+    // Les consignes s'enchaînent comme des notes qui approchent de la barre.
+    lateness: () => -0.5,
     lastPc: () => lastPc,
     onset: () => {},
     answer(pc) {
