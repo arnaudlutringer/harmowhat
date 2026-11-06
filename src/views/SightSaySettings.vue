@@ -9,6 +9,7 @@
     :parse="parseSightSettings"
     :next-path="nextPath"
     :needs-online="recognition === 'google'"
+    silent
   >
     <template #extra>
       <!-- Reconnaissance des notes dites : par le son (sur le téléphone, sans Internet) ou par Google. -->

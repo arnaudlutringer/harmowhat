@@ -129,6 +129,8 @@ const props = defineProps<{
   boardLevel?: (level: string) => string
   /** Le jeu a besoin d'Internet (reconnaissance vocale de « Lecture continue »). */
   needsOnline?: boolean
+  /** Le jeu ne joue aucun son : pas besoin de vérifier le volume du téléphone. */
+  silent?: boolean
 }>()
 
 const offline = computed(() => !!props.needsOnline && !online.value)
@@ -189,8 +191,8 @@ const records = computed(() => getScores(board.value).slice(0, 5))
 const matchs = featureEnabled('matchs') && matchesAvailable
 
 async function start(trial = false, challenge = false) {
-  // Son du téléphone coupé : on prévient avant de lancer la partie.
-  if (!(await confirmSoundOn())) return
+  // Son du téléphone coupé : on prévient avant de lancer la partie (sauf jeu sans aucun son).
+  if (!props.silent && !(await confirmSoundOn())) return
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(props.storageKey, JSON.stringify({ ...settings, ...props.extra }))
