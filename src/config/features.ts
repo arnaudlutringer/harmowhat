@@ -14,8 +14,8 @@ export const FEATURES = {
   lectureChantee: true,
   /** « Lecture continue » : lire les notes d'une portée qui défile et dire leur nom au micro. */
   lectureParlee: true,
-  /** Écran « Test du micro » (catégorie Tests de l'accueil) : le détail de la reconnaissance vocale, pour la mettre au point. */
-  testMicro: true,
+  /** Outils de mise au point de la reconnaissance vocale : écran « Test du micro » (catégorie Tests de l'accueil), banc d'essai, compte rendu de « Lecture continue ». */
+  testMicro: false,
 }
 
 export type Feature = keyof typeof FEATURES

@@ -8,7 +8,6 @@
             Dis chaque mot quand il s'affiche, normalement.
             {{ bySound ? 'L’appli enregistre le son de ta voix pour reconnaître les notes pendant « Lecture continue », sans Internet.' : 'L’appli retient comment la reconnaissance vocale comprend ta voix, pour mieux te comprendre pendant « Lecture continue ».' }}
           </p>
-          <p v-if="newPlayer" class="how">Le nom du joueur a changé : enregistre ta voix pour que le jeu te reconnaisse.</p>
           <p v-if="!bySound && !online" class="error">📶 Connecte-toi à Internet : la reconnaissance vocale en a besoin.</p>
           <p class="progress">Mot {{ step + 1 }} / {{ prompts.length }}</p>
           <p class="word" aria-live="polite">{{ prompts[step].label }}</p>
@@ -22,18 +21,22 @@
         </template>
 
         <template v-else>
-          <h2>C'est enregistré ✓</h2>
-          <p class="how">{{ bySound ? 'Tes enregistrements serviront à reconnaître les notes que tu dis.' : 'Voici ce que la reconnaissance vocale a compris. Les mots écrits autrement seront acceptés pour la bonne note.' }}</p>
-          <ul class="summary">
+          <div class="done">
+            <p class="ready-icon" aria-hidden="true">{{ complete ? '🎉' : '🎤' }}</p>
+            <h2>{{ complete ? 'Cette fois, tout est prêt' : 'Il manque encore des mots' }}</h2>
+            <p v-if="!complete" class="how">Tu en as passé quelques-uns : recommence pour que le jeu connaisse toutes les notes.</p>
+          </div>
+          <!-- Mise au point : ce qui a été retenu pour chaque mot. -->
+          <ul v-if="debug" class="summary">
             <li v-for="w in VOICE_WORDS" :key="w.key">
               <strong>{{ w.label }}</strong>
               <span>{{ summaryOf(w.key) }}</span>
             </li>
           </ul>
           <div class="buttons">
-            <ion-button v-if="suite" @click="play">Jouer</ion-button>
-            <ion-button v-else @click="router.navigate('/games/lis-dis', 'back', 'replace')">Terminé</ion-button>
-            <ion-button fill="outline" @click="restart">Recommencer</ion-button>
+            <ion-button v-if="complete && suite" @click="play">C'est parti</ion-button>
+            <ion-button v-else-if="complete" @click="router.navigate('/games/lis-dis', 'back', 'replace')">Terminé</ion-button>
+            <ion-button :fill="complete ? 'outline' : 'solid'" @click="restart">Recommencer</ion-button>
           </div>
         </template>
       </div>
@@ -42,15 +45,16 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { IonButton, IonContent, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
+import { alertController, IonButton, IonContent, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
 import PageNav from '@/components/PageNav.vue'
 import { listenToSpeech, type SpeechEvent, type SpeechListening } from '@/audio/speech'
-import { markVoiceOwner, recognition, saveVoiceWords, toLearn, voiceOwnerChanged, VOICE_TAKES, VOICE_WORDS, type VoiceWord } from '@/games/voiceWords'
+import { markVoiceOwner, recognition, saveVoiceWords, toLearn, voiceOwnerChanged, voiceReady, VOICE_TAKES, VOICE_WORDS, type VoiceWord } from '@/games/voiceWords'
 import { AMBIENT_MS, listenToSyllables, loadTemplates, MIN_VOICED_MS, saveTemplates, type Features, type Syllable, type SyllableListening } from '@/audio/wordMatch'
 import { spokenWords } from '@/games/sightReading'
 import { online } from '@/player/online'
+import { featureEnabled } from '@/config/features'
 
 const route = useRoute()
 const router = useIonRouter()
@@ -61,6 +65,23 @@ const suite = typeof route.query.suite === 'string' && route.query.suite.startsW
 const bySound = recognition.value === 'son'
 /** Le nom du joueur a changé depuis le dernier enregistrement. */
 const newPlayer = voiceOwnerChanged()
+const debug = featureEnabled('testMicro')
+/** Enregistrement terminé : la voix est prête pour jouer (aucun mot ne manque). */
+const complete = ref(false)
+
+// Enregistrement demandé avant de jouer : on prévient d'abord, et on rassure.
+onMounted(async () => {
+  if (!suite && !newPlayer) return
+  const alert = await alertController.create({
+    header: newPlayer ? '🎤 Tiens, un nouveau nom !' : '🎤 Un petit échauffement',
+    message: newPlayer
+      ? 'On ne s’est pas encore présentés : le jeu doit faire connaissance avec ta voix. Pas d’audition, promis : sept notes à dire, deux fois chacune. Moins d’une minute, et c’est gardé pour les prochaines fois !'
+      : 'Avant de jouer, le jeu doit faire connaissance avec ta voix : il ne sait pas encore à quoi ressemble ton « do ». Pas d’audition, promis : sept notes à dire, deux fois chacune. Moins d’une minute, et c’est gardé pour les prochaines fois !',
+    backdropDismiss: false,
+    buttons: [{ text: 'Je me lance' }],
+  })
+  await alert.present()
+})
 /** Chaque mot, deux fois. */
 const prompts: VoiceWord[] = VOICE_WORDS.flatMap((w) => Array.from({ length: VOICE_TAKES }, () => w))
 const level = ref(0)
@@ -174,11 +195,13 @@ function finish() {
     // Autre joueur : les enregistrements du précédent ne sont pas gardés, même pour un mot passé.
     saveTemplates(newPlayer ? sounds : { ...loadTemplates(), ...sounds })
     markVoiceOwner()
+    complete.value = voiceReady()
     return
   }
   saved = learnedWords()
   saveVoiceWords(saved)
   markVoiceOwner()
+  complete.value = voiceReady()
 }
 
 function summaryOf(key: string): string {
@@ -260,6 +283,13 @@ onBeforeUnmount(stopListening)
   display: block;
   height: 100%;
   background: var(--ion-color-primary);
+}
+.done {
+  margin-top: 40px;
+}
+.ready-icon {
+  margin: 0;
+  font-size: 64px;
 }
 .summary {
   list-style: none;

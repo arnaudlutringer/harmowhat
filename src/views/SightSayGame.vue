@@ -30,10 +30,10 @@
         <!-- Ce que la reconnaissance vocale a entendu, pour comprendre une réponse refusée. -->
         <p class="heard">{{ recognizing ? 'Je t’ai entendu, je reconnais le mot…' : heard ? `« ${heard} »` : ' ' }}</p>
         <!-- Partie finie (essai compris) : le compte rendu de tout ce qui a été entendu et jugé. -->
-        <button v-if="sight.phase.value === 'over'" class="report" @click="copyReport">{{ copied ? 'Compte rendu copié ✓' : 'Copier le compte rendu' }}</button>
+        <button v-if="debug && sight.phase.value === 'over'" class="report" @click="copyReport">{{ copied ? 'Compte rendu copié ✓' : 'Copier le compte rendu' }}</button>
       </div>
     </template>
-    <template #result>
+    <template v-if="debug" #result>
       <div class="report-box">
         <button class="report" @click="copyReport">{{ copied ? 'Compte rendu copié ✓' : 'Copier le compte rendu' }}</button>
       </div>
@@ -54,6 +54,7 @@ import { clefLabel, noteName, parseSightSettings, notesForMedal, parseSpokenNote
 import { tempoName } from '@/games/tempo'
 import { trophyEvent } from '@/games/trophies'
 import { online } from '@/player/online'
+import { featureEnabled } from '@/config/features'
 // Mots appris de la voix du joueur (« Ma voix ») : chargés pour la lecture de ce qu'il dit.
 import { recognition, soundReady } from '@/games/voiceWords'
 import { listenToSyllables, loadTemplates, saveTemplates, type Syllable, type SyllableListening } from '@/audio/wordMatch'
@@ -76,6 +77,8 @@ const fastStart = trialTempo(quiz.trial, route.query.tempo)
 const sight = useSightReading(quiz, settings.level, 1.1, fastStart, SAY_LEVELS)
 
 const heard = ref('')
+/** Mise au point : compte rendu de la partie à copier. */
+const debug = featureEnabled('testMicro')
 /** Une réponse n'a pas été comprise : on invite le joueur à la redire, bien en vue. */
 const askAgain = ref(false)
 let askAgainTimer: ReturnType<typeof setTimeout> | undefined
