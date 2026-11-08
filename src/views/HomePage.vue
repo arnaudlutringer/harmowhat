@@ -1,6 +1,7 @@
 <template>
   <ion-page>
-    <ion-content class="ion-padding">
+    <ion-content>
+      <div class="page">
       <div class="top">
         <ion-button fill="clear" router-link="/infos" aria-label="Informations" title="Informations">
           <ion-icon slot="icon-only" :icon="informationCircleOutline" />
@@ -11,8 +12,6 @@
         </div>
         <span class="spacer" />
       </div>
-      <p class="intro">Tu penses avoir l'oreille absolue&nbsp;? Prouve-le&nbsp;!</p>
-
       <!-- Défi du jour : le même jeu et le même niveau pour tout le monde, jusqu'à minuit. -->
       <!-- Une fois terminé, il se replie en une ligne jusqu'à minuit, avec le meilleur résultat du jour. -->
       <p v-if="todayScore" class="daily-done" :class="{ failed: !challengeDone }">
@@ -24,25 +23,35 @@
         <span class="daily-text">
           <small>DÉFI DU JOUR</small>
           <strong>{{ challenge.title }} · {{ challenge.level }}</strong>
-          <span>{{ challenge.board.questions }} questions · 80 % de bonnes réponses pour le relever</span>
+          <span>{{ challenge.board.questions }} questions · 80 % pour le relever</span>
         </span>
         <span class="daily-note" aria-hidden="true">♪</span>
       </button>
 
-      <!-- Les jeux, rangés par catégorie : l'oreille, la voix, le solfège, le rythme, le tempo. -->
-      <section v-for="category in categories" :key="category.title" class="category">
-        <h2>{{ category.title }} <small>{{ category.games.length }} jeux</small></h2>
-        <div class="games">
-          <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: category.color }" :title="SUMMARIES[idOf(game.path)]">
-            <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
-            <strong>{{ game.title }}</strong>
-            <!-- Médailles GOAT déjà gagnées sur ce jeu (bronze, argent, or, puis diamant en impossible). -->
-            <span v-if="!category.tests" class="medals" :aria-label="medalLabel(game.path)">
-              <span v-for="m in medalsFor(game.path)" :key="m.medal" :class="{ off: !m.won }">{{ m.medal }}</span>
-            </span>
-          </router-link>
-        </div>
-      </section>
+      <!-- Le dernier jeu lancé, à un geste (absente avant la première partie). -->
+      <router-link v-if="last" :to="`/games/${last}`" class="again">
+        <span class="again-disc"><ion-icon :icon="play" aria-hidden="true" /></span>
+        <span class="again-text">
+          <small>Rejouer</small>
+          <strong>{{ GAMES[last].title }}</strong>
+        </span>
+        <ion-icon class="again-go" :icon="chevronForward" aria-hidden="true" />
+      </router-link>
+
+      <!-- Les quatre familles : chacune ouvre la liste de ses jeux. -->
+      <nav class="families" aria-label="Familles de jeux">
+        <router-link v-for="f in families" :key="f.id" :to="f.path" class="family" :style="{ background: f.color }">
+          <span class="disc"><ion-icon :icon="f.icon" aria-hidden="true" /></span>
+          <span class="family-text">
+            <strong>{{ f.title }}</strong>
+            <span>{{ f.games.length }} jeux · {{ medalsText(f.games) }}</span>
+          </span>
+        </router-link>
+      </nav>
+
+      <!-- Écrans de mise au point, derrière un interrupteur. -->
+      <router-link v-if="debug" to="/debug/micro" class="debug">Test du micro</router-link>
+      </div>
     </ion-content>
     <bottom-nav active="/home" />
   </ion-page>
@@ -51,14 +60,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { IonButton, IonContent, IonIcon, IonPage, useIonRouter } from '@ionic/vue'
-import { informationCircleOutline } from 'ionicons/icons'
+import { chevronForward, earOutline, informationCircleOutline, micOutline, musicalNotesOutline, play } from 'ionicons/icons'
 import BottomNav from '@/components/BottomNav.vue'
 import { GAME_ICONS } from '@/games/icons'
-import { SUMMARIES } from '@/games/intros'
-import type { GameId } from '@/games/highScores'
+import { FAMILIES, familyGames, familyPath, lastGame, medalsText } from '@/games/catalog'
+import { GAMES } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
 import { featureEnabled, gameEnabled } from '@/config/features'
-import { challengeDays, challengeScores, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
+import { challengeDays, challengeScores } from '@/games/trophies'
 
 const router = useIonRouter()
 // Le défi du jour, figé pour la journée (son niveau suit les progrès du joueur d'un jour à l'autre).
@@ -67,132 +76,10 @@ const challengeDone = computed(() => challengeDays.value.includes(dayNumber()))
 /** Meilleur résultat du défi d'aujourd'hui (le défi est terminé dès qu'il existe). */
 const todayScore = computed(() => challengeScores.value[dayNumber()] ?? (challengeDone.value ? { correct: challenge.board.questions, total: challenge.board.questions } : null))
 
-const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
-const idOf = (path: string) => path.replace('/games/', '') as GameId
-/**
- * Médailles d'un jeu : bronze, argent et or (un sans faute en débutant, normal, expert), la couronne en impossible
- * une fois ce niveau débloqué, puis le diamant du GOAT.
- */
-function medalsFor(path: string) {
-  const id = idOf(path)
-  const levels = TIERS.filter((t) => t !== 'impossible' || impossibleUnlocked.value.includes(id))
-  return [
-    ...levels.map((t) => ({ medal: LEVEL_MEDALS[t].medal, won: levelMedalWon(id, t) })),
-    { medal: '💎', won: !!earnedTrophies.value[`goat-${id}`] },
-  ]
-}
-function medalLabel(path: string) {
-  const won = medalsFor(path).filter((m) => m.won).map((m) => m.medal)
-  return won.length ? `Médailles gagnées : ${won.join(' ')}` : 'Pas encore de médaille'
-}
-
-const earGames = [
-  {
-    path: '/games/grave-ou-aigu',
-    icon: GAME_ICONS['grave-ou-aigu'],
-    title: 'Grave ou aigu ?',
-  },
-  {
-    path: '/games/quelle-note',
-    icon: GAME_ICONS['quelle-note'],
-    title: 'Quelle est la note ?',
-  },
-  {
-    path: '/games/accords',
-    icon: GAME_ICONS.accords,
-    title: 'Les accords',
-  },
-  {
-    path: '/games/harmonies',
-    icon: GAME_ICONS.harmonies,
-    title: 'Les harmonies',
-  },
-  {
-    path: '/games/modalite',
-    icon: GAME_ICONS.modalite,
-    title: 'La modalité',
-  },
-]
-
-const voiceGames = [
-  {
-    path: '/games/chante-note',
-    icon: GAME_ICONS['chante-note'],
-    title: 'Chante la note',
-  },
-  {
-    path: '/games/chante-harmonie',
-    icon: GAME_ICONS['chante-harmonie'],
-    title: "Chante l'harmonie",
-  },
-  {
-    path: '/games/lis-chante',
-    icon: GAME_ICONS['lis-chante'],
-    title: 'Chante en continu',
-  },
-].filter((g) => gameEnabled(idOf(g.path)))
-
-const theoryGames = [
-  {
-    path: '/games/lecture-note',
-    icon: GAME_ICONS['lecture-note'],
-    title: 'Lecture de note',
-  },
-  {
-    path: '/games/fais-harmonie',
-    icon: GAME_ICONS['fais-harmonie'],
-    title: "Fais l'harmonie",
-  },
-  {
-    path: '/games/tonalite',
-    icon: GAME_ICONS.tonalite,
-    title: 'La tonalité',
-  },
-  {
-    path: '/games/lis-dis',
-    icon: GAME_ICONS['lis-dis'],
-    title: 'Lecture continue',
-  },
-].filter((g) => gameEnabled(idOf(g.path)))
-
-const rhythmGames = [
-  {
-    path: '/games/quel-rythme',
-    icon: GAME_ICONS['quel-rythme'],
-    title: 'Quel rythme ?',
-  },
-  {
-    path: '/games/joue-rythme',
-    icon: GAME_ICONS['joue-rythme'],
-    title: 'Joue le rythme',
-  },
-]
-
-const tempoGames = [
-  {
-    path: '/games/garde-tempo',
-    icon: GAME_ICONS['garde-tempo'],
-    title: 'Garde le tempo',
-  },
-  {
-    path: '/games/trouve-tempo',
-    icon: GAME_ICONS['trouve-tempo'],
-    title: 'Trouve le tempo',
-  },
-]
-
-// Une teinte douce par catégorie, un peu plus foncée que le fond crème.
-const categories = [
-  { title: "L'oreille", color: 'var(--hw-category-ear)', games: earGames },
-  { title: 'La voix', color: 'var(--hw-category-voice)', games: voiceGames },
-  { title: 'Le solfège', color: 'var(--hw-category-theory)', games: theoryGames },
-  { title: 'Le rythme', color: 'var(--hw-category-rhythm)', games: rhythmGames },
-  { title: 'Le tempo', color: 'var(--hw-category-tempo)', games: tempoGames },
-  // Écrans de mise au point, derrière un interrupteur (pas de médailles).
-  ...(featureEnabled('testMicro')
-    ? [{ title: 'Tests', color: 'var(--hw-category-theory)', tests: true, games: [{ path: '/debug/micro', icon: GAME_ICONS['lis-dis'], title: 'Test du micro' }] }]
-    : []),
-]
+const FAMILY_ICONS: Record<string, string> = { oreille: earOutline, voix: micOutline, solfege: musicalNotesOutline, rythme: GAME_ICONS['garde-tempo'] }
+const families = FAMILIES.map((f) => ({ ...f, path: familyPath(f), icon: FAMILY_ICONS[f.id], games: familyGames(f) }))
+const last = computed(() => (lastGame.value && gameEnabled(lastGame.value) ? lastGame.value : null))
+const debug = featureEnabled('testMicro')
 </script>
 
 <style scoped>
@@ -203,14 +90,14 @@ h1 {
   font-weight: 700;
   color: var(--ion-color-primary);
 }
-/* Même police manuscrite que le titre, un peu plus grande que le texte courant pour rester lisible. */
-.intro {
-  margin: 4px 0 12px;
-  font-family: 'Dancing Script', cursive;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--ion-color-medium);
-  text-align: center;
+/* Tout tient sur l'écran : les familles se partagent la hauteur qui reste. */
+.page {
+  min-height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 12px;
 }
 /* Défi du jour : un bandeau sombre, la note en filigrane. */
 .daily {
@@ -279,81 +166,138 @@ h1 {
   font-size: 96px;
   opacity: 0.08;
 }
-/* Titre de catégorie : la police manuscrite du titre, en violet, et le nombre de jeux à droite. */
-.category h2 {
+/* Le dernier jeu lancé. */
+.again {
   display: flex;
-  align-items: baseline;
-  margin: 18px 0 10px;
-  font-family: 'Dancing Script', cursive;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--ion-color-primary);
-}
-.category h2 small {
-  margin-left: auto;
-  font-family: var(--ion-font-family);
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--ion-color-medium);
-}
-.games {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  align-items: center;
   gap: 12px;
-}
-/* Carte d'un jeu : coins arrondis, la teinte de sa catégorie, l'icône dans un rond blanc, les médailles. */
-.card {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px;
+  min-height: 60px;
+  box-sizing: border-box;
+  padding: 8px 14px 8px 8px;
   border-radius: 18px;
+  background: var(--hw-surface, #fff);
   color: var(--hw-card-ink);
   text-decoration: none;
   box-shadow: 0 3px 10px rgba(45, 48, 71, 0.08);
 }
-.card:active {
+.again-disc {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ion-color-primary);
+  color: #fff;
+  font-size: 20px;
+}
+.again-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.again-text small {
+  font-size: 12px;
+  color: var(--ion-color-medium);
+}
+.again-text strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.again-go {
+  font-size: 20px;
+  color: var(--ion-color-medium);
+}
+/* Les familles, en 2 × 2. */
+.families {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: minmax(132px, 1fr);
+  gap: 12px;
+}
+.family {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 20px;
+  color: var(--hw-card-ink);
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgba(45, 48, 71, 0.08);
+}
+.family:active {
   transform: scale(0.98);
 }
-/* Un reflet clair dans le coin, pour donner du relief. */
-.card::after {
-  content: '';
-  position: absolute;
-  right: -26px;
-  top: -26px;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  pointer-events: none;
+.family-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.family-text strong {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.debug {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ion-color-medium);
+}
+/* Petit écran (Samsung A10) : tout tient sans défilement, en réduisant le logo et les cartes. */
+@media (max-height: 740px) {
+  .page {
+    gap: 10px;
+    padding: 8px 16px;
+  }
+  .page .logo {
+    width: 44px;
+    height: 44px;
+  }
+  .page h1 {
+    font-size: 28px;
+  }
+  .daily {
+    margin: 0;
+    padding: 10px 14px;
+  }
+  .daily-done {
+    margin: 0;
+  }
+  .families {
+    grid-auto-rows: minmax(112px, 1fr);
+    gap: 10px;
+  }
+  .family {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .family .disc {
+    width: 44px;
+    height: 44px;
+  }
+  .family .disc ion-icon {
+    font-size: 28px;
+  }
+  .family-text strong {
+    font-size: 18px;
+  }
 }
 .disc {
   display: grid;
   place-items: center;
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: var(--hw-surface, #fff);
   box-shadow: 0 2px 6px rgba(45, 48, 71, 0.12);
 }
 .disc ion-icon {
-  font-size: 32px;
+  font-size: 34px;
   color: var(--hw-card-ink);
-}
-.card strong {
-  font-size: 16px;
-  line-height: 1.15;
-}
-.medals {
-  font-size: 13px;
-  letter-spacing: 2px;
-}
-.medals .off {
-  filter: grayscale(1);
-  opacity: 0.35;
 }
 /* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
 /* Infos en haut à gauche, Paramètres en haut à droite, logo et titre centrés entre les deux. */
