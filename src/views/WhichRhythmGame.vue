@@ -34,7 +34,7 @@
       </button>
     </div>
 
-    <div class="choices">
+    <div class="choices" :class="{ many: choices.length > 9, crowded: choices.length > 12 }">
       <button
         v-for="id in choices"
         :key="id"
@@ -71,7 +71,7 @@ import GameShell from '@/components/GameShell.vue'
 import FlipPlayer from '@/components/FlipPlayer.vue'
 import RhythmStaff from '@/components/RhythmStaff.vue'
 import { useQuiz } from '@/composables/useQuiz'
-import { BEATS, CELLS, createRhythmQuestion, parseSettings, shuffledChoices, type CellId, type RhythmQuestion } from '@/games/rhythm'
+import { BEATS, CELLS, createRhythmQuestion, LISTEN_LEVELS, parseSettings, shuffledChoices, type CellId, type RhythmQuestion } from '@/games/rhythm'
 import { COUNT_IN, playRhythm } from '@/games/rhythmAudio'
 
 const settings = parseSettings(useRoute().query)
@@ -80,7 +80,7 @@ const beatMs = (q: RhythmQuestion) => (60 / q.tempo) * 1000
 
 const quiz = useQuiz({
   total: settings.questions,
-  createQuestion: () => createRhythmQuestion(settings.level),
+  createQuestion: () => createRhythmQuestion(settings.level, LISTEN_LEVELS),
   play: (q) => playRhythm(q.cells, q.tempo, { pitches: q.pitches }).then((p) => p.duration),
   // On peut répondre dès le début de la mesure ; les points baissent à partir de sa fin.
   answersOpen: (q) => COUNT_IN * beatMs(q),
@@ -182,6 +182,10 @@ function validate() {
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
+/* Beaucoup de figures (expert, impossible) : quatre colonnes, pour que tout reste à l'écran. */
+.choices.many {
+  grid-template-columns: repeat(4, 1fr);
+}
 .choice {
   height: 64px;
   padding: 4px 6px;
@@ -223,6 +227,9 @@ function validate() {
   .slot,
   .choice {
     height: 54px;
+  }
+  .choices.crowded .choice {
+    height: 42px;
   }
   .slots {
     margin-bottom: 8px;

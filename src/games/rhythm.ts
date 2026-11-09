@@ -9,6 +9,7 @@ import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 export type CellId =
   | 'noire' | 'croches' | 'soupir' | 'doubles' | 'croche-doubles' | 'doubles-croche' | 'demi-soupir-croche' | 'pointee' | 'triolet' | 'syncopette'
+  | 'croche-demi-soupir' | 'double-pointee' | 'double-silence' | 'quart-soupir-doubles'
 
 export interface Cell {
   id: CellId
@@ -32,6 +33,10 @@ export const CELLS: Record<CellId, Cell> = {
   pointee: { id: 'pointee', label: 'Croche pointée et double', parts: [0.75, 0.25], vex: ['8d', '16'] },
   triolet: { id: 'triolet', label: 'Triolet de croches', parts: [1 / 3, 1 / 3, 1 / 3], vex: ['8', '8', '8'], tuplet: true },
   syncopette: { id: 'syncopette', label: 'Syncopette', parts: [0.25, 0.5, 0.25], vex: ['16', '8', '16'] },
+  'croche-demi-soupir': { id: 'croche-demi-soupir', label: 'Croche et demi-soupir', parts: [0.5, -0.5], vex: ['8', '8r'] },
+  'double-pointee': { id: 'double-pointee', label: 'Double et croche pointée', parts: [0.25, 0.75], vex: ['16', '8d'] },
+  'double-silence': { id: 'double-silence', label: 'Double, quart de soupir et deux doubles', parts: [0.25, -0.25, 0.25, 0.25], vex: ['16', '16r', '16', '16'] },
+  'quart-soupir-doubles': { id: 'quart-soupir-doubles', label: 'Quart de soupir et trois doubles', parts: [-0.25, 0.25, 0.25, 0.25], vex: ['16r', '16', '16', '16'] },
 }
 
 export type Level = 'debutant' | 'normal' | 'expert' | 'impossible'
@@ -83,6 +88,26 @@ export const LEVELS: Record<Level, LevelConfig> = {
   },
 }
 
+/**
+ * Niveaux de « Quel rythme ? » : reconnaître un rythme à l'oreille supporte plus de difficulté que le taper
+ * (« Joue le rythme » garde LEVELS). Les nouvelles figures ressemblent à l'oreille à celles qui existaient déjà.
+ */
+export const LISTEN_LEVELS: Record<Level, LevelConfig> = {
+  ...LEVELS,
+  expert: {
+    ...LEVELS.expert,
+    description: 'Des figures qui se ressemblent, la syncopette, plus vite, et une mélodie au lieu d’une seule note.',
+    cells: [...LEVELS.expert.cells, 'syncopette', 'croche-demi-soupir', 'double-pointee'],
+    tempo: 108,
+    melody: true,
+  },
+  impossible: {
+    ...LEVELS.impossible,
+    description: 'Un tempo différent à chaque question (de 60 à 140), une mélodie, et des silences au milieu des doubles croches.',
+    cells: [...LEVELS.impossible.cells, 'croche-demi-soupir', 'double-pointee', 'double-silence', 'quart-soupir-doubles'],
+  },
+}
+
 /** Nombre de temps de la mesure (et de cellules à trouver). */
 export const BEATS = 3
 
@@ -116,12 +141,12 @@ export interface RhythmQuestion {
 }
 
 /** Trois cellules au hasard ; la première n'est jamais un silence (le rythme part sur le premier temps). */
-export function createRhythmQuestion(level: Level): RhythmQuestion {
-  const pool = LEVELS[level].cells
+export function createRhythmQuestion(level: Level, levels: Record<Level, LevelConfig> = LEVELS): RhythmQuestion {
+  const cfg = levels[level]
+  const pool = cfg.cells
   const sounding = pool.filter((c) => CELLS[c].parts[0] > 0)
   const cells: CellId[] = [sounding[randomInt(0, sounding.length - 1)]]
   while (cells.length < BEATS) cells.push(pool[randomInt(0, pool.length - 1)])
-  const cfg = LEVELS[level]
   const tempo = cfg.tempoRange ? randomInt(cfg.tempoRange[0], cfg.tempoRange[1]) : cfg.tempo
   const count = onsets(cells).length
   const pitches = cfg.melody ? melodyPitches(count) : Array<number>(count).fill(MELODY_SCALE[2])

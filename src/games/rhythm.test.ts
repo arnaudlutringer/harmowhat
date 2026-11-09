@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BEATS, CELLS, createRhythmQuestion, judgeTaps, LEVELS, onsets, parseSettings, tapPoints, type Level } from './rhythm'
+import { BEATS, CELLS, createRhythmQuestion, judgeTaps, LEVELS, LISTEN_LEVELS, onsets, parseSettings, tapPoints, type Level } from './rhythm'
 
 describe('Jeux de rythme', () => {
   it('chaque cellule remplit exactement un temps', () => {
@@ -43,3 +43,24 @@ describe('Jeux de rythme', () => {
     expect(parseSettings({ questions: '7', level: 'x' })).toEqual({ questions: 10, level: 'normal' })
   })
 })
+
+describe('Quel rythme ?, niveaux à l’écoute', () => {
+  it('rend l’expert plus dur sans toucher à Joue le rythme', () => {
+    expect(LISTEN_LEVELS.expert).toMatchObject({ tempo: 108, melody: true })
+    expect(LISTEN_LEVELS.expert.cells).toHaveLength(12)
+    expect(LEVELS.expert).toMatchObject({ tempo: 96 })
+    expect(LEVELS.expert.melody).toBeUndefined()
+    expect(LEVELS.expert.cells).toHaveLength(9)
+    expect(createRhythmQuestion('expert', LISTEN_LEVELS).choices).toHaveLength(12)
+  })
+
+  it('garde l’impossible au-dessus de l’expert', () => {
+    for (const c of LISTEN_LEVELS.expert.cells) expect(LISTEN_LEVELS.impossible.cells).toContain(c)
+    expect(LISTEN_LEVELS.impossible.cells.length).toBeGreaterThan(LISTEN_LEVELS.expert.cells.length)
+  })
+
+  it('remplit exactement un temps avec chaque figure', () => {
+    for (const cell of Object.values(CELLS)) expect(cell.parts.reduce((s, d) => s + Math.abs(d), 0)).toBeCloseTo(1)
+  })
+})
+
