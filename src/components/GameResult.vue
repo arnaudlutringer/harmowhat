@@ -9,10 +9,14 @@
     <h1>{{ summary.points }} <span class="pts">pts</span></h1>
     <p v-if="answersLabel" class="answers">{{ answersLabel }}</p>
     <p v-else class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
-    <ion-button class="share" fill="clear" size="small" :disabled="sharing" @click="share('score')">
-      <ion-icon slot="start" :icon="shareSocialOutline" />
-      Partager mon score
-    </ion-button>
+    <!-- Sous le score, sur une ligne : les boutons au style de ceux des réglages d'un jeu. -->
+    <div class="score-actions">
+      <button type="button" :disabled="sharing" @click="share('score')">Partager mon score</button>
+      <template v-if="autoSaved">
+        <button type="button" @click="openScores(autoSaved.rank, autoSaved.name)">Voir les meilleurs scores</button>
+        <button type="button" :disabled="sharing" @click="share('rank')">Partager mon classement</button>
+      </template>
+    </div>
 
     <!-- Médaille d'or gagnée à l'instant : le diamant de ce jeu devient accessible. -->
     <div v-if="diamondUnlocked" class="diamond" role="status">
@@ -36,11 +40,6 @@
         <span v-if="tops.appareil">📱 Téléphone</span>
       </p>
       <p class="country">Enregistré au nom de <strong>{{ autoSaved.name }}</strong><template v-if="worldEnabled"> · {{ country?.flag }} {{ country?.name }}</template></p>
-      <ion-button expand="block" @click="openScores(autoSaved.rank, autoSaved.name)">Voir les meilleurs scores</ion-button>
-      <ion-button expand="block" fill="outline" :disabled="sharing" @click="share('rank')">
-        <ion-icon slot="start" :icon="shareSocialOutline" />
-        Partager mon classement
-      </ion-button>
     </div>
     <form v-else-if="record" class="record" @submit.prevent="saveRecord">
       <strong>🏅 Tu entres dans les meilleurs scores !</strong>
@@ -108,7 +107,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
-import { medalOutline, musicalNote, musicalNotes, shareSocialOutline, stop } from 'ionicons/icons'
+import { medalOutline, musicalNote, musicalNotes, stop } from 'ionicons/icons'
 import { playRecording, playSequence, stopAll, tierForScore } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { summarize, type QuestionResult } from '@/games/scoring'
@@ -352,8 +351,30 @@ h1 .pts {
   font-size: 18px;
   margin: 4px 0 4px;
 }
-.share {
-  margin: 0 0 12px;
+/* Mêmes boutons que dans les réglages d'un jeu : fond clair, coins arrondis, légère ombre. */
+.score-actions {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 16px;
+}
+.score-actions button {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 6px;
+  border: none;
+  border-radius: 14px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-text-color);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.15;
+  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.06);
+  cursor: pointer;
+}
+.score-actions button:disabled {
+  opacity: 0.5;
 }
 /* Le diamant débloqué : un encart sombre, le diamant qui apparaît en grossissant. */
 .diamond {
@@ -437,9 +458,6 @@ p {
 }
 .record.auto .tops {
   justify-content: center;
-}
-.record.auto ion-button {
-  width: 100%;
 }
 .record strong {
   color: var(--ion-color-primary);
