@@ -31,12 +31,15 @@
         <h2>{{ category.title }}</h2>
         <div class="games">
           <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: game.color ?? category.color }" :title="SUMMARIES[idOf(game.path)]">
-            <span class="disc">
-              <ion-icon :icon="game.icon" aria-hidden="true" />
-              <!-- La plus belle médaille gagnée sur ce jeu. -->
-              <span v-if="!category.tests && bestMedal(game.path)" class="best" :aria-label="medalLabel(game.path)">{{ bestMedal(game.path) }}</span>
+            <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
+            <span class="name">
+              <strong>{{ game.title }}</strong>
+              <small v-if="!category.tests">{{ playsLabel(game.path) }}</small>
             </span>
-            <strong>{{ game.title }}</strong>
+            <!-- Médailles du jeu, en colonne : en couleur une fois gagnées, grises sinon. -->
+            <span v-if="!category.tests" class="medals" :aria-label="medalLabel(game.path)">
+              <span v-for="m in medalsFor(game.path)" :key="m.medal" :class="{ off: !m.won }">{{ m.medal }}</span>
+            </span>
           </router-link>
         </div>
       </section>
@@ -46,8 +49,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { IonButton, IonContent, IonIcon, IonPage, useIonRouter } from '@ionic/vue'
+import { computed, ref } from 'vue'
+import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
 import { informationCircleOutline } from 'ionicons/icons'
 import BottomNav from '@/components/BottomNav.vue'
 import { GAME_ICONS } from '@/games/icons'
@@ -55,7 +58,7 @@ import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
 import { featureEnabled, gameEnabled } from '@/config/features'
-import { challengeDays, challengeScores, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
+import { challengeDays, challengeScores, earnedTrophies, gamesPlayed, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
 // Le défi du jour, figé pour la journée (son niveau suit les progrès du joueur d'un jour à l'autre).
@@ -78,9 +81,13 @@ function medalsFor(path: string) {
     { medal: '💎', won: !!earnedTrophies.value[`goat-${id}`] },
   ]
 }
-/** La dernière médaille gagnée dans l'ordre de la liste, donc la plus belle. */
-function bestMedal(path: string) {
-  return medalsFor(path).filter((m) => m.won).pop()?.medal
+// L'écran reste en mémoire : le nombre de parties se relit à chaque retour sur l'accueil.
+const refresh = ref(0)
+onIonViewWillEnter(() => refresh.value++)
+function playsLabel(path: string) {
+  void refresh.value
+  const n = gamesPlayed(idOf(path))
+  return `${n} partie${n > 1 ? 's' : ''}`
 }
 function medalLabel(path: string) {
   const won = medalsFor(path).filter((m) => m.won).map((m) => m.medal)
@@ -293,7 +300,7 @@ h1 {
   gap: 8px;
   min-height: 50px;
   box-sizing: border-box;
-  padding: 5px 8px 5px 6px;
+  padding: 4px 6px 4px 6px;
   border-radius: 14px;
   color: var(--hw-card-ink);
   text-decoration: none;
@@ -303,7 +310,6 @@ h1 {
   transform: scale(0.98);
 }
 .disc {
-  position: relative;
   flex: none;
   display: grid;
   place-items: center;
@@ -316,17 +322,35 @@ h1 {
   font-size: 26px;
   color: var(--hw-card-ink);
 }
-.best {
-  position: absolute;
-  right: -5px;
-  bottom: -4px;
-  font-size: 14px;
-  line-height: 1;
+.name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
-.card strong {
-  font-size: 15px;
+.name strong {
+  font-size: 14.5px;
   font-weight: 600;
   line-height: 1.12;
+}
+.name small {
+  font-size: 11.5px;
+  line-height: 1.15;
+  opacity: 0.75;
+}
+/* Les médailles, l'une sous l'autre sur le côté droit. */
+.medals {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 10.5px;
+  line-height: 1.12;
+}
+.medals .off {
+  filter: grayscale(1);
+  opacity: 0.35;
 }
 /* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
 /* Infos en haut à gauche, Paramètres en haut à droite, logo et titre centrés entre les deux. */
