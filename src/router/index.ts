@@ -4,13 +4,10 @@ import HomePage from '@/views/HomePage.vue'
 import { isTutorialDone } from '@/tutorial'
 import { featureEnabled, gameEnabled } from '@/config/features'
 import type { GameId } from '@/games/highScores'
-import { FAMILIES, familyPath } from '@/games/catalog'
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/home' },
   { path: '/home', component: HomePage },
-  // Une adresse par famille de jeux : Ionic garde ainsi un écran pour chacune.
-  ...FAMILIES.map((f) => ({ path: familyPath(f), component: () => import('@/views/FamilyPage.vue') })),
   { path: '/tutoriel', component: () => import('@/views/TutorialPage.vue') },
   { path: '/parametres', component: () => import('@/views/SettingsPage.vue') },
   { path: '/infos', component: () => import('@/views/InfoPage.vue') },

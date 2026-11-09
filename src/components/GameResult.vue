@@ -92,12 +92,11 @@
     <ion-button v-if="settingsHref" expand="block" fill="outline" :router-link="settingsHref" router-direction="back">
       Changer les réglages
     </ion-button>
-    <ion-button expand="block" fill="outline" :router-link="gameFamilyPath(board.game)" router-direction="back">Autre jeu</ion-button>
+    <ion-button expand="block" fill="outline" router-link="/home" router-direction="back">Autre jeu</ion-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { gameFamilyPath } from '@/games/catalog'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
 import { medalOutline, musicalNote, musicalNotes, shareSocialOutline, stop } from 'ionicons/icons'

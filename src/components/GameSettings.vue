@@ -1,8 +1,8 @@
 <template>
   <ion-page>
     <ion-content>
-      <!-- Bandeau aux couleurs de la catégorie. Retour : toujours la famille du jeu (comme le bouton retour du téléphone). -->
-      <game-hero :game="game" :title="title" back-label="Retour aux jeux" @back="router.navigate(gameFamilyPath(game), 'back', 'replace')">
+      <!-- Bandeau aux couleurs de la catégorie. Retour : toujours l'accueil (comme le bouton retour du téléphone). -->
+      <game-hero :game="game" :title="title" back-label="Retour à l'accueil" @back="router.navigate('/home', 'back', 'replace')">
         <p class="summary">{{ SUMMARIES[game] }}</p>
         <!-- Ton parcours sur ce jeu : record du téléphone, parties terminées, meilleure médaille GOAT. -->
         <div class="stats">
@@ -91,7 +91,6 @@
 <script setup lang="ts">
 import { withTrial } from '@/games/ready'
 import { MIN_REWARD_QUESTIONS } from '@/games/questionCounts'
-import { gameFamilyPath, rememberLastGame } from '@/games/catalog'
 import { computed, ref, watch } from 'vue'
 import { IonButton, IonContent, IonFooter, IonPage, toastController, useIonRouter } from '@ionic/vue'
 import { useRoute } from 'vue-router'
@@ -196,7 +195,6 @@ const matchs = featureEnabled('matchs') && matchesAvailable
 async function start(trial = false, challenge = false) {
   // Son du téléphone coupé : on prévient avant de lancer la partie (sauf jeu sans aucun son).
   if (!props.silent && !(await confirmSoundOn())) return
-  rememberLastGame(props.game)
   const settings = { questions: questions.value, level: level.value }
   try {
     localStorage.setItem(props.storageKey, JSON.stringify({ ...settings, ...props.extra }))

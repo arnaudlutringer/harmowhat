@@ -19,8 +19,6 @@ import { syncWorldScores } from '@/games/worldScores'
 import { online } from '@/player/online'
 import { featureEnabled } from '@/config/features'
 import { parseCode, refreshUnseen } from '@/games/matches'
-import { gameFamilyPath } from '@/games/catalog'
-import type { GameId } from '@/games/highScores'
 
 const router = useRouter()
 const ionRouter = useIonRouter()
@@ -66,16 +64,13 @@ useBackButton(10, (processNextHandler) => {
 
 // Bouton retour du téléphone, hors partie (les jeux et leur écran de fin ont leur propre règle, dans GameShell) :
 // - à l'accueil : on quitte l'appli ;
-// - sur les réglages d'un jeu : retour à sa famille ;
-// - sur une famille et sur les onglets de la barre du bas : retour à l'accueil ;
+// - sur les réglages d'un jeu et sur les onglets de la barre du bas : retour à l'accueil ;
 // - ailleurs (meilleurs scores, infos, écran diapason…) : l'écran précédent, sinon l'accueil.
 const TABS = ['/trophees', '/hall-of-fame', '/parametres', '/matchs']
 useBackButton(-1, () => {
   const path = router.currentRoute.value.path
-  const game = /^\/games\/([^/]+)$/.exec(path)?.[1]
   if (path === '/home') void App.exitApp().catch(() => {})
-  else if (game) ionRouter.navigate(gameFamilyPath(game as GameId), 'back', 'replace')
-  else if (path.startsWith('/famille/') || TABS.includes(path)) ionRouter.navigate('/home', 'back', 'replace')
+  else if (/^\/games\/[^/]+$/.test(path) || TABS.includes(path)) ionRouter.navigate('/home', 'back', 'replace')
   else if (ionRouter.canGoBack()) ionRouter.back()
   else ionRouter.navigate('/home', 'back', 'replace')
 })

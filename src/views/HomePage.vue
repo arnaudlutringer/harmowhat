@@ -1,7 +1,6 @@
 <template>
   <ion-page>
-    <ion-content>
-      <div class="page">
+    <ion-content class="ion-padding">
       <div class="top">
         <ion-button fill="clear" router-link="/infos" aria-label="Informations" title="Informations">
           <ion-icon slot="icon-only" :icon="informationCircleOutline" />
@@ -21,37 +20,26 @@
       <button v-else class="daily" @click="router.push(challenge.href)">
         <ion-icon class="daily-icon" :icon="GAME_ICONS[challenge.board.game]" aria-hidden="true" />
         <span class="daily-text">
-          <small>DÉFI DU JOUR</small>
+          <small>DÉFI DU JOUR · {{ challenge.board.questions }} QUESTIONS</small>
           <strong>{{ challenge.title }} · {{ challenge.level }}</strong>
-          <span>{{ challenge.board.questions }} questions · 80 % pour le relever</span>
         </span>
         <span class="daily-note" aria-hidden="true">♪</span>
       </button>
 
-      <!-- Le dernier jeu lancé, à un geste (absente avant la première partie). -->
-      <router-link v-if="last" :to="`/games/${last}`" class="again">
-        <span class="again-disc"><ion-icon :icon="play" aria-hidden="true" /></span>
-        <span class="again-text">
-          <small>Rejouer</small>
-          <strong>{{ GAMES[last].title }}</strong>
-        </span>
-        <ion-icon class="again-go" :icon="chevronForward" aria-hidden="true" />
-      </router-link>
-
-      <!-- Les quatre familles : chacune ouvre la liste de ses jeux. -->
-      <nav class="families" aria-label="Familles de jeux">
-        <router-link v-for="f in families" :key="f.id" :to="f.path" class="family" :style="{ background: f.color }">
-          <span class="disc"><ion-icon :icon="f.icon" aria-hidden="true" /></span>
-          <span class="family-text">
-            <strong>{{ f.title }}</strong>
-            <span>{{ f.games.length }} jeux · {{ medalsText(f.games) }}</span>
-          </span>
-        </router-link>
-      </nav>
-
-      <!-- Écrans de mise au point, derrière un interrupteur. -->
-      <router-link v-if="debug" to="/debug/micro" class="debug">Test du micro</router-link>
-      </div>
+      <!-- Tous les jeux, rangés par catégorie : une ligne par paire de jeux, pour les voir d'un coup d'œil. -->
+      <section v-for="category in categories" :key="category.title" class="category">
+        <h2>{{ category.title }}</h2>
+        <div class="games">
+          <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: game.color ?? category.color }" :title="SUMMARIES[idOf(game.path)]">
+            <span class="disc">
+              <ion-icon :icon="game.icon" aria-hidden="true" />
+              <!-- La plus belle médaille gagnée sur ce jeu. -->
+              <span v-if="!category.tests && bestMedal(game.path)" class="best" :aria-label="medalLabel(game.path)">{{ bestMedal(game.path) }}</span>
+            </span>
+            <strong>{{ game.title }}</strong>
+          </router-link>
+        </div>
+      </section>
     </ion-content>
     <bottom-nav active="/home" />
   </ion-page>
@@ -60,14 +48,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { IonButton, IonContent, IonIcon, IonPage, useIonRouter } from '@ionic/vue'
-import { chevronForward, earOutline, informationCircleOutline, micOutline, musicalNotesOutline, play } from 'ionicons/icons'
+import { informationCircleOutline } from 'ionicons/icons'
 import BottomNav from '@/components/BottomNav.vue'
 import { GAME_ICONS } from '@/games/icons'
-import { FAMILIES, familyGames, familyPath, lastGame, medalsText } from '@/games/catalog'
-import { GAMES } from '@/games/highScores'
+import { SUMMARIES } from '@/games/intros'
+import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
 import { featureEnabled, gameEnabled } from '@/config/features'
-import { challengeDays, challengeScores } from '@/games/trophies'
+import { challengeDays, challengeScores, earnedTrophies, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
 // Le défi du jour, figé pour la journée (son niveau suit les progrès du joueur d'un jour à l'autre).
@@ -76,28 +64,150 @@ const challengeDone = computed(() => challengeDays.value.includes(dayNumber()))
 /** Meilleur résultat du défi d'aujourd'hui (le défi est terminé dès qu'il existe). */
 const todayScore = computed(() => challengeScores.value[dayNumber()] ?? (challengeDone.value ? { correct: challenge.board.questions, total: challenge.board.questions } : null))
 
-const FAMILY_ICONS: Record<string, string> = { oreille: earOutline, voix: micOutline, solfege: musicalNotesOutline, rythme: GAME_ICONS['garde-tempo'] }
-const families = FAMILIES.map((f) => ({ ...f, path: familyPath(f), icon: FAMILY_ICONS[f.id], games: familyGames(f) }))
-const last = computed(() => (lastGame.value && gameEnabled(lastGame.value) ? lastGame.value : null))
-const debug = featureEnabled('testMicro')
+const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
+const idOf = (path: string) => path.replace('/games/', '') as GameId
+/**
+ * Médailles d'un jeu : bronze, argent et or (un sans faute en débutant, normal, expert), la couronne en impossible
+ * une fois ce niveau débloqué, puis le diamant du GOAT.
+ */
+function medalsFor(path: string) {
+  const id = idOf(path)
+  const levels = TIERS.filter((t) => t !== 'impossible' || impossibleUnlocked.value.includes(id))
+  return [
+    ...levels.map((t) => ({ medal: LEVEL_MEDALS[t].medal, won: levelMedalWon(id, t) })),
+    { medal: '💎', won: !!earnedTrophies.value[`goat-${id}`] },
+  ]
+}
+/** La dernière médaille gagnée dans l'ordre de la liste, donc la plus belle. */
+function bestMedal(path: string) {
+  return medalsFor(path).filter((m) => m.won).pop()?.medal
+}
+function medalLabel(path: string) {
+  const won = medalsFor(path).filter((m) => m.won).map((m) => m.medal)
+  return won.length ? `Médailles gagnées : ${won.join(' ')}` : 'Pas encore de médaille'
+}
+
+const earGames = [
+  {
+    path: '/games/grave-ou-aigu',
+    icon: GAME_ICONS['grave-ou-aigu'],
+    title: 'Grave ou aigu ?',
+  },
+  {
+    path: '/games/quelle-note',
+    icon: GAME_ICONS['quelle-note'],
+    title: 'Quelle est la note ?',
+  },
+  {
+    path: '/games/accords',
+    icon: GAME_ICONS.accords,
+    title: 'Les accords',
+  },
+  {
+    path: '/games/harmonies',
+    icon: GAME_ICONS.harmonies,
+    title: 'Les harmonies',
+  },
+  {
+    path: '/games/modalite',
+    icon: GAME_ICONS.modalite,
+    title: 'La modalité',
+  },
+]
+
+const voiceGames = [
+  {
+    path: '/games/chante-note',
+    icon: GAME_ICONS['chante-note'],
+    title: 'Chante la note',
+  },
+  {
+    path: '/games/chante-harmonie',
+    icon: GAME_ICONS['chante-harmonie'],
+    title: "Chante l'harmonie",
+  },
+  {
+    path: '/games/lis-chante',
+    icon: GAME_ICONS['lis-chante'],
+    title: 'Chante en continu',
+  },
+].filter((g) => gameEnabled(idOf(g.path)))
+
+const theoryGames = [
+  {
+    path: '/games/lecture-note',
+    icon: GAME_ICONS['lecture-note'],
+    title: 'Lecture de note',
+  },
+  {
+    path: '/games/fais-harmonie',
+    icon: GAME_ICONS['fais-harmonie'],
+    title: "Fais l'harmonie",
+  },
+  {
+    path: '/games/tonalite',
+    icon: GAME_ICONS.tonalite,
+    title: 'La tonalité',
+  },
+  {
+    path: '/games/lis-dis',
+    icon: GAME_ICONS['lis-dis'],
+    title: 'Lecture continue',
+  },
+].filter((g) => gameEnabled(idOf(g.path)))
+
+const rhythmGames = [
+  {
+    path: '/games/quel-rythme',
+    icon: GAME_ICONS['quel-rythme'],
+    title: 'Quel rythme ?',
+  },
+  {
+    path: '/games/joue-rythme',
+    icon: GAME_ICONS['joue-rythme'],
+    title: 'Joue le rythme',
+  },
+]
+
+const tempoGames = [
+  {
+    path: '/games/garde-tempo',
+    icon: GAME_ICONS['garde-tempo'],
+    title: 'Garde le tempo',
+  },
+  {
+    path: '/games/trouve-tempo',
+    icon: GAME_ICONS['trouve-tempo'],
+    title: 'Trouve le tempo',
+  },
+]
+
+// Une teinte douce par catégorie, un peu plus foncée que le fond crème (le tempo garde la sienne dans « Rythme et tempo »).
+interface HomeGame {
+  path: string
+  icon: string
+  title: string
+  color?: string
+}
+const categories: { title: string; color: string; tests?: boolean; games: HomeGame[] }[] = [
+  { title: "L'oreille", color: 'var(--hw-category-ear)', games: earGames },
+  { title: 'La voix', color: 'var(--hw-category-voice)', games: voiceGames },
+  { title: 'Le solfège', color: 'var(--hw-category-theory)', games: theoryGames },
+  { title: 'Rythme et tempo', color: 'var(--hw-category-rhythm)', games: [...rhythmGames, ...tempoGames.map((g) => ({ ...g, color: 'var(--hw-category-tempo)' }))] },
+  // Écrans de mise au point, derrière un interrupteur (pas de médailles).
+  ...(featureEnabled('testMicro')
+    ? [{ title: 'Tests', color: 'var(--hw-category-theory)', tests: true, games: [{ path: '/debug/micro', icon: GAME_ICONS['lis-dis'], title: 'Test du micro' }] }]
+    : []),
+]
 </script>
 
 <style scoped>
 h1 {
   margin: 0;
   font-family: 'Dancing Script', cursive;
-  font-size: 34px;
+  font-size: 30px;
   font-weight: 700;
   color: var(--ion-color-primary);
-}
-/* Tout tient sur l'écran : les familles se partagent la hauteur qui reste. */
-.page {
-  min-height: 100%;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px 16px 12px;
 }
 /* Défi du jour : un bandeau sombre, la note en filigrane. */
 .daily {
@@ -106,21 +216,21 @@ h1 {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 4px 0 8px;
-  padding: 14px 16px;
+  gap: 12px;
+  margin: 2px 0 4px;
+  padding: 9px 14px;
   border: none;
-  border-radius: 20px;
+  border-radius: 16px;
   background: var(--hw-daily, #2d3047);
   color: #fff;
   text-align: left;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(45, 48, 71, 0.25);
+  box-shadow: 0 4px 12px rgba(45, 48, 71, 0.2);
 }
 .daily-icon {
   flex: none;
-  font-size: 48px;
+  font-size: 34px;
   color: #fff;
 }
 .daily-text {
@@ -135,11 +245,7 @@ h1 {
   letter-spacing: 1px;
 }
 .daily-text strong {
-  font-size: 17px;
-}
-.daily-text span {
-  font-size: 12px;
-  opacity: 0.75;
+  font-size: 16px;
 }
 /* Défi relevé : une seule ligne discrète, en vert. */
 .daily-done {
@@ -162,158 +268,84 @@ h1 {
 .daily-note {
   position: absolute;
   right: -4px;
-  bottom: -26px;
-  font-size: 96px;
+  bottom: -18px;
+  font-size: 64px;
   opacity: 0.08;
 }
-/* Le dernier jeu lancé. */
-.again {
+/* Titre de catégorie : la police manuscrite du titre, en violet. */
+.category h2 {
+  margin: 8px 0 5px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 23px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+}
+.games {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+/* Un jeu : l'icône à gauche, son nom bien lisible à droite, sur une seule tuile basse. */
+.card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 60px;
+  gap: 8px;
+  min-height: 50px;
   box-sizing: border-box;
-  padding: 8px 14px 8px 8px;
-  border-radius: 18px;
-  background: var(--hw-surface, #fff);
+  padding: 5px 8px 5px 6px;
+  border-radius: 14px;
   color: var(--hw-card-ink);
   text-decoration: none;
-  box-shadow: 0 3px 10px rgba(45, 48, 71, 0.08);
+  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.08);
 }
-.again-disc {
+.card:active {
+  transform: scale(0.98);
+}
+.disc {
+  position: relative;
   flex: none;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--ion-color-primary);
-  color: #fff;
-  font-size: 20px;
-}
-.again-text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-.again-text small {
-  font-size: 12px;
-  color: var(--ion-color-medium);
-}
-.again-text strong {
-  font-size: 16px;
-  font-weight: 600;
-}
-.again-go {
-  font-size: 20px;
-  color: var(--ion-color-medium);
-}
-/* Les familles, en 2 × 2. */
-.families {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-auto-rows: minmax(132px, 1fr);
-  gap: 12px;
-}
-.family {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 20px;
-  color: var(--hw-card-ink);
-  text-decoration: none;
-  box-shadow: 0 3px 10px rgba(45, 48, 71, 0.08);
-}
-.family:active {
-  transform: scale(0.98);
-}
-.family-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 13px;
-}
-.family-text strong {
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.1;
-}
-.debug {
-  text-align: center;
-  font-size: 13px;
-  color: var(--ion-color-medium);
-}
-/* Petit écran (Samsung A10) : tout tient sans défilement, en réduisant le logo et les cartes. */
-@media (max-height: 740px) {
-  .page {
-    gap: 10px;
-    padding: 8px 16px;
-  }
-  .page .logo {
-    width: 44px;
-    height: 44px;
-  }
-  .page h1 {
-    font-size: 28px;
-  }
-  .daily {
-    margin: 0;
-    padding: 10px 14px;
-  }
-  .daily-done {
-    margin: 0;
-  }
-  .families {
-    grid-auto-rows: minmax(112px, 1fr);
-    gap: 10px;
-  }
-  .family {
-    padding: 10px 12px;
-    gap: 6px;
-  }
-  .family .disc {
-    width: 44px;
-    height: 44px;
-  }
-  .family .disc ion-icon {
-    font-size: 28px;
-  }
-  .family-text strong {
-    font-size: 18px;
-  }
-}
-.disc {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--hw-surface, #fff);
-  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.12);
 }
 .disc ion-icon {
-  font-size: 34px;
+  font-size: 26px;
   color: var(--hw-card-ink);
+}
+.best {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  font-size: 14px;
+  line-height: 1;
+}
+.card strong {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.12;
 }
 /* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
 /* Infos en haut à gauche, Paramètres en haut à droite, logo et titre centrés entre les deux. */
 .top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  margin-top: -6px;
 }
 .brand {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  gap: 8px;
+  min-height: 48px;
 }
 .logo {
-  width: 64px;
-  height: 64px;
+  width: 36px;
+  height: 36px;
 }
 .top ion-button {
   --color: var(--ion-color-primary);

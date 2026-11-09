@@ -26,11 +26,7 @@ import { featureEnabled } from '@/config/features'
 import { matchesAvailable, unseenResults } from '@/games/matches'
 import { pendingTrophyCount } from '@/games/trophies'
 
-const props = defineProps<{
-  active: '/home' | '/trophees' | '/hall-of-fame' | '/matchs' | '/parametres'
-  /** Écran rattaché à l'onglet actif sans en être la racine : toucher l'onglet ramène à sa racine. */
-  nested?: boolean
-}>()
+const props = defineProps<{ active: '/home' | '/trophees' | '/hall-of-fame' | '/matchs' | '/parametres' }>()
 
 const ALL_ITEMS = [
   { path: '/home', label: 'Jeux', icon: musicalNotesOutline, iconOn: musicalNotes },
@@ -46,7 +42,7 @@ const router = useIonRouter()
 
 // Les quatre écrans sont au même niveau : on passe de l'un à l'autre sans empiler l'historique.
 function go(path: string) {
-  if (path === props.active && !props.nested) return
+  if (path === props.active) return
   router.navigate(path, 'root', 'replace')
 }
 </script>
