@@ -37,7 +37,7 @@
               <small v-if="!category.tests">🎮 <b>{{ playsOf(game.path) }}</b> partie{{ playsOf(game.path) > 1 ? 's' : '' }}</small>
             </span>
             <!-- Médailles du jeu, en colonne : en couleur une fois gagnées, grises sinon. -->
-            <span v-if="!category.tests" class="medals" :aria-label="medalLabel(game.path)">
+            <span v-if="!category.tests" class="medals" :class="{ many: medalsFor(game.path).length > 4 }" :aria-label="medalLabel(game.path)">
               <span v-for="m in medalsFor(game.path)" :key="m.medal" :class="{ off: !m.won }">{{ m.medal }}</span>
             </span>
           </router-link>
@@ -298,7 +298,8 @@ h1 {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 50px;
+  /* La même hauteur pour toutes : de quoi loger un nom sur deux lignes, sa pastille et les médailles. */
+  min-height: 72px;
   box-sizing: border-box;
   padding: 6px;
   border-radius: 14px;
@@ -357,6 +358,11 @@ h1 {
   gap: 3px;
   font-size: 10.5px;
   line-height: 1.12;
+}
+/* Cinq médailles (couronne et diamant) : un peu plus serrées, pour que la tuile garde sa hauteur. */
+.medals.many {
+  gap: 1px;
+  font-size: 9.5px;
 }
 .medals .off {
   filter: grayscale(1);
