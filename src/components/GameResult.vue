@@ -9,13 +9,16 @@
     <h1>{{ summary.points }} <span class="pts">pts</span></h1>
     <p v-if="answersLabel" class="answers">{{ answersLabel }}</p>
     <p v-else class="answers">{{ summary.correct }} / {{ total }} bonne{{ summary.correct > 1 ? 's' : '' }} réponse{{ summary.correct > 1 ? 's' : '' }}</p>
-    <!-- Sous le score, sur une ligne : les boutons au style de ceux des réglages d'un jeu. -->
+    <!-- Sous le score, sur une ligne : boutons secondaires, comme « Autre jeu ». -->
     <div class="score-actions">
-      <button type="button" :disabled="sharing" @click="share('score')">Partager mon score</button>
-      <template v-if="autoSaved">
-        <button type="button" @click="openScores(autoSaved.rank, autoSaved.name)">Voir les meilleurs scores</button>
-        <button type="button" :disabled="sharing" @click="share('rank')">Partager mon classement</button>
-      </template>
+      <button type="button" :disabled="sharing" @click="share">
+        <ion-icon :icon="shareSocialOutline" aria-hidden="true" />
+        Partager mon score
+      </button>
+      <button v-if="autoSaved" type="button" @click="openScores(autoSaved.rank, autoSaved.name)">
+        <ion-icon :icon="podiumOutline" aria-hidden="true" />
+        Voir les meilleurs scores
+      </button>
     </div>
 
     <!-- Médaille d'or gagnée à l'instant : le diamant de ce jeu devient accessible. -->
@@ -114,7 +117,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { IonButton, IonIcon, IonInput, useIonRouter } from '@ionic/vue'
-import { medalOutline, musicalNote, musicalNotes, stop } from 'ionicons/icons'
+import { medalOutline, musicalNote, musicalNotes, podiumOutline, shareSocialOutline, stop } from 'ionicons/icons'
 import { playRecording, playSequence, stopAll, tierForScore } from '@/audio/engine'
 import { usePlaying } from '@/composables/usePlaying'
 import { summarize, type QuestionResult } from '@/games/scoring'
@@ -180,8 +183,6 @@ onMounted(countTrophies)
 // sur le téléphone, et dans la base mondiale, qui alimente les classements du monde et des pays.
 const router = useIonRouter()
 const tops = reactive({ monde: false, pays: false, appareil: qualifies(getScores(props.board), summary.value.points) })
-/** Rang du score dans le classement du monde et du pays. */
-const ranks = reactive({ monde: 0, pays: 0 })
 const saved = ref(false)
 const record = computed(() => !saved.value && (tops.monde || tops.pays || tops.appareil))
 const playerName = ref(lastPlayerName())
@@ -199,7 +200,6 @@ onMounted(() => {
   const local = cachedBoard(props.board, code)
   const update = (scope: 'monde' | 'pays', rows: { points: number }[]) => {
     tops[scope] = qualifies(rows as never, points)
-    ranks[scope] = rows.filter((r) => r.points > points).length + 1
   }
   if (world) update('monde', world)
   if (local) update('pays', local)
@@ -291,25 +291,14 @@ function toggleElise() {
   else playElise()
 }
 
-// Partage : l'image du score, ou de la place dans le plus beau des classements où il entre.
+// Partage : l'image du score (la place dans un classement se partage depuis l'écran des scores).
 const sharing = ref(false)
-async function share(kind: 'score' | 'rank') {
+async function share() {
   if (sharing.value) return
   sharing.value = true
-  const game = GAMES[props.board.game].title
   const { points, correct } = summary.value
   try {
-    if (kind === 'score') {
-      await shareImage({ kind, game, level: levelLabel(props.board), points, correct, total: props.total, tierImage: tierImage.value })
-    } else {
-      const [rank, where] =
-        tops.monde && ranks.monde
-          ? [ranks.monde, 'au monde']
-          : tops.pays && ranks.pays
-            ? [ranks.pays, `en ${country.value?.name ?? ''}`]
-            : [autoSaved.value?.rank ?? 1, 'sur mon téléphone']
-      await shareImage({ kind, game, gameId: props.board.game, rank, where, name: autoSaved.value?.name ?? '', points })
-    }
+    await shareImage({ kind: 'score', game: GAMES[props.board.game].title, level: levelLabel(props.board), points, correct, total: props.total, tierImage: tierImage.value })
   } catch {
     // Partage annulé ou impossible : rien à signaler.
   } finally {
@@ -364,7 +353,7 @@ h1 .pts {
   font-size: 18px;
   margin: 4px 0 4px;
 }
-/* Mêmes boutons que dans les réglages d'un jeu : fond clair, coins arrondis, légère ombre. */
+/* Boutons secondaires : les mêmes que « Changer les réglages » et « Autre jeu ». */
 .score-actions {
   display: flex;
   gap: 8px;
@@ -373,18 +362,26 @@ h1 .pts {
 .score-actions button {
   flex: 1;
   min-width: 0;
-  min-height: 48px;
-  padding: 6px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
   border: none;
-  border-radius: 14px;
+  border-radius: 18px;
   background: var(--hw-surface, #fff);
-  color: var(--ion-text-color);
+  color: var(--ion-color-primary);
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1.15;
-  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.06);
+  box-shadow: 0 4px 10px rgba(45, 48, 71, 0.1);
   cursor: pointer;
+}
+.score-actions ion-icon {
+  flex: none;
+  font-size: 20px;
 }
 .score-actions button:disabled {
   opacity: 0.5;

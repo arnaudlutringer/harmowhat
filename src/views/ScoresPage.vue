@@ -57,6 +57,13 @@
 
     <!-- En bas, toujours à portée du pouce : l'accueil et une partie avec ces réglages. -->
     <ion-footer class="ion-no-border">
+      <!-- Le joueur figure dans ce classement : il peut partager sa place. -->
+      <div v-if="myIndex >= 0" class="share-rank">
+        <button type="button" :disabled="sharing" @click="shareRank">
+          <ion-icon :icon="shareSocialOutline" aria-hidden="true" />
+          Partager mon classement
+        </button>
+      </div>
       <div class="actions">
         <button class="home" aria-label="Accueil" @click="home"><ion-icon :icon="homeOutline" /></button>
         <button class="start" @click="replay">
@@ -72,16 +79,17 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonContent, IonFooter, IonIcon, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
-import { homeOutline } from 'ionicons/icons'
+import { homeOutline, shareSocialOutline } from 'ionicons/icons'
 import { GAME_ICONS } from '@/games/icons'
 import GameHero from '@/components/GameHero.vue'
 import RankBadge from '@/components/RankBadge.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
 import { GAMES, getScores, isGameId, levelLabel, parseBoard, playHref, shownLevels } from '@/games/highScores'
 import { cachedBoard, fetchBoard, parseScope, scope, updateCachedBoard, worldVersion, type WorldScore } from '@/games/worldScores'
-import { flag } from '@/player/countries'
+import { countryByCode, flag } from '@/player/countries'
 import { profile } from '@/player/profile'
 import { online } from '@/player/online'
+import { shareImage } from '@/share/shareImage'
 
 interface Row {
   name: string
@@ -151,6 +159,27 @@ async function load() {
   }
 }
 const needConnection = computed(() => scope.value !== 'appareil' && !online.value)
+
+/** Place du joueur dans le classement affiché : le score qu'il vient d'enregistrer, sinon son meilleur. */
+const myIndex = computed(() => {
+  if (needConnection.value || loading.value || failed.value) return -1
+  return highlight.value >= 0 && entries.value[highlight.value] ? highlight.value : entries.value.findIndex((e) => isMine(e))
+})
+
+const sharing = ref(false)
+async function shareRank() {
+  const mine = entries.value[myIndex.value]
+  if (sharing.value || !mine) return
+  sharing.value = true
+  const where = scope.value === 'monde' ? 'au monde' : scope.value === 'pays' ? `en ${countryByCode(profile.value.country)?.name ?? ''}` : 'sur mon téléphone'
+  try {
+    await shareImage({ kind: 'rank', game: info.title, gameId: game, rank: myIndex.value + 1, where, name: mine.name, points: mine.points })
+  } catch {
+    // Partage annulé ou impossible : rien à signaler.
+  } finally {
+    sharing.value = false
+  }
+}
 
 // worldVersion : des scores viennent d'arriver dans la base ; online : la connexion revient (classement à jour en direct).
 watch([board, scope, worldVersion, online], () => void load())
@@ -338,6 +367,36 @@ h2 {
   margin: 28px 0;
   text-align: center;
   color: var(--ion-color-medium);
+}
+.share-rank {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 10px 16px 0;
+  background: var(--ion-background-color);
+}
+.share-rank button {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 18px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-color-primary);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(45, 48, 71, 0.1);
+  cursor: pointer;
+}
+.share-rank button:disabled {
+  opacity: 0.5;
+}
+.share-rank ion-icon {
+  font-size: 20px;
 }
 .actions {
   display: flex;
