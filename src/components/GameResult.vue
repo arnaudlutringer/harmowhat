@@ -311,9 +311,11 @@ function restart() {
   emit('restart')
 }
 
+/** Quitte l'écran de fin : on revient dans l'historique si possible, sans empiler une copie d'un écran déjà ouvert (il ne s'afficherait pas). */
 function leave(path: string) {
   stopAll()
-  router.navigate(path, 'back')
+  if (window.history.state?.back === path) router.back()
+  else router.navigate(path, 'back', 'replace')
 }
 
 onMounted(playElise)
