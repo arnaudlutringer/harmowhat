@@ -57,6 +57,8 @@
         placeholder="10 caractères au plus"
         autocapitalize="words"
         @ion-input="nameError = false"
+        @ion-focus="typingName = true"
+        @ion-blur="typingName = false"
       />
       <p v-if="nameError" class="error">Indique ton nom pour enregistrer ton score.</p>
       <!-- Le pays vient de l'onglet Joueur des paramètres. -->
@@ -96,11 +98,16 @@
       </span>
     </button>
 
-    <ion-button expand="block" @click="restart">Rejouer</ion-button>
-    <ion-button v-if="settingsHref" expand="block" fill="outline" :router-link="settingsHref" router-direction="back">
-      Changer les réglages
-    </ion-button>
-    <ion-button expand="block" fill="outline" router-link="/home" router-direction="back">Autre jeu</ion-button>
+    <!-- Figés en bas de l'écran, comme « C'est parti ! » dans les réglages (masqués pendant la saisie du nom : le clavier les remonterait). -->
+    <div v-show="!typingName" class="result-actions">
+      <div class="result-actions-inner">
+        <button type="button" class="again" @click="restart">Rejouer</button>
+        <div class="others">
+          <button v-if="settingsHref" type="button" @click="leave(settingsHref)">Changer les réglages</button>
+          <button type="button" @click="leave('/home')">Autre jeu</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -179,6 +186,7 @@ const saved = ref(false)
 const record = computed(() => !saved.value && (tops.monde || tops.pays || tops.appareil))
 const playerName = ref(lastPlayerName())
 const nameError = ref(false)
+const typingName = ref(false)
 const saving = ref(false)
 const country = computed(() => countryByCode(profile.value.country))
 
@@ -314,6 +322,11 @@ function restart() {
   emit('restart')
 }
 
+function leave(path: string) {
+  stopAll()
+  router.navigate(path, 'back')
+}
+
 onMounted(playElise)
 onBeforeUnmount(stopAll)
 </script>
@@ -440,6 +453,55 @@ h1 .pts {
 }
 p {
   margin-bottom: 24px;
+}
+/* Les boutons du bas : mêmes styles que « C'est parti ! » et « Un essai » dans les réglages d'un jeu. */
+.result-actions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  background: var(--ion-background-color);
+}
+.result-actions-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 10px 16px calc(12px + var(--ion-safe-area-bottom, 0px));
+}
+.result-actions button {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+.again {
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #7d6cf2, #4b3fd1);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 10px 22px rgba(76, 63, 209, 0.35);
+}
+.others {
+  display: flex;
+  gap: 8px;
+}
+.others button {
+  flex: 1;
+  min-height: 46px;
+  padding: 6px;
+  border-radius: 18px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-color-primary);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+  box-shadow: 0 4px 10px rgba(45, 48, 71, 0.1);
 }
 .record {
   display: flex;

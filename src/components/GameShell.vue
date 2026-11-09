@@ -21,7 +21,7 @@
           <strong v-if="gain" :key="gain.id" class="gain" aria-live="polite">+{{ gain.points }}<span class="pts">pts</span></strong>
         </div>
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content class="ion-padding" :class="{ 'with-result-actions': quiz.finished.value }">
       <game-result
         v-if="quiz.finished.value"
         :results="quiz.results.value"
@@ -239,6 +239,10 @@ useBackButton(20, (processNextHandler) => {
 </script>
 
 <style scoped>
+/* Écran de résultat : de la place sous le contenu pour les boutons figés en bas. */
+ion-content.with-result-actions {
+  --padding-bottom: calc(150px + var(--ion-safe-area-bottom, 0px));
+}
 /* Compte à rebours avant la première question : un grand chiffre qui apparaît à chaque seconde,
    centré sur toute la hauteur de l'écran (moins les marges du contenu). */
 .countdown {
