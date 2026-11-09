@@ -354,6 +354,7 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 3px;
   font-size: 10.5px;
   line-height: 1.12;
 }
