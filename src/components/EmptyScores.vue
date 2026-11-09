@@ -1,6 +1,6 @@
 <template>
   <!-- Classement encore vide : le podium qui attend son premier joueur. Dans la page (et non un fichier image) pour garder les polices et le thème de l'appli. -->
-  <svg class="empty-scores" viewBox="0 0 300 266" role="img" aria-label="Pas encore de score ici. À toi de jouer !">
+  <svg class="empty-scores" viewBox="0 28 300 238" role="img" aria-label="Pas encore de score ici. À toi de jouer !">
     <defs>
       <linearGradient id="empty-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6c94a" /><stop offset="1" stop-color="#e9a514" /></linearGradient>
       <linearGradient id="empty-silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c3ccd8" /><stop offset="1" stop-color="#96a3b4" /></linearGradient>
@@ -16,19 +16,8 @@
 
     <!-- Les places libres, en pointillés. -->
     <circle class="free" cx="87" cy="108" r="15" />
+    <circle class="free" cx="150" cy="70" r="15" />
     <circle class="free" cx="213" cy="124" r="15" />
-
-    <!-- Le logo de l'appli, sur la plus haute marche. -->
-    <g transform="translate(116 22) scale(0.425)">
-      <rect width="160" height="160" rx="36" class="logo" />
-      <g transform="translate(22 32) scale(0.19)" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="34">
-        <path d="M335.72 330.76C381.73 299.5 416 251.34 416 192a160 160 0 0 0-320 0v206.57c0 44.26 35.74 81.43 80 81.43c44.26 0 66.83-25.94 77.29-40 14.77-19.81 41.71-81.56 82.43-109.24" />
-        <path d="M160 304V184c0-48.4 43.2-88 96-88c52.8 0 96 39.6 96 88" />
-        <path d="M160 239c25-18 79.82-15 79.82-15 26 0 41.17 29.42 26 50.6 0 0-36.86 42.4-41.86 61.4" />
-      </g>
-      <ellipse cx="122" cy="50" rx="9" ry="6.5" transform="rotate(-20 122 50)" fill="#ffffff" />
-      <path d="M130 48V18c0 10 12 12 12 24" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
-    </g>
 
     <!-- Le podium : les couleurs de celui des classements. -->
     <path d="M56 186v-46a10 10 0 0 1 10-10h41a10 10 0 0 1 10 10v46z" fill="url(#empty-silver)" />
@@ -66,9 +55,6 @@
   stroke-width: 2;
   stroke-dasharray: 5 5;
   opacity: 0.7;
-}
-.logo {
-  fill: var(--ion-color-primary);
 }
 text {
   text-anchor: middle;
