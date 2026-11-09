@@ -51,7 +51,7 @@
             </li>
           </ol>
         </template>
-        <p v-else class="empty">Pas encore de score ici. À toi de jouer !</p>
+        <empty-scores v-else />
       </div>
     </ion-content>
 
@@ -81,6 +81,7 @@ import { useRoute } from 'vue-router'
 import { IonContent, IonFooter, IonIcon, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
 import { homeOutline, shareSocialOutline } from 'ionicons/icons'
 import { GAME_ICONS } from '@/games/icons'
+import EmptyScores from '@/components/EmptyScores.vue'
 import GameHero from '@/components/GameHero.vue'
 import RankBadge from '@/components/RankBadge.vue'
 import ScopeTabs from '@/components/ScopeTabs.vue'
