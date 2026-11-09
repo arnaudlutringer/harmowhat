@@ -126,9 +126,7 @@ export const TROPHIES: Trophy[] = [
     family: 'goat',
     icon: '🐐',
     title: GOAT_TITLES[game],
-    condition: SIGHT_GAMES.includes(game)
-      ? `${GAME_NAMES[game]} : marque ${SIGHT_GOAT_POINTS.toLocaleString('fr-FR')} points en une partie`
-      : `${GAME_NAMES[game]} : donne chaque réponse d'un questionnaire d'au moins ${MIN_REWARD_QUESTIONS} questions à ${GOAT_POINTS.toLocaleString('fr-FR')} points`,
+    condition: `${GAME_NAMES[game]} : une fois la médaille d'or gagnée, ${goatGoal(game)}`,
     game,
   })),
 
@@ -335,6 +333,13 @@ export interface GameContext {
   challengeDay?: number
 }
 
+/** Ce qu'il faut réussir pour gagner le diamant d'un jeu, à placer dans une phrase. */
+export function goatGoal(game: GameId): string {
+  return SIGHT_GAMES.includes(game)
+    ? `marque ${SIGHT_GOAT_POINTS.toLocaleString('fr-FR')} points en une partie`
+    : `donne chaque réponse d'un questionnaire d'au moins ${MIN_REWARD_QUESTIONS} questions à ${GOAT_POINTS.toLocaleString('fr-FR')} points`
+}
+
 /** Fin d'un questionnaire : met à jour les compteurs et donne les trophées mérités. */
 export function evaluateGame(ctx: GameContext): void {
   const state = load()
@@ -395,7 +400,6 @@ export function evaluateGame(ctx: GameContext): void {
   for (const [id, ok] of rules) if (ok) award(state, id)
   // Médaille, GOAT et niveau Impossible : pas sur un questionnaire trop court (les jeux d'un seul tenant n'ont pas de questions).
   const longEnough = sight || board.game === 'garde-tempo' || board.questions >= MIN_REWARD_QUESTIONS
-  if (longEnough && (sight ? runPoints >= SIGHT_GOAT_POINTS : atLeast(GOAT_POINTS)) && TIER_ORDER.includes(level)) award(state, `goat-${board.game}`, level)
   // Médaille du niveau joué : un questionnaire complet sans faute (« intermédiaire » compte comme normal).
   const medalTier = (level as string) === 'intermediaire' ? 'normal' : level
   const won = s.levelMedals[board.game] ?? []
@@ -405,6 +409,9 @@ export function evaluateGame(ctx: GameContext): void {
     s.levelMedals = { ...s.levelMedals, [board.game]: [...won, medalTier] }
     state.pending.push({ id: `medal-${board.game}`, tier: medalTier })
   }
+  // Le diamant du GOAT s'ouvre avec la médaille d'or du jeu (gagnée avant, ou pendant cette partie).
+  const goldWon = s.levelMedals[board.game]?.includes('expert')
+  if (longEnough && goldWon && (sight ? runPoints >= SIGHT_GOAT_POINTS : atLeast(GOAT_POINTS)) && TIER_ORDER.includes(level)) award(state, `goat-${board.game}`, level)
   // Exploit en expert (questionnaire complet, sans faute, plus de 9 000 points à chaque question) : le niveau Impossible se débloque.
   const exploit = level === 'expert' && results.length >= board.questions && results.every((r) => r.correct && r.points > IMPOSSIBLE_POINTS)
   if (longEnough && exploit && !NO_IMPOSSIBLE.includes(board.game) && !s.impossible.includes(board.game)) {
@@ -541,6 +548,9 @@ export const LEVEL_MEDALS: Record<Tier, { medal: string; name: string }> = {
 
 /** La médaille de ce niveau est-elle gagnée sur ce jeu ? */
 export const levelMedalWon = (game: GameId, tier: Tier) => !!levelMedals.value[game]?.includes(tier)
+
+/** Le diamant se montre une fois la médaille d'or gagnée (ou s'il a été gagné avant cette règle). */
+export const diamondShown = (game: GameId) => levelMedalWon(game, 'expert') || !!earnedTrophies.value[`goat-${game}`]
 
 /** Annonce d'une médaille de niveau gagnée, dans la popin des trophées. */
 function medalNotice(id: string, tier?: Tier): Trophy | null {

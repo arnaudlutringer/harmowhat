@@ -14,6 +14,15 @@
       Partager mon score
     </ion-button>
 
+    <!-- Médaille d'or gagnée à l'instant : le diamant de ce jeu devient accessible. -->
+    <div v-if="diamondUnlocked" class="diamond" role="status">
+      <span class="gem" aria-hidden="true">💎</span>
+      <span>
+        <strong>Diamant débloqué !</strong>
+        <small>Pour le gagner, {{ goatGoal(board.game) }}.</small>
+      </span>
+    </div>
+
     <!-- Le score entre dans au moins un classement (monde, pays, téléphone) : on propose de l'enregistrer dans les trois. -->
     <!-- Sauvegarde automatique (Mon compte) : le score est déjà enregistré ; on montre sous quel nom, et le classement. -->
     <!-- Partie d'un match : publier son défi, ou le résultat contre celui qui l'a lancé. -->
@@ -113,7 +122,7 @@ import { cachedBoard, fetchBoard, submitScore, worldEnabled } from '@/games/worl
 import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
 import { online } from '@/player/online'
-import { evaluateGame, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
+import { earnedTrophies, evaluateGame, goatGoal, levelMedalWon, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
 import TrophyUnlocked from './TrophyUnlocked.vue'
 import MatchResult from './MatchResult.vue'
 import { shareImage } from '@/share/shareImage'
@@ -142,7 +151,10 @@ const summary = computed(() => summarize(props.results))
 
 // Trophées : la partie est comptée une fois, à l'arrivée sur cet écran ; les nouveaux trophées s'annoncent un par un.
 const unlocked = ref<{ trophy: Trophy; tier?: Tier }[]>([])
+const diamondUnlocked = ref(false)
 function countTrophies() {
+  const game = props.board.game
+  const hadGold = levelMedalWon(game, 'expert')
   evaluateGame({
     board: props.board,
     results: props.results,
@@ -152,6 +164,8 @@ function countTrophies() {
     challengeDay: isTodaysChallenge(props.board) ? dayNumber() : undefined,
   })
   unlocked.value = takePendingTrophies()
+  // Si le diamant est gagné dans la même partie que l'or, il n'y a plus rien à débloquer.
+  diamondUnlocked.value = !hadGold && levelMedalWon(game, 'expert') && !earnedTrophies.value[`goat-${game}`]
 }
 onMounted(countTrophies)
 
@@ -340,6 +354,49 @@ h1 .pts {
 }
 .share {
   margin: 0 0 12px;
+}
+/* Le diamant débloqué : un encart sombre, le diamant qui apparaît en grossissant. */
+.diamond {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: var(--hw-daily, #2d3047);
+  color: #fff;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(45, 48, 71, 0.25);
+}
+.diamond .gem {
+  flex: none;
+  font-size: 40px;
+  line-height: 1;
+  animation: diamond-pop 0.7s ease-out both;
+}
+.diamond strong {
+  display: block;
+  font-size: 18px;
+  color: #f2c94c;
+}
+.diamond small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+@keyframes diamond-pop {
+  0% {
+    transform: scale(0.2) rotate(-25deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.25) rotate(6deg);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+  }
 }
 .notes {
   list-style: none;

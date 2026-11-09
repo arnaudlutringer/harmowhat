@@ -11,6 +11,7 @@ globalThis.localStorage = {
   length: 0,
 } as Storage
 
+const { GAMES } = await import('./highScores')
 const { evaluateGame, takePendingTrophies, trophyEvent, TROPHIES, GOAT_POINTS, earnedTrophies, levelMedals } = await import('./trophies')
 const earned = (id: string) => earnedTrophies.value[id]
 
@@ -95,7 +96,23 @@ describe('Trophées', () => {
     expect(ids()).toContain('sans-filet')
   })
 
+  it("ne donne le diamant qu'une fois la médaille d'or gagnée", () => {
+    const expert = { game: 'modalite' as const, level: 'expert', questions: 10 }
+    game({ board: { ...expert, level: 'normal' }, results: results(Array(10).fill(GOAT_POINTS)) })
+    expect(earned('goat-modalite')).toBeUndefined()
+    game({ board: expert, results: results(Array(10).fill(8000)) })
+    expect(earned('goat-modalite')).toBeUndefined()
+    game({ board: { ...expert, level: 'normal' }, results: results(Array(10).fill(GOAT_POINTS)) })
+    expect(earned('goat-modalite')?.tier).toBe('normal')
+  })
+
+  it("propose une médaille d'or sur chaque jeu : le diamant reste accessible partout", () => {
+    for (const info of Object.values(GAMES)) expect(info.levels.some((l) => l.id.split('-')[0] === 'expert')).toBe(true)
+  })
+
   it('paliers de rapidité, et GOAT au niveau joué (puis au niveau supérieur)', () => {
+    game({ board: { game: 'grave-ou-aigu', level: 'expert', questions: 10 }, results: results(Array(10).fill(5000)) })
+    ids()
     game({ results: results(Array(10).fill(GOAT_POINTS)) })
     expect(ids()).toEqual(expect.arrayContaining(['rapide', 'tres-rapide', 'fulgurant', 'reflexe', 'goat-grave-ou-aigu']))
     expect(earnedTrophies.value['goat-grave-ou-aigu'].tier).toBe('normal')
@@ -132,6 +149,8 @@ describe('Trophées', () => {
     game({ board, results: [{ correct: false, points: 12000 }] })
     expect(levelMedalWon('lis-dis', 'normal')).toBe(true)
     expect(ids()).not.toContain('goat-lis-dis')
+    game({ board: { ...board, level: 'expert' }, results: [{ correct: false, points: 12000 }] })
+    ids()
     game({ board, results: [{ correct: false, points: 31000 }] })
     expect(ids()).toContain('goat-lis-dis')
     game({ board, results: [{ correct: false, points: 0 }] })

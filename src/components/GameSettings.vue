@@ -8,7 +8,7 @@
         <div class="stats">
           <button type="button" aria-label="Meilleur score sur ce téléphone" @click="explainRecord">🏆 <b>{{ record ? record.toLocaleString('fr-FR') : '—' }}</b> pts.</button>
           <span>🎮 <b>{{ plays }}</b> partie{{ plays > 1 ? 's' : '' }}</span>
-          <span :class="{ off: !goat }">{{ goat ? `💎 GOAT (${TIER_LABELS[goat].label.toLowerCase()})` : '💎 GOAT à gagner' }}</span>
+          <span v-if="diamondShown(game)" :class="{ off: !goat }">{{ goat ? `💎 GOAT (${TIER_LABELS[goat].label.toLowerCase()})` : '💎 GOAT à gagner' }}</span>
         </div>
       </game-hero>
 
@@ -103,7 +103,7 @@ import { featureEnabled } from '@/config/features'
 import { matchesAvailable } from '@/games/matches'
 import { newSeed } from '@/games/seed'
 import { confirmSoundOn } from '@/audio/volume'
-import { earnedTrophies, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
+import { diamondShown, earnedTrophies, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
 
 /**
  * Écran de réglages d'un jeu : un bandeau à ses couleurs, trois onglets (Jouer, Règles, Records) et,

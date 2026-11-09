@@ -58,7 +58,7 @@ import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
 import { featureEnabled, gameEnabled } from '@/config/features'
-import { challengeDays, challengeScores, earnedTrophies, gamesPlayed, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
+import { challengeDays, challengeScores, diamondShown, earnedTrophies, gamesPlayed, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
 // Le défi du jour, figé pour la journée (son niveau suit les progrès du joueur d'un jour à l'autre).
@@ -78,7 +78,8 @@ function medalsFor(path: string) {
   const levels = TIERS.filter((t) => t !== 'impossible' || impossibleUnlocked.value.includes(id))
   return [
     ...levels.map((t) => ({ medal: LEVEL_MEDALS[t].medal, won: levelMedalWon(id, t) })),
-    { medal: '💎', won: !!earnedTrophies.value[`goat-${id}`] },
+    // Le diamant n'apparaît qu'une fois la médaille d'or gagnée.
+    ...(diamondShown(id) ? [{ medal: '💎', won: !!earnedTrophies.value[`goat-${id}`] }] : []),
   ]
 }
 // L'écran reste en mémoire : le nombre de parties se relit à chaque retour sur l'accueil.
