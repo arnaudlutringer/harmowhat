@@ -34,7 +34,7 @@
             <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
             <span class="name">
               <strong>{{ game.title }}</strong>
-              <small v-if="!category.tests">{{ playsLabel(game.path) }}</small>
+              <small v-if="!category.tests">🎮 <b>{{ playsOf(game.path) }}</b> partie{{ playsOf(game.path) > 1 ? 's' : '' }}</small>
             </span>
             <!-- Médailles du jeu, en colonne : en couleur une fois gagnées, grises sinon. -->
             <span v-if="!category.tests" class="medals" :aria-label="medalLabel(game.path)">
@@ -84,10 +84,9 @@ function medalsFor(path: string) {
 // L'écran reste en mémoire : le nombre de parties se relit à chaque retour sur l'accueil.
 const refresh = ref(0)
 onIonViewWillEnter(() => refresh.value++)
-function playsLabel(path: string) {
+function playsOf(path: string) {
   void refresh.value
-  const n = gamesPlayed(idOf(path))
-  return `${n} partie${n > 1 ? 's' : ''}`
+  return gamesPlayed(idOf(path))
 }
 function medalLabel(path: string) {
   const won = medalsFor(path).filter((m) => m.won).map((m) => m.medal)
@@ -300,7 +299,7 @@ h1 {
   gap: 8px;
   min-height: 50px;
   box-sizing: border-box;
-  padding: 4px 6px 4px 6px;
+  padding: 6px;
   border-radius: 14px;
   color: var(--hw-card-ink);
   text-decoration: none;
@@ -327,17 +326,26 @@ h1 {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
 }
 .name strong {
   font-size: 14.5px;
   font-weight: 600;
   line-height: 1.12;
 }
+/* Le nombre de parties : la même pastille que dans les réglages du jeu. */
 .name small {
-  font-size: 11.5px;
-  line-height: 1.15;
-  opacity: 0.75;
+  align-self: flex-start;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-text-color);
+  font-size: 11px;
+  line-height: 1.2;
+  box-shadow: 0 1px 4px rgba(45, 48, 71, 0.08);
+}
+.name small b {
+  font-size: 12px;
 }
 /* Les médailles, l'une sous l'autre sur le côté droit. */
 .medals {
