@@ -9,14 +9,14 @@
         <!-- Par famille : les trophées gagnés en couleur (avec leur date), les autres grisés avec leur condition. -->
         <section v-for="(label, family) in FAMILIES" :key="family">
           <h2>{{ label }}</h2>
-          <p v-if="family === 'goat'" class="hint">La médaille du GOAT est le diamant 💎 ; à côté, le niveau le plus haut où tu l'as gagné.</p>
+          <p v-if="family === 'goat'" class="hint">La médaille du GOAT est le diamant (le losange bleu) ; à côté, le niveau le plus haut où tu l'as gagné.</p>
           <div class="grid">
             <div v-for="t in byFamily(family)" :key="t.id" class="trophy" :class="{ earned: earnedTrophies[t.id] }">
               <span class="icon" aria-hidden="true">{{ t.icon }}</span>
               <span class="text">
                 <strong>
                   {{ t.title }}
-                  <span v-if="earnedTrophies[t.id]?.tier" class="goat-tier">💎 {{ TIER_LABELS[earnedTrophies[t.id].tier!].label }}</span>
+                  <span v-if="earnedTrophies[t.id]?.tier" class="goat-tier"><medal-dot kind="goat" :size="11" label="" aria-hidden="true" /> {{ TIER_LABELS[earnedTrophies[t.id].tier!].label }}</span>
                 </strong>
                 <small>{{ t.condition }}</small>
                 <small v-if="earnedTrophies[t.id]" class="date">Gagné le {{ formatDate(earnedTrophies[t.id].date) }}</small>
@@ -45,6 +45,7 @@ import { computed } from 'vue'
 import { IonButton, IonContent, IonIcon, IonPage } from '@ionic/vue'
 import { shareSocialOutline } from 'ionicons/icons'
 import PageNav from '@/components/PageNav.vue'
+import MedalDot from '@/components/MedalDot.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import { earnedTrophies, FAMILIES, TIER_LABELS, TROPHIES, type Trophy, type TrophyFamily } from '@/games/trophies'
 import { shareImage } from '@/share/shareImage'

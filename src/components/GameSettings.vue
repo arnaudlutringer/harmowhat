@@ -8,7 +8,7 @@
         <div class="stats">
           <button type="button" aria-label="Meilleur score sur ce téléphone" @click="explainRecord">🏆 <b>{{ record ? record.toLocaleString('fr-FR') : '—' }}</b> pts.</button>
           <span>🎮 <b>{{ plays }}</b> partie{{ plays > 1 ? 's' : '' }}</span>
-          <span v-if="diamondShown(game)" :class="{ off: !goat }">{{ goat ? `💎 GOAT (${TIER_LABELS[goat].label.toLowerCase()})` : '💎 GOAT à gagner' }}</span>
+          <span v-if="diamondShown(game)" :class="{ off: !goat }"><medal-dot kind="goat" :won="!!goat" :size="12" label="" aria-hidden="true" /> {{ goat ? `GOAT (${TIER_LABELS[goat].label.toLowerCase()})` : 'GOAT à gagner' }}</span>
         </div>
       </game-hero>
 
@@ -42,7 +42,7 @@
               <small>{{ cfg.description }}</small>
               <slot name="level-extra" :level="String(key)" />
               <!-- Médaille du niveau, sous sa définition : en couleur une fois gagnée (sans faute à ce niveau), grise sinon. -->
-              <span class="medal" :class="{ off: !medalWon(String(key)) }" :aria-label="medalWon(String(key)) ? 'Médaille gagnée' : 'Médaille à gagner'">{{ medalOf(String(key), i) }}</span>
+              <medal-dot class="medal" :kind="tierOf(String(key), i)" :won="medalWon(String(key))" :size="20" />
             </button>
           </div>
 
@@ -98,12 +98,13 @@ import { bestScore, getScores, hasLocalScores, levelLabel, scoresHref, type Boar
 import { INTROS, SUMMARIES } from '@/games/intros'
 import GameHero from './GameHero.vue'
 import PillTabs from './PillTabs.vue'
+import MedalDot from '@/components/MedalDot.vue'
 import RankBadge from './RankBadge.vue'
 import { featureEnabled } from '@/config/features'
 import { matchesAvailable } from '@/games/matches'
 import { newSeed } from '@/games/seed'
 import { confirmSoundOn } from '@/audio/volume'
-import { diamondShown, earnedTrophies, gamesPlayed, hasPlayed, LEVEL_MEDALS, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
+import { diamondShown, earnedTrophies, gamesPlayed, hasPlayed, levelMedalWon, TIER_LABELS, visibleLevels, type Tier } from '@/games/trophies'
 
 /**
  * Écran de réglages d'un jeu : un bandeau à ses couleurs, trois onglets (Jouer, Règles, Records) et,
@@ -170,7 +171,6 @@ watch(
 const TIERS: Tier[] = ['debutant', 'normal', 'expert', 'impossible']
 const tierOf = (key: string, index: number): Tier => (TIERS.includes(key as Tier) ? (key as Tier) : TIERS[Math.min(index, 2)])
 const keys = computed(() => Object.keys(shownLevels.value))
-const medalOf = (key: string, index: number) => LEVEL_MEDALS[tierOf(key, index)].medal
 const medalWon = (key: string) => levelMedalWon(props.game, tierOf(key, keys.value.indexOf(key)))
 
 // Bandeau : recalculé à chaque retour sur l'écran (après une partie).
@@ -314,12 +314,6 @@ h2 {
 }
 .level .medal {
   margin-top: auto;
-  padding-top: 6px;
-  font-size: 22px;
-}
-.level .medal.off {
-  filter: grayscale(1);
-  opacity: 0.3;
 }
 .level.on {
   outline: 3px solid var(--ion-color-primary);

@@ -66,11 +66,11 @@
             <!-- 3. Les médailles : une par niveau (sans faute), et le diamant du GOAT. -->
             <template v-else-if="step === 3">
               <div class="medals" aria-hidden="true">
-                <span v-for="(m, i) in MEDALS" :key="m.medal" class="medal" :style="{ animationDelay: `${i * 0.15}s` }">{{ m.medal }}</span>
+                <span v-for="(m, i) in MEDALS" :key="m.kind" class="medal" :style="{ animationDelay: `${i * 0.15}s` }"><medal-dot :kind="m.kind" :size="38" label="" /></span>
               </div>
               <p class="lead">Dans chaque jeu, gagne une médaille par niveau.</p>
               <ul class="medal-list">
-                <li v-for="m in MEDALS" :key="m.medal"><span>{{ m.medal }}</span> {{ m.text }}</li>
+                <li v-for="m in MEDALS" :key="m.kind"><medal-dot :kind="m.kind" :size="20" label="" aria-hidden="true" /> {{ m.text }}</li>
               </ul>
               <ion-button expand="block" size="large" @click="next">Suivant</ion-button>
             </template>
@@ -162,6 +162,7 @@ import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillLeave, useIonRout
 import { chevronBack, play, stop } from 'ionicons/icons'
 import { playArpeggio, playTuningFork, stopAll } from '@/audio/engine'
 import ChoiceRow from '@/components/ChoiceRow.vue'
+import MedalDot, { type MedalKind } from '@/components/MedalDot.vue'
 import PlayerSettings from '@/components/PlayerSettings.vue'
 import { GAME_ICONS } from '@/games/icons'
 import { INSTRUMENTS, selectedInstrument, setInstrument, type InstrumentId } from '@/audio/instruments'
@@ -173,11 +174,11 @@ import { trophyEvent } from '@/games/trophies'
 const STEPS = 9
 
 /** Écran des médailles : bronze, argent, or pour un sans faute à chaque niveau, le diamant pour le GOAT. */
-const MEDALS = [
-  { medal: '🥉', text: 'Un questionnaire sans faute en débutant' },
-  { medal: '🥈', text: 'Sans faute en normal' },
-  { medal: '🥇', text: 'Sans faute en expert' },
-  { medal: '💎', text: 'Le GOAT : chaque réponse à 10 000 points' },
+const MEDALS: { kind: MedalKind; text: string }[] = [
+  { kind: 'debutant', text: 'Un questionnaire sans faute en débutant' },
+  { kind: 'normal', text: 'Sans faute en normal' },
+  { kind: 'expert', text: 'Sans faute en expert' },
+  { kind: 'goat', text: 'Le GOAT, après l’or : chaque réponse à 10 000 points' },
 ]
 
 /** Écran des mini-jeux : un jeu par catégorie, aux couleurs de l'accueil. */

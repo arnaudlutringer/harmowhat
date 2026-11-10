@@ -23,7 +23,7 @@
 
     <!-- Médaille d'or gagnée à l'instant : le diamant de ce jeu devient accessible. -->
     <div v-if="diamondUnlocked" class="diamond" role="status">
-      <span class="gem" aria-hidden="true">💎</span>
+      <span class="gem" aria-hidden="true"><medal-dot kind="goat" :size="34" label="" /></span>
       <span>
         <strong>Diamant débloqué !</strong>
         <small>Pour le gagner, {{ goatGoal(board.game) }}.</small>
@@ -133,6 +133,7 @@ import { profile } from '@/player/profile'
 import { online } from '@/player/online'
 import { earnedTrophies, evaluateGame, goatGoal, levelMedalWon, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
 import TrophyUnlocked from './TrophyUnlocked.vue'
+import MedalDot from './MedalDot.vue'
 import MatchResult from './MatchResult.vue'
 import { shareImage } from '@/share/shareImage'
 import { dayNumber, isTodaysChallenge } from '@/games/dailyChallenge'

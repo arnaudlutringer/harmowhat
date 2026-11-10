@@ -31,14 +31,16 @@
         <h2>{{ category.title }}</h2>
         <div class="games">
           <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: category.color }" :title="SUMMARIES[idOf(game.path)]">
-            <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
-            <span class="name">
+            <span class="head">
+              <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
               <strong>{{ game.title }}</strong>
-              <small v-if="!category.tests">🎮 <b>{{ playsOf(game.path) }}</b> partie{{ playsOf(game.path) > 1 ? 's' : '' }}</small>
             </span>
-            <!-- Médailles du jeu, en colonne : en couleur une fois gagnées, grises sinon. -->
-            <span v-if="!category.tests" class="medals" :class="{ many: medalsFor(game.path).length > 4 }" :aria-label="medalLabel(game.path)">
-              <span v-for="m in medalsFor(game.path)" :key="m.medal" :class="{ off: !m.won }">{{ m.medal }}</span>
+            <!-- En bas de la tuile, un bandeau blanc : les parties à gauche, les médailles en points de couleur à droite. -->
+            <span v-if="!category.tests" class="strip">
+              <small>🎮 <b>{{ playsOf(game.path) }}</b> partie{{ playsOf(game.path) > 1 ? 's' : '' }}</small>
+              <span class="dots" role="img" :aria-label="medalLabel(game.path)">
+                <medal-dot v-for="m in medalsFor(game.path)" :key="m.kind" :kind="m.kind" :won="m.won" :size="11" label="" aria-hidden="true" />
+              </span>
             </span>
           </router-link>
         </div>
@@ -53,6 +55,7 @@ import { computed, ref } from 'vue'
 import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
 import { informationCircleOutline } from 'ionicons/icons'
 import BottomNav from '@/components/BottomNav.vue'
+import MedalDot, { type MedalKind } from '@/components/MedalDot.vue'
 import { GAME_ICONS } from '@/games/icons'
 import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
@@ -77,9 +80,9 @@ function medalsFor(path: string) {
   const id = idOf(path)
   const levels = TIERS.filter((t) => t !== 'impossible' || impossibleUnlocked.value.includes(id))
   return [
-    ...levels.map((t) => ({ medal: LEVEL_MEDALS[t].medal, won: levelMedalWon(id, t) })),
+    ...levels.map((t) => ({ kind: t as MedalKind, name: LEVEL_MEDALS[t].name, won: levelMedalWon(id, t) })),
     // Le diamant n'apparaît qu'une fois la médaille d'or gagnée.
-    ...(diamondShown(id) ? [{ medal: '💎', won: !!earnedTrophies.value[`goat-${id}`] }] : []),
+    ...(diamondShown(id) ? [{ kind: 'goat' as MedalKind, name: 'Diamant', won: !!earnedTrophies.value[`goat-${id}`] }] : []),
   ]
 }
 // L'écran reste en mémoire : le nombre de parties se relit à chaque retour sur l'accueil.
@@ -90,8 +93,8 @@ function playsOf(path: string) {
   return gamesPlayed(idOf(path))
 }
 function medalLabel(path: string) {
-  const won = medalsFor(path).filter((m) => m.won).map((m) => m.medal)
-  return won.length ? `Médailles gagnées : ${won.join(' ')}` : 'Pas encore de médaille'
+  const won = medalsFor(path).filter((m) => m.won).map((m) => m.name.toLowerCase())
+  return won.length ? `Gagné : ${won.join(', ')}` : 'Pas encore de médaille'
 }
 
 const earGames = [
@@ -292,15 +295,14 @@ h1 {
   grid-template-columns: 1fr 1fr;
   gap: 7px;
 }
-/* Un jeu : l'icône à gauche, son nom bien lisible à droite, sur une seule tuile basse. */
+/* Un jeu : l'icône et son nom en haut, le bandeau blanc des parties et des médailles en bas. */
 .card {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  /* La même hauteur pour toutes : de quoi loger un nom sur deux lignes, sa pastille et les médailles. */
+  flex-direction: column;
+  overflow: hidden;
+  /* La même hauteur pour toutes : de quoi loger un nom sur deux lignes et le bandeau. */
   min-height: 72px;
   box-sizing: border-box;
-  padding: 6px;
   border-radius: 14px;
   color: #fff;
   text-decoration: none;
@@ -322,50 +324,40 @@ h1 {
   font-size: 26px;
   color: var(--hw-card-ink);
 }
-.name {
+.head {
   flex: 1;
-  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
 }
-.name strong {
+.head strong {
+  min-width: 0;
   font-size: 14.5px;
   font-weight: 600;
   line-height: 1.12;
 }
-/* Le nombre de parties : la même pastille que dans les réglages du jeu. */
-.name small {
-  align-self: flex-start;
-  padding: 2px 7px;
-  border-radius: 10px;
+/* Le bandeau du bas : les parties à gauche, les médailles à droite, sur fond blanc pour que toutes les couleurs se voient. */
+.strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 8px;
   background: var(--hw-surface, #fff);
   color: var(--ion-text-color);
+}
+.strip small {
   font-size: 11px;
   line-height: 1.2;
-  box-shadow: 0 1px 4px rgba(45, 48, 71, 0.08);
 }
-.name small b {
+.strip small b {
   font-size: 12px;
 }
-/* Les médailles, l'une sous l'autre sur le côté droit. */
-.medals {
-  flex: none;
+.dots {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 3px;
-  font-size: 10.5px;
-  line-height: 1.12;
-}
-/* Cinq médailles (couronne et diamant) : un peu plus serrées, pour que la tuile garde sa hauteur. */
-.medals.many {
-  gap: 1px;
-  font-size: 9.5px;
-}
-.medals .off {
-  filter: grayscale(1);
-  opacity: 0.55;
+  gap: 4px;
 }
 /* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
 /* Infos en haut à gauche, Paramètres en haut à droite, logo et titre centrés entre les deux. */

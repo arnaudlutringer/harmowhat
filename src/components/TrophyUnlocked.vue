@@ -4,9 +4,9 @@
   <div v-if="current" class="veil" :class="{ leaving }" aria-live="assertive">
     <div :key="index" ref="popin" class="popin" :class="{ leaving }" :style="flight">
       <span class="label">Trophée débloqué&nbsp;!</span>
-      <span class="icon" aria-hidden="true">{{ current.trophy.icon }}</span>
+      <span class="icon" aria-hidden="true"><medal-dot v-if="medalKind" :kind="medalKind" :size="52" label="" /><template v-else>{{ current.trophy.icon }}</template></span>
       <strong>{{ current.trophy.title }}</strong>
-      <span v-if="current.tier" class="tier">{{ TIER_LABELS[current.tier].medal }} {{ TIER_LABELS[current.tier].label }}</span>
+      <span v-if="current.tier" class="tier"><medal-dot kind="goat" :size="13" label="" aria-hidden="true" /> {{ TIER_LABELS[current.tier].label }}</span>
       <small>{{ current.trophy.condition }}</small>
     </div>
   </div>
@@ -15,6 +15,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { TIER_LABELS, type Tier, type Trophy } from '@/games/trophies'
+import MedalDot, { type MedalKind } from './MedalDot.vue'
 
 /** Trophées à annoncer, un par un ; la liste peut s'allonger pendant l'annonce. */
 const props = defineProps<{ queue: { trophy: Trophy; tier?: Tier }[] }>()
@@ -29,6 +30,9 @@ const running = ref(false)
 const popin = ref<HTMLElement>()
 const flight = ref<Record<string, string>>({})
 const current = computed(() => (running.value ? (props.queue[index.value] ?? null) : null))
+/** Médaille de niveau gagnée : son point de couleur à la place de l'emoji. */
+const MEDAL_KINDS: Record<string, MedalKind> = { '🥉': 'debutant', '🥈': 'normal', '🥇': 'expert', '👑': 'impossible' }
+const medalKind = computed(() => (current.value?.trophy.id.startsWith('medal-') ? MEDAL_KINDS[current.value.trophy.icon] : undefined))
 let timers: ReturnType<typeof setTimeout>[] = []
 
 /** Décalage du centre de la popin jusqu'au bouton « Mes trophées » visible (sinon le coin haut droit). */
