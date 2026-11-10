@@ -1,5 +1,5 @@
 <template>
-  <!-- Une médaille en point de couleur : bronze, argent, or, la couronne en violet, et le diamant du GOAT en losange bleu. -->
+  <!-- Une médaille en point de couleur : bronze, argent, or, la couronne en violet, et le diamant du GOAT en diamant bleu. -->
   <span class="medal-dot" :class="[kind, { off: !won }]" :style="{ width: `${size}px`, height: `${size}px` }" role="img" :aria-label="label ?? `${NAMES[kind]} ${won ? 'gagnée' : 'à gagner'}`" />
 </template>
 
@@ -36,11 +36,11 @@ const NAMES: Record<MedalKind, string> = {
 .impossible {
   background: #8e5cf0;
 }
-/* Le diamant : un losange (un carré tourné), un peu réduit pour garder la même surface qu'un point. */
+/* Le diamant : une pierre taillée bleue (table plate en haut, pointe en bas), avec une facette plus claire. */
 .goat {
-  background: #4fb8e8;
-  border-radius: 2px;
-  transform: rotate(45deg) scale(0.78);
+  border-radius: 0;
+  background: linear-gradient(115deg, #9fdcf7 0 38%, #4fb8e8 38% 70%, #2f8fc4 70%);
+  clip-path: polygon(22% 8%, 78% 8%, 100% 38%, 50% 100%, 0 38%);
 }
 /* À gagner : un point gris, visible sur fond clair comme sur fond sombre. */
 .off {
