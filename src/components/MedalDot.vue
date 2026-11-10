@@ -1,6 +1,21 @@
 <template>
-  <!-- Une médaille en point de couleur : bronze, argent, or, la couronne en violet, et le diamant du GOAT en diamant bleu. -->
-  <span class="medal-dot" :class="[kind, { off: !won }]" :style="{ width: `${size}px`, height: `${size}px` }" role="img" :aria-label="label ?? `${NAMES[kind]} ${won ? 'gagnée' : 'à gagner'}`" />
+  <!-- Une médaille en point de couleur : bronze, argent, or, la couronne en violet, et le diamant du GOAT en diamant bleu.
+       À gagner : le même contour en pointillés que les places libres d'un classement vide. -->
+  <svg
+    class="medal-dot"
+    :class="[kind, { off: !won }]"
+    :width="size"
+    :height="size"
+    viewBox="0 0 20 20"
+    role="img"
+    :aria-label="label ?? `${NAMES[kind]} ${won ? 'gagnée' : 'à gagner'}`"
+  >
+    <template v-if="kind === 'goat'">
+      <path class="shape" d="M5 2.5h10l4 5.5-9 10-9-10z" />
+      <path v-if="won" class="facet" d="M5 2.5h5l-2.5 5.5h-6.5z" />
+    </template>
+    <circle v-else class="shape" cx="10" cy="10" r="8.5" />
+  </svg>
 </template>
 
 <script setup lang="ts">
@@ -22,28 +37,33 @@ const NAMES: Record<MedalKind, string> = {
   display: inline-block;
   flex: none;
   vertical-align: middle;
-  border-radius: 50%;
+  overflow: visible;
 }
-.debutant {
-  background: #cd7f32;
+.debutant .shape {
+  fill: #cd7f32;
 }
-.normal {
-  background: #a3adbb;
+.normal .shape {
+  fill: #a3adbb;
 }
-.expert {
-  background: #f2c230;
+.expert .shape {
+  fill: #f2c230;
 }
-.impossible {
-  background: #8e5cf0;
+.impossible .shape {
+  fill: #8e5cf0;
 }
-/* Le diamant : une pierre taillée bleue (table plate en haut, pointe en bas), avec une facette plus claire. */
-.goat {
-  border-radius: 0;
-  background: linear-gradient(115deg, #9fdcf7 0 38%, #4fb8e8 38% 70%, #2f8fc4 70%);
-  clip-path: polygon(22% 8%, 78% 8%, 100% 38%, 50% 100%, 0 38%);
+.goat .shape {
+  fill: #4fb8e8;
 }
-/* À gagner : un point gris, visible sur fond clair comme sur fond sombre. */
-.off {
-  background: rgba(140, 135, 125, 0.35);
+/* Une facette plus claire : le diamant se reconnaît d'un coup d'œil. */
+.goat .facet {
+  fill: #a9e1f8;
+}
+/* À gagner : un rond (ou un diamant) clair en pointillés, comme les places libres d'un classement vide. */
+.off .shape {
+  fill: none;
+  stroke: var(--ion-color-medium);
+  stroke-width: 1.8;
+  stroke-dasharray: 3 2.4;
+  opacity: 0.7;
 }
 </style>
