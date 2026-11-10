@@ -11,7 +11,7 @@
     <!-- La gamme écrite tient lieu de bouton de lecture : la toucher (re)joue la gamme. En débutant et normal, elle est
          là dès la question ; en expert (à l'oreille), le bouton de lecture reste jusqu'à la réponse. -->
     <template v-if="cfg.showStaff || revealed" #player>
-      <button class="sheet replay" :class="{ sounding: quiz.playing.value }" :aria-label="`Écouter la gamme : ${staffLabel}`" @click="quiz.listen()">
+      <button class="sheet replay" :class="{ sounding: quiz.playing.value, ok: quiz.feedback.value?.correct === true, ko: quiz.feedback.value?.correct === false }" :aria-label="`Écouter la gamme : ${staffLabel}`" @click="quiz.listen()">
         <scale-staff :notes="q.notes" :steps="cfg.showSteps || revealed" :label="staffLabel" />
       </button>
       <p class="hint">{{ hint }}</p>
@@ -109,7 +109,9 @@ function colorFor(id: ModeId) {
   padding: 4px;
   background: #fffdf3;
   color: #222;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  /* Contour : violet pendant la question, vert ou rouge une fois la réponse donnée (plus épais pendant l'écoute). */
+  --frame: var(--ion-color-primary);
+  box-shadow: 0 0 0 4px var(--frame), 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 /* Expert, après la réponse : la portée à la place du bouton de lecture, cliquable. */
 .sheet.replay {
@@ -118,8 +120,14 @@ function colorFor(id: ModeId) {
   cursor: pointer;
   transition: box-shadow 0.2s;
 }
-.sheet.replay.sounding {
-  box-shadow: 0 0 0 4px var(--ion-color-secondary), 0 8px 24px rgba(0, 0, 0, 0.2);
+.sheet.ok {
+  --frame: var(--ion-color-success);
+}
+.sheet.ko {
+  --frame: var(--ion-color-danger);
+}
+.sheet.sounding {
+  box-shadow: 0 0 0 7px var(--frame), 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 .hint {
   color: var(--ion-color-medium);

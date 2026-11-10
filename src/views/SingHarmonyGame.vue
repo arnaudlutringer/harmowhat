@@ -14,7 +14,7 @@
     </template>
     <template #player>
       <!-- Après la réponse : la portée remplace les boutons, avec la note jouée, puis sur la même pulsation la note attendue (vert) et la note chantée (rouge). -->
-      <div v-if="quiz.feedback.value && result" class="staff">
+      <div v-if="quiz.feedback.value && result" class="staff" :class="quiz.feedback.value.correct ? 'ok' : 'ko'">
         <chord-staff
           :notes="staffNotes"
           melodic
@@ -208,6 +208,13 @@ function onNote(frequency: number) {
   background: #fffdf3;
   color: #222;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+/* La portée n'apparaît qu'à la réponse : entourée de vert si elle est bonne, de rouge sinon. */
+.staff.ok {
+  box-shadow: 0 0 0 4px var(--ion-color-success), 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+.staff.ko {
+  box-shadow: 0 0 0 4px var(--ion-color-danger), 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 .hl {
   color: var(--ion-color-primary);

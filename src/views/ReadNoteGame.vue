@@ -10,7 +10,7 @@
   >
     <!-- Jeu visuel : pas de son à deviner. La note sonne une fois à la réponse, sans réécoute possible. -->
     <template #player>
-      <div class="sheet" :class="{ sounding: quiz.playing.value, vanished: flash.hidden.value }">
+      <div class="sheet" :class="{ sounding: quiz.playing.value, ok: quiz.feedback.value?.correct === true, ko: quiz.feedback.value?.correct === false, vanished: flash.hidden.value }">
         <chord-staff :notes="[q.note]" :clef="CLEFS[q.clef].vex" :label="`${CLEFS[q.clef].label}, note à lire`" />
       </div>
     </template>
@@ -86,11 +86,19 @@ function colorFor(pc: number) {
   border: none;
   background: #fffdf3;
   color: #222;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  /* Contour : violet pendant la question, vert ou rouge une fois la réponse donnée (plus épais pendant l'écoute). */
+  --frame: var(--ion-color-primary);
+  box-shadow: 0 0 0 4px var(--frame), 0 8px 24px rgba(0, 0, 0, 0.2);
   transition: box-shadow 0.2s;
 }
+.sheet.ok {
+  --frame: var(--ion-color-success);
+}
+.sheet.ko {
+  --frame: var(--ion-color-danger);
+}
 .sheet.sounding {
-  box-shadow: 0 0 0 4px var(--ion-color-secondary), 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 7px var(--frame), 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 .sheet :deep(.staff) {
   color: #222;

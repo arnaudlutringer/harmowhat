@@ -18,7 +18,7 @@
     <template #player>
       <button
         class="sheet"
-        :class="{ sounding: quiz.playing.value, revealed, vanished: flash.hidden.value }"
+        :class="{ sounding: quiz.playing.value, ok: quiz.feedback.value?.correct === true, ko: quiz.feedback.value?.correct === false, revealed, vanished: flash.hidden.value }"
         :disabled="!revealed"
         :aria-label="revealed ? `Réécouter ${pitchLabel(q.base)} puis ${pitchLabel(q.target)}` : undefined"
         @click="quiz.listen()"
@@ -117,7 +117,9 @@ function colorFor(pc: number) {
   border: none;
   background: #fffdf3;
   color: #222;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  /* Contour : violet pendant la question, vert ou rouge une fois la réponse donnée (plus épais pendant l'écoute). */
+  --frame: var(--ion-color-primary);
+  box-shadow: 0 0 0 4px var(--frame), 0 8px 24px rgba(0, 0, 0, 0.2);
   transition: box-shadow 0.2s;
 }
 .sheet.revealed {
@@ -127,8 +129,14 @@ function colorFor(pc: number) {
 .sheet:disabled {
   opacity: 1;
 }
+.sheet.ok {
+  --frame: var(--ion-color-success);
+}
+.sheet.ko {
+  --frame: var(--ion-color-danger);
+}
 .sheet.sounding {
-  box-shadow: 0 0 0 4px var(--ion-color-secondary), 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 7px var(--frame), 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 .sheet :deep(.staff) {
   color: #222;

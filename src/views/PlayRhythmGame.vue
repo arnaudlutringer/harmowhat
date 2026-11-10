@@ -10,7 +10,7 @@
   >
     <template #player>
       <div class="player">
-        <rhythm-staff class="written" :cells="q.cells" :label="rhythmLabel" />
+        <rhythm-staff class="written" :class="{ ok: quiz.feedback.value?.correct === true, ko: quiz.feedback.value?.correct === false }" :cells="q.cells" :label="rhythmLabel" />
         <!-- Après la mesure : les notes attendues (traits) et les frappes (points verts dans le temps, rouges sinon).
              La frise garde sa place avant la réponse : le grand bouton ne bouge pas quand elle apparaît. -->
         <svg class="timeline" viewBox="0 0 320 44" aria-hidden="true">
@@ -153,6 +153,14 @@ function finish() {
   padding: 6px;
   background: #fffdf3;
   color: #222;
+  /* Contour : violet pendant la question, vert ou rouge une fois la réponse donnée. */
+  box-shadow: 0 0 0 4px var(--ion-color-primary);
+}
+.written.ok {
+  box-shadow: 0 0 0 4px var(--ion-color-success);
+}
+.written.ko {
+  box-shadow: 0 0 0 4px var(--ion-color-danger);
 }
 .timeline {
   width: 100%;
