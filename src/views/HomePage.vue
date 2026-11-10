@@ -30,7 +30,7 @@
       <section v-for="category in categories" :key="category.title" class="category">
         <h2>{{ category.title }}</h2>
         <div class="games">
-          <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: game.color ?? category.color }" :title="SUMMARIES[idOf(game.path)]">
+          <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: category.color }" :title="SUMMARIES[idOf(game.path)]">
             <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
             <span class="name">
               <strong>{{ game.title }}</strong>
@@ -189,21 +189,20 @@ const tempoGames = [
   },
 ]
 
-// Une teinte douce par catégorie, un peu plus foncée que le fond crème (le tempo garde la sienne dans « Rythme et tempo »).
+// Une couleur vive par catégorie, assez soutenue pour que le nom des jeux se lise en blanc.
 interface HomeGame {
   path: string
   icon: string
   title: string
-  color?: string
 }
 const categories: { title: string; color: string; tests?: boolean; games: HomeGame[] }[] = [
-  { title: "L'oreille", color: 'var(--hw-category-ear)', games: earGames },
-  { title: 'La voix', color: 'var(--hw-category-voice)', games: voiceGames },
-  { title: 'Le solfège', color: 'var(--hw-category-theory)', games: theoryGames },
-  { title: 'Rythme et tempo', color: 'var(--hw-category-rhythm)', games: [...rhythmGames, ...tempoGames.map((g) => ({ ...g, color: 'var(--hw-category-tempo)' }))] },
+  { title: "L'oreille", color: 'var(--hw-vivid-ear)', games: earGames },
+  { title: 'La voix', color: 'var(--hw-vivid-voice)', games: voiceGames },
+  { title: 'Le solfège', color: 'var(--hw-vivid-theory)', games: theoryGames },
+  { title: 'Rythme et tempo', color: 'var(--hw-vivid-rhythm)', games: [...rhythmGames, ...tempoGames] },
   // Écrans de mise au point, derrière un interrupteur (pas de médailles).
   ...(featureEnabled('testMicro')
-    ? [{ title: 'Tests', color: 'var(--hw-category-theory)', tests: true, games: [{ path: '/debug/micro', icon: GAME_ICONS['lis-dis'], title: 'Test du micro' }] }]
+    ? [{ title: 'Tests', color: 'var(--hw-vivid-theory)', tests: true, games: [{ path: '/debug/micro', icon: GAME_ICONS['lis-dis'], title: 'Test du micro' }] }]
     : []),
 ]
 </script>
@@ -303,7 +302,7 @@ h1 {
   box-sizing: border-box;
   padding: 6px;
   border-radius: 14px;
-  color: var(--hw-card-ink);
+  color: #fff;
   text-decoration: none;
   box-shadow: 0 2px 6px rgba(45, 48, 71, 0.08);
 }
@@ -366,7 +365,7 @@ h1 {
 }
 .medals .off {
   filter: grayscale(1);
-  opacity: 0.35;
+  opacity: 0.55;
 }
 /* Titre à gauche, Paramètres et Infos à droite, sur la même ligne. */
 /* Infos en haut à gauche, Paramètres en haut à droite, logo et titre centrés entre les deux. */

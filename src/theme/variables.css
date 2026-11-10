@@ -63,6 +63,11 @@
   --hw-category-rhythm: #f3e7c4;
   --hw-category-tempo: #dbe6f5;
   --hw-card-ink: #3a3350;
+  /* Tuiles de l'accueil : couleurs vives, le texte y est blanc (dans les deux thèmes). */
+  --hw-vivid-ear: #bb4a33;
+  --hw-vivid-voice: #6c5ce7;
+  --hw-vivid-theory: #00806a;
+  --hw-vivid-rhythm: #96590a;
 
   /* Surfaces blanches (popin des trophées, trophées gagnés) et fond d'alerte doux. */
   --hw-surface: #ffffff;
