@@ -207,7 +207,6 @@ function home() {
 .subtitle {
   margin: 4px 0 0;
   font-weight: 600;
-  opacity: 0.8;
 }
 .body {
   max-width: 480px;

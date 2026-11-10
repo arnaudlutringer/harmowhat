@@ -214,7 +214,6 @@ async function start(trial = false, challenge = false) {
   font-size: 13px;
   line-height: 1.35;
   text-align: center;
-  opacity: 0.8;
 }
 .stats {
   display: flex;

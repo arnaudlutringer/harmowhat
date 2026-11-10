@@ -20,7 +20,8 @@ import { gameCategory } from '@/games/trophies'
 withDefaults(defineProps<{ game: GameId; title: string; backLabel?: string }>(), { backLabel: 'Retour' })
 const emit = defineEmits<{ back: [] }>()
 
-const CATEGORY_VARS = ['--hw-category-ear', '--hw-category-voice', '--hw-category-theory', '--hw-category-rhythm', '--hw-category-tempo']
+// Les couleurs vives des tuiles de l'accueil (le rythme et le tempo y partagent la même).
+const CATEGORY_VARS = ['--hw-vivid-ear', '--hw-vivid-voice', '--hw-vivid-theory', '--hw-vivid-rhythm', '--hw-vivid-rhythm']
 </script>
 
 <style scoped>
@@ -32,9 +33,9 @@ const CATEGORY_VARS = ['--hw-category-ear', '--hw-category-voice', '--hw-categor
   justify-content: flex-end;
   padding: calc(56px + var(--ion-safe-area-top, 0px)) 16px 34px;
   background:
-    radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.45), transparent 55%),
+    radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.16), transparent 55%),
     var(--cat);
-  color: var(--hw-card-ink);
+  color: #fff;
 }
 .back {
   position: absolute;
