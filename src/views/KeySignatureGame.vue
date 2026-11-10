@@ -144,4 +144,21 @@ function colorFor(id: string) {
   white-space: nowrap;
   text-transform: none;
 }
+/* Petit écran (Samsung A10) : portée et touches réduites, le résultat reste à l'écran. */
+@media (max-height: 740px) {
+  .sheet {
+    margin-bottom: 8px;
+    padding: 2px;
+  }
+  .sheet :deep(svg) {
+    height: 148px !important;
+  }
+  .choices {
+    gap: 6px;
+  }
+  .choices ion-button {
+    height: 40px;
+    font-size: 14px;
+  }
+}
 </style>

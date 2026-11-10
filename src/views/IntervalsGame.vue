@@ -133,4 +133,14 @@ function colorFor(id: string) {
 .direction.down {
   transform: rotate(45deg);
 }
+/* Petit écran (Samsung A10) : touches réduites, le résultat reste à l'écran. */
+@media (max-height: 740px) {
+  .choices {
+    gap: 6px;
+  }
+  .choices ion-button {
+    min-height: 42px;
+    font-size: 14px;
+  }
+}
 </style>

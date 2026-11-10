@@ -100,4 +100,24 @@ const emit = defineEmits<{ understood: [] }>()
   font-size: 14px;
   cursor: pointer;
 }
+/* Petit écran (Samsung A10) : le message reste à l'écran, sous les réponses. */
+@media (max-height: 740px) {
+  .feedback {
+    min-height: 48px;
+    margin-top: 8px;
+    gap: 2px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+  .feedback.reserved {
+    min-height: 74px;
+  }
+  .next-hint {
+    margin-top: 2px;
+    font-size: 13px;
+  }
+  .advance-bar {
+    margin-top: 4px;
+  }
+}
 </style>

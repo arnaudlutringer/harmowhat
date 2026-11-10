@@ -458,4 +458,24 @@ ion-content.with-result-actions {
 .compact .prompt {
   margin: 10px 0 8px;
 }
+/* Petit écran (Samsung A10) : la question et son résultat tiennent sans défilement. */
+@media (max-height: 740px) {
+  .prompt {
+    margin: 4px 0 6px;
+    font-size: 18px;
+  }
+  .play {
+    width: 92px;
+    height: 92px;
+    font-size: 42px;
+  }
+  .hint {
+    margin: 4px 0 6px;
+  }
+  .bottom {
+    min-height: 104px;
+    padding-top: 4px;
+    padding-bottom: calc(8px + var(--ion-safe-area-bottom, 0px));
+  }
+}
 </style>

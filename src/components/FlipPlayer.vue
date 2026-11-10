@@ -83,4 +83,18 @@ const revealed = computed(() => props.quiz.feedback.value !== null)
   margin: 12px 0 20px;
   text-align: center;
 }
+/* Petit écran (Samsung A10) : la carte laisse la place aux réponses et au résultat. */
+@media (max-height: 740px) {
+  .card {
+    height: 112px;
+  }
+  .front {
+    width: 96px;
+    height: 96px;
+    font-size: 44px;
+  }
+  .hint {
+    margin: 2px 0 6px;
+  }
+}
 </style>

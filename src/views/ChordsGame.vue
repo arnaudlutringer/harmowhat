@@ -189,4 +189,30 @@ function stateFor(midi: number) {
 .validate {
   margin-top: 14px;
 }
+/* Petit écran (Samsung A10) : carte, notes et Valider réduits, tout reste à l'écran. */
+@media (max-height: 740px) {
+  .player :deep(.card) {
+    height: 96px;
+  }
+  .player :deep(.front) {
+    width: 84px;
+    height: 84px;
+    font-size: 40px;
+  }
+  .player :deep(.back svg) {
+    height: 88px !important;
+  }
+  .player :deep(.hint) {
+    margin: 2px 0 6px;
+  }
+  .choices {
+    gap: 6px;
+  }
+  .pick {
+    padding: 7px 8px;
+  }
+  .validate {
+    margin-top: 6px;
+  }
+}
 </style>

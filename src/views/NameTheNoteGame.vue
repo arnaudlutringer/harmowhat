@@ -74,4 +74,16 @@ function colorFor(choice: string) {
   font-size: 20px;
   text-transform: none;
 }
+/* Petit écran (Samsung A10) : touches réduites, le résultat reste à l'écran. */
+@media (max-height: 740px) {
+  .choices {
+    gap: 6px;
+  }
+  .choices ion-button {
+    margin: 0;
+    min-height: 0;
+    height: 42px;
+    font-size: 17px;
+  }
+}
 </style>
