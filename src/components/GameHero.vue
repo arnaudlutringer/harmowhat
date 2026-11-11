@@ -86,4 +86,11 @@ h1 {
   font-size: 26px;
   font-weight: 700;
 }
+/* Petit écran (Samsung A10) : un peu moins de marge, le bandeau garde son allure. */
+@media (max-height: 740px) {
+  .hero {
+    padding-top: calc(50px + var(--ion-safe-area-top, 0px));
+    padding-bottom: 30px;
+  }
+}
 </style>

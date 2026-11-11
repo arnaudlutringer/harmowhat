@@ -1,5 +1,6 @@
 <template>
-  <ion-page>
+  <!-- Jeu avec un réglage en plus (la précision des harmonies) : sur petit écran, le résumé du bandeau tient sur une ligne. -->
+  <ion-page :class="{ crowded: !!$slots.extra }">
     <ion-content>
       <!-- Bandeau aux couleurs de la catégorie. Retour : toujours l'accueil (comme le bouton retour du téléphone). -->
       <game-hero :game="game" :title="title" back-label="Retour à l'accueil" @back="router.navigate('/home', 'back', 'replace')">
@@ -39,12 +40,15 @@
               @click="level = String(key)"
             >
               <strong>{{ cfg.label }}</strong>
-              <small>{{ cfg.description }}</small>
-              <slot name="level-extra" :level="String(key)" />
-              <!-- Médaille du niveau, sous sa définition : en couleur une fois gagnée (sans faute à ce niveau), grise sinon. -->
-              <medal-dot class="medal" :kind="tierOf(String(key), i)" :won="medalWon(String(key))" :size="20" />
+              <!-- Médaille du niveau : en couleur une fois gagnée (sans faute à ce niveau), en pointillés sinon. -->
+              <medal-dot class="medal" :kind="tierOf(String(key), i)" :won="medalWon(String(key))" :size="18" />
             </button>
           </div>
+          <!-- La description du niveau choisi, une seule fois sous les tuiles : l'écran tient sans défiler. -->
+          <p v-if="shownLevels[level]" class="level-desc">
+            <b>{{ shownLevels[level].label }} :</b> {{ shownLevels[level].description }}
+            <slot name="level-extra" :level="level" />
+          </p>
 
           <!-- Réglage propre au jeu (la précision des harmonies). -->
           <slot name="extra" />
@@ -315,13 +319,15 @@ h2 {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+/* Une tuile par niveau, compacte : son nom et sa médaille sur une ligne. */
 .level {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  padding: 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 46px;
+  padding: 0 12px;
   border: none;
   border-radius: 18px;
   background: var(--hw-surface, #fff);
@@ -334,13 +340,18 @@ h2 {
 .level strong {
   font-size: 16px;
 }
-.level small {
-  font-size: 11px;
-  line-height: 1.3;
+.level-desc {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  line-height: 1.35;
   color: var(--ion-color-medium);
 }
-.level .medal {
-  margin-top: auto;
+.level-desc b {
+  color: var(--ion-text-color);
+}
+.level-desc :slotted(*) {
+  display: block;
+  margin-top: 2px;
 }
 .level.on {
   outline: 3px solid var(--ion-color-primary);
@@ -350,9 +361,6 @@ h2 {
 .level.impossible {
   background: linear-gradient(135deg, #2d3047, #4b3fd1);
   color: #fff;
-}
-.level.impossible small {
-  color: #cfc9f5;
 }
 .level.impossible.on {
   outline-color: #f2c94c;
@@ -427,5 +435,48 @@ h2 {
   letter-spacing: 1px;
   text-transform: uppercase;
   box-shadow: 0 10px 22px rgba(76, 63, 209, 0.35);
+}
+/* Petit écran (Samsung A10) : tout tient sans défiler, le bandeau garde sa taille. Le résumé complet est dans les règles. */
+@media (max-height: 740px) {
+  .summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .stats {
+    margin-top: 8px;
+  }
+  .body {
+    padding-bottom: 8px;
+  }
+  h2 {
+    margin: 10px 0 6px;
+  }
+  .level {
+    min-height: 42px;
+  }
+  .levels {
+    gap: 8px;
+  }
+  .crowded .summary {
+    -webkit-line-clamp: 1;
+  }
+  .crowded .body {
+    padding-bottom: 0;
+  }
+  .crowded .level-desc {
+    margin-top: 4px;
+  }
+  .crowded h2 {
+    margin-top: 8px;
+  }
+  .level-desc {
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
 </style>

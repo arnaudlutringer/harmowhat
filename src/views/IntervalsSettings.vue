@@ -13,6 +13,7 @@
   >
     <!-- La précision : intervalle seul, ou avec sa qualité (tierce mineure, quarte augmentée…). -->
     <template #extra>
+      <div class="precision-row">
       <h2 class="extra-title">Précision</h2>
       <div class="precisions" role="radiogroup" aria-label="Précision">
         <button
@@ -24,9 +25,10 @@
           @click="precision = key"
         >
           <strong>{{ cfg.label }}</strong>
-          <small>{{ cfg.description }}</small>
         </button>
       </div>
+      </div>
+      <p class="precision-desc"><b>{{ PRECISIONS[precision].label }} :</b> {{ PRECISIONS[precision].description }}</p>
     </template>
   </game-settings>
 </template>
@@ -65,10 +67,9 @@ const nextPath = ({ questions, level }: { questions: number; level: string }) =>
 }
 .precisions button {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  padding: 12px;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 12px;
   border: none;
   border-radius: 18px;
   background: var(--hw-surface, #fff);
@@ -78,10 +79,44 @@ const nextPath = ({ questions, level }: { questions: number; level: string }) =>
   box-shadow: 0 2px 8px rgba(45, 48, 71, 0.07);
   cursor: pointer;
 }
-.precisions small {
-  font-size: 11px;
-  line-height: 1.3;
+.precisions strong {
+  font-size: 16px;
+}
+.precision-desc {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  line-height: 1.35;
   color: var(--ion-color-medium);
+}
+.precision-desc b {
+  color: var(--ion-text-color);
+}
+/* Petit écran (Samsung A10) : « Précision » à gauche de ses deux tuiles, et sa description sur une ligne. */
+@media (max-height: 740px) {
+  .precision-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .precision-row .extra-title {
+    flex: none;
+    width: 86px;
+    margin: 0;
+  }
+  .precision-row .precisions {
+    flex: 1;
+    gap: 8px;
+  }
+  .precisions button {
+    min-height: 42px;
+  }
+  .precision-desc {
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 .precisions .on {
   outline: 3px solid var(--ion-color-primary);
