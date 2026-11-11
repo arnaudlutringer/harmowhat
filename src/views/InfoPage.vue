@@ -3,6 +3,20 @@
     <ion-content class="ion-padding">
       <page-nav title="Informations" back-href="/home" />
       <div class="info">
+        <h2>Statistiques</h2>
+        <ion-list lines="full">
+          <ion-item>
+            <ion-label class="ion-text-wrap">
+              <strong>📊 Utilisation de l'appli</strong>
+              <p>
+                Pour améliorer les jeux, l'appli compte les parties lancées, abandonnées ou rejouées, et les partages.
+                Ces chiffres sont anonymes : ils sont liés à un identifiant tiré au hasard sur ce téléphone, sans nom ni
+                aucune autre information personnelle.
+              </p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+
         <h2>Sons</h2>
         <ion-list lines="full">
           <ion-item>

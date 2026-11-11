@@ -3,6 +3,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { gameIconSvg } from '@/games/icons'
 import type { GameId } from '@/games/highScores'
+import { track } from '@/games/tracking'
 import { gameCategory } from '@/games/trophies'
 
 /**
@@ -26,6 +27,8 @@ const TROPHY_TILE = '#f6e7b8'
 
 export interface ScoreShare {
   kind: 'score'
+  /** Jeu, pour la mesure d'utilisation. */
+  gameId?: GameId
   game: string
   level: string
   points: number
@@ -280,6 +283,12 @@ function caption(content: ShareContent): string {
  * dans un navigateur : partage web si possible, sinon l'image est téléchargée.
  */
 export async function shareImage(content: ShareContent): Promise<void> {
+  await sendImage(content)
+  const game = content.kind === 'rank' ? content.gameId : content.kind === 'score' ? content.gameId : content.game
+  track('partage', { game, details: { type: content.kind } })
+}
+
+async function sendImage(content: ShareContent): Promise<void> {
   const blob = await renderShareImage(content)
   const text = caption(content)
   const filename = `oreille-${content.kind}.png`
@@ -290,7 +299,7 @@ export async function shareImage(content: ShareContent): Promise<void> {
   }
   const file = new File([blob], filename, { type: 'image/png' })
   if (navigator.canShare?.({ files: [file] })) {
-    await navigator.share({ files: [file], text }).catch(() => {})
+    await navigator.share({ files: [file], text })
     return
   }
   const url = URL.createObjectURL(blob)

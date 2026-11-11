@@ -137,6 +137,7 @@ import TrophyUnlocked from './TrophyUnlocked.vue'
 import MedalDot from './MedalDot.vue'
 import MatchResult from './MatchResult.vue'
 import { shareImage } from '@/share/shareImage'
+import { track } from '@/games/tracking'
 import { dayNumber, isTodaysChallenge } from '@/games/dailyChallenge'
 
 const props = defineProps<{
@@ -300,7 +301,7 @@ async function share() {
   sharing.value = true
   const { points, correct } = summary.value
   try {
-    await shareImage({ kind: 'score', game: GAMES[props.board.game].title, level: levelLabel(props.board), points, correct, total: props.total, tierImage: tierImage.value })
+    await shareImage({ kind: 'score', gameId: props.board.game, game: GAMES[props.board.game].title, level: levelLabel(props.board), points, correct, total: props.total, tierImage: tierImage.value })
   } catch {
     // Partage annulé ou impossible : rien à signaler.
   } finally {
@@ -315,6 +316,7 @@ function openTrophies() {
 
 function restart() {
   stopAll()
+  track('rejouer', { game: props.board.game, level: props.board.level })
   emit('restart')
 }
 

@@ -92,6 +92,7 @@ import type { useQuiz } from '@/composables/useQuiz'
 import type { Board } from '@/games/highScores'
 import { computed, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
 import { preloadPiano, stopAll } from '@/audio/engine'
+import { track } from '@/games/tracking'
 
 const props = defineProps<{
   title: string
@@ -188,6 +189,14 @@ function onPointerUp(e: PointerEvent) {
   if (dx < -60 && Math.abs(dx) > Math.abs(dy) * 1.5) props.quiz.next()
 }
 
+// Mesure d'utilisation : une partie lancée à l'ouverture du jeu, puis à chaque nouvelle partie (« Rejouer »).
+const gameInfo = () => ({ game: props.board.game, level: props.board.level, details: { questions: props.board.questions, essai: !!props.quiz.trial } })
+onMounted(() => track('partie_lancee', gameInfo()))
+watch(
+  () => props.quiz.finished.value,
+  (finished, before) => before && !finished && track('partie_lancee', gameInfo()),
+)
+
 // Charge les sons du piano dès l'ouverture du jeu pour qu'ils soient prêts au premier clic.
 onMounted(() => void preloadPiano().catch(() => {}))
 // On quitte l'écran : plus aucun son.
@@ -218,6 +227,7 @@ async function confirmQuit() {
   const { role } = await alert.onDidDismiss()
   confirming = false
   if (role !== 'confirm') return props.quiz.resume()
+  track('partie_abandonnee', { ...gameInfo(), details: { ...gameInfo().details, question: props.quiz.number.value } })
   backToSettings()
 }
 
