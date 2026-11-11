@@ -173,6 +173,33 @@ const tierOf = (key: string, index: number): Tier => (TIERS.includes(key as Tier
 const keys = computed(() => Object.keys(shownLevels.value))
 const medalWon = (key: string) => levelMedalWon(props.game, tierOf(key, keys.value.indexOf(key)))
 
+/**
+ * Niveau proposé : celui qui suit la plus haute médaille gagnée (le plus haut niveau si toutes le sont) ;
+ * sans aucune médaille, le dernier niveau choisi.
+ */
+function suggestedLevel(fallback: string): string {
+  const all = keys.value
+  let top = -1
+  all.forEach((key, i) => {
+    if (medalWon(key)) top = i
+  })
+  if (top < 0) return fallback
+  return all[Math.min(top + 1, all.length - 1)]
+}
+level.value = suggestedLevel(level.value)
+// De retour après une partie : une nouvelle médaille fait passer au niveau suivant.
+let wonCount = keys.value.filter(medalWon).length
+watch(
+  () => route.path,
+  (path) => {
+    if (path !== ownPath) return
+    const won = keys.value.filter(medalWon).length
+    if (won === wonCount) return
+    wonCount = won
+    level.value = suggestedLevel(level.value)
+  },
+)
+
 // Bandeau : recalculé à chaque retour sur l'écran (après une partie).
 const refresh = ref(0)
 watch(() => route.path, (path) => path === ownPath && refresh.value++)
