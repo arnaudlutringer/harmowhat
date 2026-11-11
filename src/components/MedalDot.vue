@@ -39,20 +39,30 @@ const NAMES: Record<MedalKind, string> = {
   vertical-align: middle;
   overflow: visible;
 }
+/* Un contour de la même couleur, aussi épais que le pointillé d'une médaille à gagner : les deux ont la même taille. */
+.shape {
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
 .debutant .shape {
   fill: #cd7f32;
+  stroke: #cd7f32;
 }
 .normal .shape {
   fill: #a3adbb;
+  stroke: #a3adbb;
 }
 .expert .shape {
   fill: #f2c230;
+  stroke: #f2c230;
 }
 .impossible .shape {
   fill: #8e5cf0;
+  stroke: #8e5cf0;
 }
 .goat .shape {
   fill: #4fb8e8;
+  stroke: #4fb8e8;
 }
 /* Une facette plus claire : le diamant se reconnaît d'un coup d'œil. */
 .goat .facet {

@@ -1,9 +1,10 @@
 <template>
   <div class="result hw-square">
     <!-- Mes trophées, en haut à droite : les trophées gagnés s'y envolent. -->
-    <ion-button class="trophies" fill="clear" router-link="/trophees" data-trophy-target aria-label="Mes trophées" title="Mes trophées">
-      <ion-icon slot="icon-only" :icon="medalOutline" />
-    </ion-button>
+    <button type="button" class="trophies" data-trophy-target @click="openTrophies">
+      <ion-icon :icon="medalOutline" aria-hidden="true" />
+      Trophées
+    </button>
     <trophy-unlocked :queue="unlocked" />
     <img class="emoji" :src="tierImage" alt="" />
     <h1>{{ summary.points }} <span class="pts">pts</span></h1>
@@ -307,6 +308,11 @@ async function share() {
   }
 }
 
+function openTrophies() {
+  stopAll()
+  router.push('/trophees')
+}
+
 function restart() {
   stopAll()
   emit('restart')
@@ -333,11 +339,26 @@ onBeforeUnmount(stopAll)
 /* « Mes trophées » en haut à droite de l'écran (la popin des trophées gagnés s'envole vers lui). */
 .trophies {
   position: fixed;
-  top: calc(8px + var(--ion-safe-area-top, 0px));
-  right: 8px;
+  top: calc(10px + var(--ion-safe-area-top, 0px));
+  right: 12px;
   z-index: 5;
-  --color: var(--ion-color-primary);
-  font-size: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 18px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-color-primary);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(45, 48, 71, 0.1);
+  cursor: pointer;
+}
+.trophies ion-icon {
+  font-size: 20px;
 }
 .emoji {
   display: block;

@@ -4,7 +4,7 @@
   <div v-if="current" class="veil" :class="{ leaving }" aria-live="assertive">
     <div :key="index" ref="popin" class="popin" :class="{ leaving }" :style="flight">
       <span class="label">Trophée débloqué&nbsp;!</span>
-      <span class="icon" aria-hidden="true"><medal-dot v-if="medalKind" :kind="medalKind" :size="52" label="" /><template v-else>{{ current.trophy.icon }}</template></span>
+      <span class="icon" aria-hidden="true"><medal-ribbon v-if="medalKind && medalKind !== 'goat'" :kind="medalKind" :size="84" /><template v-else>{{ current.trophy.icon }}</template></span>
       <strong>{{ current.trophy.title }}</strong>
       <span v-if="current.tier" class="tier"><medal-dot kind="goat" :size="13" label="" aria-hidden="true" /> {{ TIER_LABELS[current.tier].label }}</span>
       <small>{{ current.trophy.condition }}</small>
@@ -16,6 +16,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { TIER_LABELS, type Tier, type Trophy } from '@/games/trophies'
 import MedalDot, { type MedalKind } from './MedalDot.vue'
+import MedalRibbon from './MedalRibbon.vue'
 
 /** Trophées à annoncer, un par un ; la liste peut s'allonger pendant l'annonce. */
 const props = defineProps<{ queue: { trophy: Trophy; tier?: Tier }[] }>()
