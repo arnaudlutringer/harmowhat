@@ -25,6 +25,8 @@ const props = defineProps<{
   together?: number[]
   /** Texte écrit à droite de la première note, au milieu de la portée (l'intervalle cherché : « 3M↑ »). */
   annotation?: string
+  /** Décalage des notes vers la droite, en pixels de la portée (une note seule, loin de la clé, se lit mieux). */
+  shift?: number
 }>()
 const host = ref<HTMLDivElement>()
 
@@ -42,6 +44,7 @@ async function draw() {
   const clef = props.clef ?? clefFor(props.notes.map((n) => n.midi))
   const stave = new Stave(10, 20, width - 20).addClef(clef)
   stave.setContext(context).draw()
+  if (props.shift) stave.setNoteStartX(stave.getNoteStartX() + props.shift)
 
   // Place de chaque note : sa pulsation (groupe) et son rang dans l'accord de cette pulsation.
   const groups: SpelledNote[][] = []
@@ -112,7 +115,7 @@ async function draw() {
 }
 
 onMounted(draw)
-watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together, props.annotation], draw)
+watch(() => [props.notes, props.clef, props.correct, props.wrong, props.together, props.annotation, props.shift], draw)
 </script>
 
 <style scoped>

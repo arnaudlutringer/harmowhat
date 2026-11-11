@@ -11,7 +11,7 @@
     <!-- Jeu visuel : pas de son à deviner. La note sonne une fois à la réponse, sans réécoute possible. -->
     <template #player>
       <div class="sheet" :class="{ sounding: quiz.playing.value, ok: quiz.feedback.value?.correct === true, ko: quiz.feedback.value?.correct === false, vanished: flash.hidden.value }">
-        <chord-staff :notes="[q.note]" :clef="CLEFS[q.clef].vex" :label="`${CLEFS[q.clef].label}, note à lire`" />
+        <chord-staff :notes="[q.note]" :clef="CLEFS[q.clef].vex" :shift="45" :label="`${CLEFS[q.clef].label}, note à lire`" />
       </div>
     </template>
 
