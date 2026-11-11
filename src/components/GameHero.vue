@@ -7,6 +7,8 @@
     <span class="big"><ion-icon :icon="GAME_ICONS[game]" aria-hidden="true" /></span>
     <h1>{{ title }}</h1>
     <slot />
+    <!-- Le symbole de la catégorie, en grand et très discret, coupé par le coin bas droit (comme la note du défi du jour). -->
+    <ion-icon class="category-mark" :icon="CATEGORY_ICONS[gameCategory(game)] ?? CATEGORY_ICONS[0]" aria-hidden="true" />
   </header>
 </template>
 
@@ -16,6 +18,7 @@ import { arrowBack } from 'ionicons/icons'
 import type { GameId } from '@/games/highScores'
 import { GAME_ICONS } from '@/games/icons'
 import { gameCategory } from '@/games/trophies'
+import { CATEGORY_ICONS } from '@/games/categoryIcons'
 
 withDefaults(defineProps<{ game: GameId; title: string; backLabel?: string }>(), { backLabel: 'Retour' })
 const emit = defineEmits<{ back: [] }>()
@@ -27,6 +30,7 @@ const CATEGORY_VARS = ['--hw-vivid-ear', '--hw-vivid-voice', '--hw-vivid-theory'
 <style scoped>
 .hero {
   position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,6 +71,15 @@ const CATEGORY_VARS = ['--hw-vivid-ear', '--hw-vivid-voice', '--hw-vivid-theory'
 .big ion-icon {
   font-size: 68px;
   color: var(--hw-card-ink);
+}
+.category-mark {
+  position: absolute;
+  right: -22px;
+  bottom: -30px;
+  font-size: 130px;
+  color: #fff;
+  opacity: 0.14;
+  pointer-events: none;
 }
 h1 {
   margin: 14px 0 0;

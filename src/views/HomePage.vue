@@ -34,6 +34,8 @@
             <span class="head">
               <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
               <strong>{{ game.title }}</strong>
+              <!-- Le symbole de la catégorie, en filigrane à droite de la tuile. -->
+              <ion-icon v-if="category.icon" class="category-mark" :icon="category.icon" aria-hidden="true" />
             </span>
             <!-- En bas de la tuile, un bandeau blanc : les parties à gauche, les médailles en points de couleur à droite. -->
             <span v-if="!category.tests" class="strip">
@@ -57,6 +59,7 @@ import { informationCircleOutline } from 'ionicons/icons'
 import BottomNav from '@/components/BottomNav.vue'
 import MedalDot, { type MedalKind } from '@/components/MedalDot.vue'
 import { GAME_ICONS } from '@/games/icons'
+import { CATEGORY_ICONS } from '@/games/categoryIcons'
 import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
@@ -198,11 +201,11 @@ interface HomeGame {
   icon: string
   title: string
 }
-const categories: { title: string; color: string; tests?: boolean; games: HomeGame[] }[] = [
-  { title: "L'oreille", color: 'var(--hw-vivid-ear)', games: earGames },
-  { title: 'La voix', color: 'var(--hw-vivid-voice)', games: voiceGames },
-  { title: 'Le solfège', color: 'var(--hw-vivid-theory)', games: theoryGames },
-  { title: 'Rythme et tempo', color: 'var(--hw-vivid-rhythm)', games: [...rhythmGames, ...tempoGames] },
+const categories: { title: string; color: string; icon?: string; tests?: boolean; games: HomeGame[] }[] = [
+  { title: "L'oreille", color: 'var(--hw-vivid-ear)', icon: CATEGORY_ICONS[0], games: earGames },
+  { title: 'La voix', color: 'var(--hw-vivid-voice)', icon: CATEGORY_ICONS[1], games: voiceGames },
+  { title: 'Le solfège', color: 'var(--hw-vivid-theory)', icon: CATEGORY_ICONS[2], games: theoryGames },
+  { title: 'Rythme et tempo', color: 'var(--hw-vivid-rhythm)', icon: CATEGORY_ICONS[3], games: [...rhythmGames, ...tempoGames] },
   // Écrans de mise au point, derrière un interrupteur (pas de médailles).
   ...(featureEnabled('testMicro')
     ? [{ title: 'Tests', color: 'var(--hw-vivid-theory)', tests: true, games: [{ path: '/debug/micro', icon: GAME_ICONS['lis-dis'], title: 'Test du micro' }] }]
@@ -325,6 +328,7 @@ h1 {
   color: var(--hw-card-ink);
 }
 .head {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
@@ -332,10 +336,21 @@ h1 {
   padding: 6px;
 }
 .head strong {
+  position: relative;
+  z-index: 1;
   min-width: 0;
   font-size: 14.5px;
   font-weight: 600;
   line-height: 1.12;
+}
+.category-mark {
+  position: absolute;
+  right: -10px;
+  bottom: -12px;
+  font-size: 52px;
+  color: #fff;
+  opacity: 0.2;
+  pointer-events: none;
 }
 /* Le bandeau du bas : les parties à gauche, les médailles à droite, sur fond blanc pour que toutes les couleurs se voient. */
 .strip {
