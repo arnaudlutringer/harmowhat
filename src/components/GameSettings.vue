@@ -1,6 +1,6 @@
 <template>
   <!-- Jeu avec un réglage en plus (la précision des harmonies) : sur petit écran, le résumé du bandeau tient sur une ligne. -->
-  <ion-page :class="{ crowded: !!$slots.extra }">
+  <ion-page :class="$slots.extra ? 'crowded' : 'roomy'">
     <ion-content>
       <!-- Bandeau aux couleurs de la catégorie. Retour : toujours l'accueil (comme le bouton retour du téléphone). -->
       <game-hero :game="game" :title="title" back-label="Retour à l'accueil" @back="router.navigate('/home', 'back', 'replace')">
@@ -39,9 +39,16 @@
               :class="{ on: level === key, impossible: key === 'impossible' }"
               @click="level = String(key)"
             >
-              <strong>{{ cfg.label }}</strong>
-              <!-- Médaille du niveau : en couleur une fois gagnée (sans faute à ce niveau), en pointillés sinon. -->
-              <medal-dot class="medal" :kind="tierOf(String(key), i)" :won="medalWon(String(key))" :size="18" />
+              <span class="level-head">
+                <strong>{{ cfg.label }}</strong>
+                <!-- Médaille du niveau : en couleur une fois gagnée (sans faute à ce niveau), en pointillés sinon. -->
+                <medal-dot class="medal" :kind="tierOf(String(key), i)" :won="medalWon(String(key))" :size="18" />
+              </span>
+              <!-- Grand écran : la description dans la tuile (sur petit écran, celle du niveau choisi est sous les tuiles). -->
+              <small class="tile-desc">
+                {{ cfg.description }}
+                <slot name="level-extra" :level="String(key)" />
+              </small>
             </button>
           </div>
           <!-- La description du niveau choisi, une seule fois sous les tuiles : l'écran tient sans défiler. -->
@@ -340,6 +347,16 @@ h2 {
 .level strong {
   font-size: 16px;
 }
+.level-head {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.tile-desc {
+  display: none;
+}
 .level-desc {
   margin: 8px 2px 0;
   font-size: 13px;
@@ -477,6 +494,64 @@ h2 {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+}
+/* Grand écran : la place en plus sert aux niveaux, qui retrouvent leur description dans leur tuile
+   (un peu plus haut pour un jeu avec un réglage en plus, comme la précision des harmonies). */
+@media (min-height: 820px) {
+  .roomy .level {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    min-height: 0;
+    padding: 12px;
+  }
+  .roomy .level-head {
+    flex: none;
+  }
+  .roomy .tile-desc {
+    display: block;
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--ion-color-medium);
+  }
+  .roomy .level.impossible .tile-desc {
+    color: #cfc9f5;
+  }
+  .roomy .tile-desc :slotted(*) {
+    display: block;
+    margin-top: 2px;
+  }
+  .roomy .level-desc {
+    display: none;
+  }
+}
+@media (min-height: 980px) {
+  .crowded .level {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    min-height: 0;
+    padding: 12px;
+  }
+  .crowded .level-head {
+    flex: none;
+  }
+  .crowded .tile-desc {
+    display: block;
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--ion-color-medium);
+  }
+  .crowded .level.impossible .tile-desc {
+    color: #cfc9f5;
+  }
+  .crowded .tile-desc :slotted(*) {
+    display: block;
+    margin-top: 2px;
+  }
+  .crowded .level-desc {
+    display: none;
   }
 }
 </style>

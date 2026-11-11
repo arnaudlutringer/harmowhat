@@ -25,6 +25,7 @@
           @click="precision = key"
         >
           <strong>{{ cfg.label }}</strong>
+          <small class="tile-desc">{{ cfg.description }}</small>
         </button>
       </div>
       </div>
@@ -81,6 +82,28 @@ const nextPath = ({ questions, level }: { questions: number; level: string }) =>
 }
 .precisions strong {
   font-size: 16px;
+}
+.tile-desc {
+  display: none;
+}
+/* Grand écran : la description de chaque précision dans sa tuile (comme les niveaux, voir GameSettings). */
+@media (min-height: 980px) {
+  .precisions button {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-height: 0;
+    padding: 12px;
+  }
+  .tile-desc {
+    display: block;
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--ion-color-medium);
+  }
+  .precision-desc {
+    display: none;
+  }
 }
 .precision-desc {
   margin: 8px 2px 0;
