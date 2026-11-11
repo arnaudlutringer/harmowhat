@@ -61,7 +61,7 @@ export const GAMES: Record<GameId, GameInfo> = {
     questionCounts: HIGH_LOW_COUNTS,
   },
   'quelle-note': {
-    title: 'Quelle est la note ?',
+    title: 'Quelle note ?',
     emoji: '👂',
     levels: Object.entries(NOTE_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: NOTE_COUNTS,

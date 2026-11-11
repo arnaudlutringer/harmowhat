@@ -13,7 +13,7 @@
 | Jeu | Niveau Impossible |
 |---|---|
 | **Grave ou aigu ?** | La note n'est qu'à **un quart de ton** du La3, au-dessus ou au-dessous, jouée par un **instrument différent à chaque question**. |
-| **Quelle est la note ?** | **Les 12 notes en propositions**, un **instrument différent à chaque question**, et **aucun diapason**, même avant la partie. |
+| **Quelle note ?** | **Les 12 notes en propositions**, un **instrument différent à chaque question**, et **aucun diapason**, même avant la partie. |
 | **Les accords** | **4 notes** au hasard sur deux octaves, **12 notes proposées**. |
 | **Les harmonies** | Tous les intervalles, avec leur sens, **joués très brièvement** par un **instrument différent à chaque question**, avec **12 propositions**. |
 | **La modalité** | À l'oreille seulement, la gamme est **jouée en descendant une fois sur deux**, par un **instrument différent à chaque question**. |

@@ -45,7 +45,7 @@ Un titre par jeu, avec une médaille bronze (Débutant), argent (Normal) ou or (
 | Jeu | Titre |
 |---|---|
 | Grave ou aigu ? | Sismographe |
-| Quelle est la note ? | Oreille absolue |
+| Quelle note ? | Oreille absolue |
 | Les accords | Maître des accords |
 | Les harmonies | Maître des intervalles |
 | La modalité | Mage des modes |

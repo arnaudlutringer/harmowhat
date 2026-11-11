@@ -8,7 +8,7 @@ function pitchClass(name: string): number {
   return (BASE[letter] + (name.endsWith('♯') ? 1 : name.endsWith('♭') ? -1 : 0) + 12) % 12
 }
 
-describe('Quelle est la note ?', () => {
+describe('Quelle note ?', () => {
   it('propose des bémols', () => {
     const names = Array.from({ length: 300 }, () => createQuestion('expert').choices).flat()
     expect(names.some((n) => n.endsWith('♭'))).toBe(true)

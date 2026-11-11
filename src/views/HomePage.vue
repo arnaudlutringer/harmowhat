@@ -109,7 +109,7 @@ const earGames = [
   {
     path: '/games/quelle-note',
     icon: GAME_ICONS['quelle-note'],
-    title: 'Quelle est la note ?',
+    title: 'Quelle note ?',
   },
   {
     path: '/games/accords',
@@ -349,7 +349,8 @@ h1 {
   bottom: -12px;
   font-size: 52px;
   color: #fff;
-  opacity: 0.2;
+  /* Très discret : le nom du jeu passe par-dessus. */
+  opacity: 0.09;
   pointer-events: none;
 }
 /* Le bandeau du bas : les parties à gauche, les médailles à droite, sur fond blanc pour que toutes les couleurs se voient. */

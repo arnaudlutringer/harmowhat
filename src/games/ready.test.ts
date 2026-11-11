@@ -17,7 +17,7 @@ describe('Écran « Je suis prêt »', () => {
   })
 
   it('ignore un jeu inconnu', () => {
-    expect(readyGame('quelle-note').title).toBe('Quelle est la note ?')
+    expect(readyGame('quelle-note').title).toBe('Quelle note ?')
     expect(readyGame('chante-note').title).toBe('Chante la note')
     expect(readyGame('harmonies').slug).toBe('quelle-note')
     expect(readyGame('toto').slug).toBe('quelle-note')

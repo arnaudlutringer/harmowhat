@@ -1,7 +1,7 @@
 <template>
   <game-settings
     game="quelle-note"
-    title="Quelle est la note ?"
+    title="Quelle note ?"
     :levels="LEVELS"
     :question-counts="QUESTION_COUNTS"
     storage-key="harmowhat.quelle-note.settings"

@@ -63,7 +63,7 @@ const GOAT_TITLES: Record<GameId, string> = {
 
 const GAME_NAMES: Record<GameId, string> = {
   'grave-ou-aigu': 'Grave ou aigu ?',
-  'quelle-note': 'Quelle est la note ?',
+  'quelle-note': 'Quelle note ?',
   accords: 'Les accords',
   harmonies: 'Les harmonies',
   modalite: 'La modalité',
