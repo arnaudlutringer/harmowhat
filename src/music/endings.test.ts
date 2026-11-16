@@ -70,7 +70,20 @@ describe('Musique de fin', () => {
     expect(first('mendelssohn', 5)).toEqual(['Si', 'Si', 'Si', 'Sol', 'Mi'])
     // Danse macabre : la et mi♭ (triton) ensemble, puis ré et la.
     expect(first('danse-macabre', 4)).toEqual(['La', 'Ré♯', 'Ré', 'La'])
-    expect(INSTRUMENT_ENDINGS.violin).toEqual(['spring', 'mendelssohn', 'danse-macabre'])
+    expect(INSTRUMENT_ENDINGS.violin).toEqual(['spring', 'mendelssohn', 'danse-macabre', 'csardas', 'irish-washerwoman'])
+    // Csárdás : mi ré do♯, ré ré, puis les doubles croches ré mi fa mi ; la phrase se pose sur le ré.
+    expect(first('csardas', 9)).toEqual(['Mi', 'Ré', 'Do♯', 'Ré', 'Ré', 'Ré', 'Mi', 'Fa', 'Mi'])
+    expect(pitchClassName(ENDINGS.csardas.notes[ENDINGS.csardas.notes.length - 1].midi)).toBe('Ré')
+    // The Irish Washerwoman : levée ré do, puis si sol sol ré sol sol ; la phrase se pose sur le sol.
+    expect(first('irish-washerwoman', 8)).toEqual(['Ré', 'Do', 'Si', 'Sol', 'Sol', 'Ré', 'Sol', 'Sol'])
+    expect(ENDINGS['irish-washerwoman'].notes[ENDINGS['irish-washerwoman'].notes.length - 1].midi).toBe(67)
+    for (const id of ['csardas', 'irish-washerwoman'] as const) {
+      const { notes, unit } = ENDINGS[id]
+      const end = Math.max(...notes.map((n) => n.at + n.len)) * unit
+      expect(end).toBeGreaterThan(8)
+      expect(end).toBeLessThanOrEqual(10)
+      for (const n of notes) expect(n.midi).toBeGreaterThanOrEqual(INSTRUMENTS.violin.low)
+    }
     expect(first('hava-nagila', 5)).toEqual(['Ré', 'Ré', 'Fa♯', 'Ré♯', 'Ré'])
     // Rhapsody in Blue : trille fa–sol, puis la montée jusqu'au si♭ aigu.
     expect(first('rhapsody', 2)).toEqual(['Fa', 'Sol'])

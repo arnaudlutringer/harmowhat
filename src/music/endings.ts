@@ -34,6 +34,8 @@ import { VALSE_MUSETTE, VALSE_MUSETTE_EIGHTH } from './valseMusette'
 import { HEDWIG, HEDWIG_EIGHTH } from './hedwig'
 import { PIANO_JAZZ, PIANO_JAZZ_EIGHTH } from './pianoJazz'
 import { MAPLE_LEAF, MAPLE_LEAF_SIXTEENTH } from './mapleLeafRag'
+import { CSARDAS, CSARDAS_SIXTEENTH } from './csardas'
+import { IRISH_WASHERWOMAN, IRISH_WASHERWOMAN_EIGHTH } from './irishWasherwoman'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -69,7 +71,7 @@ export type EndingId =
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
   | 'morning' | 'faune' | 'badinerie'
   | 'rising-sun' | 'paganini-24' | 'mountain-king'
-  | 'mendelssohn' | 'danse-macabre'
+  | 'mendelssohn' | 'danse-macabre' | 'csardas' | 'irish-washerwoman'
   | 'rhapsody' | 'hava-nagila' | 'greensleeves' | 'gran-vals' | 'asturias'
   | 'spring' | 'bella-ciao' | 'romance' | 'tico-tico'
 
@@ -112,6 +114,8 @@ const PIECES: Record<EndingId, Ending> = {
   },
   mendelssohn: { id: 'mendelssohn', title: 'Concerto pour violon', composer: 'Mendelssohn', notes: MENDELSSOHN, unit: MENDELSSOHN_BEAT },
   'danse-macabre': { id: 'danse-macabre', title: 'Danse macabre', composer: 'Saint-Saëns', notes: DANSE_MACABRE, unit: DANSE_MACABRE_BEAT },
+  csardas: { id: 'csardas', title: 'Csárdás', composer: 'Monti', notes: CSARDAS, unit: CSARDAS_SIXTEENTH },
+  'irish-washerwoman': { id: 'irish-washerwoman', title: 'The Irish Washerwoman', composer: 'Traditionnel irlandais', notes: IRISH_WASHERWOMAN, unit: IRISH_WASHERWOMAN_EIGHTH },
   rhapsody: { id: 'rhapsody', title: 'Rhapsody in Blue', composer: 'Gershwin', notes: RHAPSODY_IN_BLUE, unit: RHAPSODY_BEAT },
   'hava-nagila': { id: 'hava-nagila', title: 'Hava Nagila', composer: 'Traditionnel', notes: HAVA_NAGILA, unit: HAVA_NAGILA_EIGHTH },
   greensleeves: { id: 'greensleeves', title: 'Greensleeves', composer: 'Traditionnel', notes: GREENSLEEVES, unit: GREENSLEEVES_BEAT },
@@ -138,7 +142,7 @@ for (const e of Object.values(PIECES)) ENDINGS[e.id] = { ...e, notes: firstSecon
 /** Morceaux proposés pour chaque instrument ; le premier est celui par défaut. */
 export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   piano: ['elise', 'moonlight', 'turkish-march', 'piano-jazz', 'maple-leaf'],
-  violin: ['spring', 'mendelssohn', 'danse-macabre'],
+  violin: ['spring', 'mendelssohn', 'danse-macabre', 'csardas', 'irish-washerwoman'],
   cello: ['bach-prelude', 'swan', 'dvorak', 'hedwig'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],
   trumpet: ['te-deum', 'taps'],
