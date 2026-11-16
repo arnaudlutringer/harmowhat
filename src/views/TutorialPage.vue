@@ -160,8 +160,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillLeave, useIonRouter } from '@ionic/vue'
+import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillLeave, useBackButton, useIonRouter } from '@ionic/vue'
 import { chevronBack, play, stop } from 'ionicons/icons'
+import { useRoute } from 'vue-router'
 import { playArpeggio, playTuningFork, stopAll } from '@/audio/engine'
 import ChoiceRow from '@/components/ChoiceRow.vue'
 import MedalDot, { type MedalKind } from '@/components/MedalDot.vue'
@@ -194,6 +195,7 @@ const SHOWCASE = [
 const step = ref(1)
 const closing = ref(false)
 const router = useIonRouter()
+const route = useRoute()
 const sound = usePlaying<string>()
 const ending = computed(() => endingFor(selectedInstrument.value))
 
@@ -206,6 +208,13 @@ function previous() {
   stopAll()
   step.value = Math.max(1, step.value - 1)
 }
+
+// Bouton retour du téléphone : l'étape précédente (à la première étape, la règle habituelle de l'appli).
+useBackButton(20, (processNextHandler) => {
+  if (route.path !== '/tutoriel' || step.value === 1) return processNextHandler()
+  clearTimeout(pickTimer)
+  previous()
+})
 
 /** Un appui écoute, un second appui sur le même bouton arrête. */
 function toggle(key: string, start: () => Promise<number>) {
