@@ -7,7 +7,7 @@
       </span>
       <span class="label"><slot /></span>
     </button>
-    <button type="button" class="listen" :class="{ 'is-playing': playing }" :aria-label="listenLabel" @click="emit('listen')">
+    <button type="button" class="listen" :class="{ playing }" :aria-label="listenLabel" @click="emit('listen')">
       <span class="disc"><ion-icon :icon="playing ? stop : play" /></span>
       <span aria-hidden="true">{{ playing ? 'Arrêter' : 'Écouter' }}</span>
     </button>
@@ -110,10 +110,10 @@ const emit = defineEmits<{ pick: []; listen: [] }>()
   border-radius: 50%;
   font-size: 14px;
 }
-.listen.is-playing {
+.listen.playing {
   color: var(--ion-color-primary);
 }
-.listen.is-playing .disc {
+.listen.playing .disc {
   border-color: var(--ion-color-primary);
   background: var(--ion-color-primary);
   color: #fff;
