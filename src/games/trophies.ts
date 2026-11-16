@@ -512,6 +512,19 @@ export function playStreak(): { lastDay: string; streak: number } {
   return { lastDay: s.lastDay, streak: s.streak }
 }
 
+/**
+ * Série en cours, pour l'accueil : jours de suite joués, et si le joueur a déjà joué aujourd'hui.
+ * Sans partie hier ni aujourd'hui, la série est perdue (0).
+ */
+export function currentStreak(now = new Date()): { days: number; playedToday: boolean } {
+  const { lastDay, streak } = playStreak()
+  const today = dayOf(now)
+  const yesterday = dayOf(new Date(now.getTime() - 86400000))
+  if (lastDay === today) return { days: streak, playedToday: true }
+  if (lastDay === yesterday) return { days: streak, playedToday: false }
+  return { days: 0, playedToday: false }
+}
+
 /** Nombre de questionnaires terminés dans ce jeu (au moins 1 s'il y a déjà joué avant ce décompte). */
 export function gamesPlayed(game: GameId): number {
   const s = load().stats

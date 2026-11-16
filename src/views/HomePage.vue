@@ -9,7 +9,11 @@
           <img class="logo" src="/logo.svg" alt="" />
           <h1>L'oreille</h1>
         </div>
-        <span class="spacer" />
+        <!-- La série : jours de suite joués. Vive une fois la partie du jour jouée, pâle tant qu'elle reste à prolonger. -->
+        <button type="button" class="streak" :class="{ lit: streak.playedToday, none: !streak.days }" :aria-label="streakText" @click="explainStreak">
+          <span class="flame" aria-hidden="true">🔥</span>
+          <b>{{ streak.days }}</b>
+        </button>
       </div>
       <!-- Défi du jour : le même jeu et le même niveau pour tout le monde, jusqu'à minuit. -->
       <!-- Une fois terminé, il se replie en une ligne jusqu'à minuit, avec le meilleur résultat du jour. -->
@@ -54,7 +58,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
+import { IonButton, IonContent, IonIcon, IonPage, onIonViewWillEnter, toastController, useIonRouter } from '@ionic/vue'
 import { informationCircleOutline } from 'ionicons/icons'
 import BottomNav from '@/components/BottomNav.vue'
 import MedalDot, { type MedalKind } from '@/components/MedalDot.vue'
@@ -64,7 +68,7 @@ import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
 import { featureEnabled, gameEnabled } from '@/config/features'
-import { challengeDays, challengeScores, diamondShown, earnedTrophies, gamesPlayed, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
+import { challengeDays, challengeScores, currentStreak, diamondShown, earnedTrophies, gamesPlayed, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
 // Le défi du jour, figé pour la journée (son niveau suit les progrès du joueur d'un jour à l'autre).
@@ -91,6 +95,18 @@ function medalsFor(path: string) {
 // L'écran reste en mémoire : le nombre de parties se relit à chaque retour sur l'accueil.
 const refresh = ref(0)
 onIonViewWillEnter(() => refresh.value++)
+// Série de jours joués (relue à chaque retour sur l'accueil, comme les parties).
+const streak = computed(() => (refresh.value, currentStreak()))
+const streakText = computed(() => {
+  const { days, playedToday } = streak.value
+  if (!days) return 'Joue aujourd’hui pour lancer ta série de jours !'
+  const label = `${days} jour${days > 1 ? 's' : ''} de suite`
+  return playedToday ? `${label} : reviens demain pour la prolonger.` : `${label} : joue aujourd’hui pour ne pas la perdre !`
+})
+async function explainStreak() {
+  const toast = await toastController.create({ message: `🔥 ${streakText.value}`, duration: 2500, position: 'top' })
+  await toast.present()
+}
 function playsOf(path: string) {
   void refresh.value
   return gamesPlayed(idOf(path))
@@ -398,8 +414,40 @@ h1 {
   --color: var(--ion-color-primary);
   margin: 0;
 }
-/* Même largeur que le bouton Infos : le titre reste centré. */
-.spacer {
-  width: 48px;
+/* La série, à droite (la même largeur que le bouton Infos : le titre reste centré). */
+.streak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 48px;
+  height: 34px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 17px;
+  background: var(--hw-surface, #fff);
+  color: var(--ion-color-medium);
+  font-family: inherit;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(45, 48, 71, 0.1);
+  cursor: pointer;
+}
+.streak .flame {
+  font-size: 16px;
+  filter: grayscale(0.6);
+  opacity: 0.7;
+}
+/* Partie du jour jouée : la flamme est vive. */
+.streak.lit {
+  color: #e8590c;
+}
+.streak.lit .flame {
+  filter: none;
+  opacity: 1;
+}
+/* Pas de série : la flamme est éteinte. */
+.streak.none .flame {
+  filter: grayscale(1);
+  opacity: 0.45;
 }
 </style>
