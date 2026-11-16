@@ -36,6 +36,9 @@ describe('Musique de fin', () => {
   it('violoncelle, trompette et accordéon proposent chacun plusieurs morceaux', () => {
     expect(INSTRUMENT_ENDINGS.cello).toEqual(['bach-prelude', 'swan', 'dvorak', 'hedwig'])
     expect(INSTRUMENT_ENDINGS.trumpet).toEqual(['te-deum', 'taps', 'saints', 'la-cucaracha'])
+    // Chœur : Bella ciao et le Cygne retirés ; un joueur qui les avait choisis revient au Te Deum.
+    expect(INSTRUMENT_ENDINGS.choir).toEqual(['te-deum'])
+    expect(endingFor('choir', { choir: 'swan' }).id).toBe('te-deum')
     expect(INSTRUMENT_ENDINGS.accordion).toEqual(['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'])
   })
 

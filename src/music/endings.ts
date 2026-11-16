@@ -161,7 +161,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   flute: ['morning', 'faune', 'badinerie', 'carmen-entracte', 'danny-boy', 'blessed-spirits'],
   'electric-guitar': ['rising-sun', 'paganini-24', 'mountain-king'],
   // Au chœur, des morceaux dans sa tessiture : le Te Deum de Charpentier, Bella ciao, le Cygne en legato.
-  choir: ['te-deum', 'bella-ciao', 'swan'],
+  choir: ['te-deum'],
 }
 
 /**
