@@ -78,13 +78,14 @@
             <!-- 5. L'instrument -->
             <template v-else-if="step === 5">
               <p class="lead">Quel est ton instrument de prédilection ?</p>
-              <p class="how">Touche un instrument pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
+              <p class="how">Touche un instrument pour le choisir.</p>
               <div class="list">
                 <choice-row
                   v-for="inst in INSTRUMENTS"
                   :key="inst.id"
                   :listen-label="`Écouter ${inst.label.toLowerCase()}`"
                   :playing="sound.current.value === inst.id"
+                  :chosen="pickedInstrument === inst.id"
                   @pick="pickInstrument(inst.id)"
                   @listen="listenInstrument(inst.id)"
                 >
@@ -96,13 +97,14 @@
             <!-- 6. Le morceau -->
             <template v-else-if="step === 6">
               <p class="lead">Quel est ton morceau favori parmi ceux-là ?</p>
-              <p class="how">Touche un morceau pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
+              <p class="how">Touche un morceau pour le choisir.</p>
               <div class="list">
                 <choice-row
                   v-for="e in endingsFor(selectedInstrument)"
                   :key="e.id"
                   :listen-label="`Écouter ${e.title}`"
                   :playing="sound.current.value === e.id"
+                  :chosen="pickedEnding === e.id"
                   @pick="pickEnding(e.id)"
                   @listen="listenEnding(e, e.id)"
                 >
@@ -238,15 +240,26 @@ function listenDrunk() {
   toggle('drunk', () => playEnding(ending.value, selectedInstrument.value, 0.5))
 }
 
+// Le choix se coche, puis l'étape suivante arrive un instant après : le joueur voit ce qu'il a choisi.
+const pickedInstrument = ref<InstrumentId | null>(null)
+const pickedEnding = ref<EndingId | null>(null)
+let pickTimer: ReturnType<typeof setTimeout> | undefined
+function afterPick() {
+  clearTimeout(pickTimer)
+  pickTimer = setTimeout(next, 350)
+}
+
 function pickInstrument(id: InstrumentId) {
+  pickedInstrument.value = id
   setInstrument(id)
   chooseEnding(id, endingsFor(id)[0].id)
-  next()
+  afterPick()
 }
 
 function pickEnding(id: EndingId) {
+  pickedEnding.value = id
   chooseEnding(selectedInstrument.value, id)
-  next()
+  afterPick()
 }
 
 // « C'est parti » : le tutoriel s'efface en fondu, puis l'accueil.

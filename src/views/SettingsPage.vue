@@ -61,13 +61,14 @@
         <template v-if="picking === 'instrument'">
           <button class="back" @click="cancel"><ion-icon :icon="chevronBack" aria-hidden="true" /> Annuler</button>
           <p class="lead">Quel est ton instrument de prédilection ?</p>
-          <p class="how">Touche un instrument pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
+          <p class="how">Touche un instrument pour le choisir.</p>
           <div class="list">
             <choice-row
               v-for="inst in INSTRUMENTS"
               :key="inst.id"
               :listen-label="`Écouter ${inst.label.toLowerCase()}`"
               :playing="preview.current.value === inst.id"
+              :chosen="inst.id === selectedInstrument"
               @pick="choose(inst.id)"
               @listen="listen(inst.id, () => playArpeggio(inst))"
             >
@@ -79,7 +80,7 @@
         <template v-else-if="picking === 'piece'">
           <button class="back" @click="showStep('instrument')"><ion-icon :icon="chevronBack" aria-hidden="true" /> Instrument</button>
           <p class="lead">Quel est ton morceau favori parmi ceux-là ?</p>
-          <p class="how">Touche un morceau pour le choisir, ou <ion-icon :icon="play" aria-label="le bouton lecture" /> pour l'écouter d'abord.</p>
+          <p class="how">Touche un morceau pour le choisir.</p>
           <div class="list">
             <choice-row
               v-for="e in endingsFor(selectedInstrument)"
