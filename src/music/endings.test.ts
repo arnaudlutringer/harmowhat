@@ -35,8 +35,24 @@ describe('Musique de fin', () => {
 
   it('violoncelle, trompette et accordéon proposent chacun plusieurs morceaux', () => {
     expect(INSTRUMENT_ENDINGS.cello).toEqual(['bach-prelude', 'swan', 'dvorak', 'hedwig'])
-    expect(INSTRUMENT_ENDINGS.trumpet).toEqual(['te-deum', 'taps'])
+    expect(INSTRUMENT_ENDINGS.trumpet).toEqual(['te-deum', 'taps', 'saints', 'la-cucaracha'])
     expect(INSTRUMENT_ENDINGS.accordion).toEqual(['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'])
+  })
+
+  it('trompette : When the Saints (sol si do ré) et La Cucaracha (ré ré ré sol si), une dizaine de secondes', () => {
+    expect(ENDINGS.saints.notes.slice(0, 4).map((n) => pitchClassName(n.midi))).toEqual(['Sol', 'Si', 'Do', 'Ré'])
+    expect(ENDINGS['la-cucaracha'].notes.slice(0, 5).map((n) => pitchClassName(n.midi))).toEqual(['Ré', 'Ré', 'Ré', 'Sol', 'Si'])
+    expect(pitchClassName(ENDINGS['la-cucaracha'].notes[ENDINGS['la-cucaracha'].notes.length - 1].midi)).toBe('Sol')
+    for (const id of ['saints', 'la-cucaracha'] as const) {
+      const { notes, unit } = ENDINGS[id]
+      const end = Math.max(...notes.map((n) => n.at + n.len)) * unit
+      expect(end).toBeGreaterThan(8)
+      expect(end).toBeLessThanOrEqual(10)
+      for (const n of notes) {
+        expect(n.midi).toBeGreaterThanOrEqual(INSTRUMENTS.trumpet.low)
+        expect(n.midi).toBeLessThanOrEqual(INSTRUMENTS.trumpet.high)
+      }
+    }
   })
 
   it('premières notes des nouveaux morceaux', () => {

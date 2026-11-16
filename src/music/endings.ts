@@ -36,6 +36,8 @@ import { PIANO_JAZZ, PIANO_JAZZ_EIGHTH } from './pianoJazz'
 import { MAPLE_LEAF, MAPLE_LEAF_SIXTEENTH } from './mapleLeafRag'
 import { CSARDAS, CSARDAS_SIXTEENTH } from './csardas'
 import { IRISH_WASHERWOMAN, IRISH_WASHERWOMAN_EIGHTH } from './irishWasherwoman'
+import { SAINTS, SAINTS_BEAT } from './saints'
+import { LA_CUCARACHA, LA_CUCARACHA_EIGHTH } from './laCucaracha'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -67,7 +69,7 @@ export interface Ending {
 export type EndingId =
   | 'elise'| 'moonlight' | 'turkish-march' | 'piano-jazz' | 'maple-leaf'
   | 'bach-prelude' | 'swan' | 'dvorak' | 'hedwig'
-  | 'te-deum' | 'taps'
+  | 'te-deum' | 'taps' | 'saints' | 'la-cucaracha'
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
   | 'morning' | 'faune' | 'badinerie'
   | 'rising-sun' | 'paganini-24' | 'mountain-king'
@@ -122,6 +124,8 @@ const PIECES: Record<EndingId, Ending> = {
   'gran-vals': { id: 'gran-vals', title: 'Gran Vals', composer: 'Tárrega', notes: GRAN_VALS, unit: GRAN_VALS_BEAT },
   asturias: { id: 'asturias', title: 'Asturias (Leyenda)', composer: 'Albéniz', notes: ASTURIAS, unit: ASTURIAS_SIXTEENTH },
   taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
+  saints: { id: 'saints', title: 'When the Saints Go Marching In', composer: 'Traditionnel', notes: SAINTS, unit: SAINTS_BEAT },
+  'la-cucaracha': { id: 'la-cucaracha', title: 'La Cucaracha', composer: 'chanson populaire mexicaine', notes: LA_CUCARACHA, unit: LA_CUCARACHA_EIGHTH },
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
   'valse-musette': {
@@ -145,7 +149,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   violin: ['spring', 'mendelssohn', 'danse-macabre', 'csardas', 'irish-washerwoman'],
   cello: ['bach-prelude', 'swan', 'dvorak', 'hedwig'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],
-  trumpet: ['te-deum', 'taps'],
+  trumpet: ['te-deum', 'taps', 'saints', 'la-cucaracha'],
   accordion: ['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'],
   guitar: ['romance', 'gran-vals', 'greensleeves', 'asturias'],
   flute: ['morning', 'faune', 'badinerie'],
