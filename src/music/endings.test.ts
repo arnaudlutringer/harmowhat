@@ -101,13 +101,27 @@ describe('Musique de fin', () => {
   })
 
   it('propose plusieurs morceaux au piano et joue celui choisi, s’il est proposé pour l’instrument', () => {
-    expect(endingsFor('piano').map((e) => e.title)).toEqual(['La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque', 'Piano Jazz in E♭'])
+    expect(endingsFor('piano').map((e) => e.title)).toEqual(['La Lettre à Élise', 'Sonate au clair de lune (3ᵉ mvt)', 'Marche turque', 'Piano Jazz in E♭', 'Maple Leaf Rag'])
     expect(endingFor('piano', { piano: 'moonlight' }).id).toBe('moonlight')
     expect(endingFor('violin', { violin: 'moonlight' }).id).toBe('spring')
     expect(endingFor('piano', {}).id).toBe('elise')
     // Un morceau retiré (le Slow Piano Blues) encore mémorisé comme choisi : on revient au premier.
     expect(endingFor('piano', { piano: 'blues' as EndingId }).id).toBe('elise')
     for (const id of Object.keys(INSTRUMENTS) as InstrumentId[]) expect(INSTRUMENT_ENDINGS[id].length).toBeGreaterThan(0)
+  })
+
+  it('Maple Leaf Rag : la♭ mi♭ la♭ do mi♭ sol mi♭ sol si♭ mi♭, l’arpège final sur le la♭ aigu, une dizaine de secondes', () => {
+    const { notes, unit } = ENDINGS['maple-leaf']
+    const melody = notes.filter((n) => n.at < 18 && n.midi >= 67 && n.velocity === 0.5)
+    expect(melody.map((n) => pitchClassName(n.midi))).toEqual(['Sol♯', 'Ré♯', 'Sol♯', 'Do', 'Ré♯', 'Sol', 'Ré♯', 'Sol', 'La♯', 'Ré♯'])
+    expect(notes[notes.length - 1].midi).toBe(92)
+    const end = Math.max(...notes.map((n) => n.at + n.len)) * unit
+    expect(end).toBeGreaterThan(9)
+    expect(end).toBeLessThan(11)
+    for (const n of notes) {
+      expect(n.midi).toBeGreaterThanOrEqual(INSTRUMENTS.piano.low)
+      expect(n.midi).toBeLessThanOrEqual(INSTRUMENTS.piano.high)
+    }
   })
 
   it('Sonate au clair de lune : arpèges de do♯ mineur en doubles croches, accords sforzando, une dizaine de secondes', () => {
