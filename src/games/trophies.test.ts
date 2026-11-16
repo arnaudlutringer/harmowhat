@@ -102,20 +102,26 @@ describe('Trophées', () => {
     expect(earned('goat-modalite')).toBeUndefined()
     game({ board: expert, results: results(Array(10).fill(8000)) })
     expect(earned('goat-modalite')).toBeUndefined()
+    // L'or est gagné : le diamant ne se gagne plus qu'en expert ou en Impossible.
     game({ board: { ...expert, level: 'normal' }, results: results(Array(10).fill(GOAT_POINTS)) })
-    expect(earned('goat-modalite')?.tier).toBe('normal')
+    expect(earned('goat-modalite')).toBeUndefined()
+    game({ board: expert, results: results(Array(10).fill(GOAT_POINTS)) })
+    expect(earned('goat-modalite')?.tier).toBe('expert')
+    game({ board: { ...expert, level: 'impossible' }, results: results(Array(10).fill(GOAT_POINTS)) })
+    expect(earned('goat-modalite')?.tier).toBe('impossible')
   })
 
   it("propose une médaille d'or sur chaque jeu : le diamant reste accessible partout", () => {
     for (const info of Object.values(GAMES)) expect(info.levels.some((l) => l.id.split('-')[0] === 'expert')).toBe(true)
   })
 
-  it('paliers de rapidité, et GOAT au niveau joué (puis au niveau supérieur)', () => {
+  it('paliers de rapidité, et GOAT seulement en expert ou en Impossible', () => {
     game({ board: { game: 'grave-ou-aigu', level: 'expert', questions: 10 }, results: results(Array(10).fill(5000)) })
     ids()
     game({ results: results(Array(10).fill(GOAT_POINTS)) })
-    expect(ids()).toEqual(expect.arrayContaining(['rapide', 'tres-rapide', 'fulgurant', 'reflexe', 'goat-grave-ou-aigu']))
-    expect(earnedTrophies.value['goat-grave-ou-aigu'].tier).toBe('normal')
+    const fast = ids()
+    expect(fast).toEqual(expect.arrayContaining(['rapide', 'tres-rapide', 'fulgurant', 'reflexe']))
+    expect(fast).not.toContain('goat-grave-ou-aigu')
     game({ board: { game: 'grave-ou-aigu', level: 'debutant', questions: 10 }, results: results(Array(10).fill(GOAT_POINTS)) })
     expect(ids()).not.toContain('goat-grave-ou-aigu')
     game({ board: { game: 'grave-ou-aigu', level: 'expert', questions: 10 }, results: results(Array(10).fill(GOAT_POINTS)) })
@@ -151,7 +157,10 @@ describe('Trophées', () => {
     expect(ids()).not.toContain('goat-lis-dis')
     game({ board: { ...board, level: 'expert' }, results: [{ correct: false, points: 12000 }] })
     ids()
+    // 30 000 points en normal ne suffisent plus : le diamant se gagne en expert ou en Impossible.
     game({ board, results: [{ correct: false, points: 31000 }] })
+    expect(ids()).not.toContain('goat-lis-dis')
+    game({ board: { ...board, level: 'expert' }, results: [{ correct: false, points: 31000 }] })
     expect(ids()).toContain('goat-lis-dis')
     game({ board, results: [{ correct: false, points: 0 }] })
     expect(ids()).toContain('catastrophe')

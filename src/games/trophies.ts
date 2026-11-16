@@ -32,11 +32,12 @@ export interface Trophy {
   title: string
   condition: string
   icon: string
-  /** Trophées GOAT : un par jeu, gagné en débutant, normal ou expert (médaille bronze, argent ou or). */
+  /** Trophées GOAT : un par jeu, gagné en expert ou en Impossible, une fois la médaille d'or du jeu gagnée. */
   game?: GameId
 }
 
-/** GOAT : chaque réponse d'un questionnaire à 10 000 points, c'est-à-dire donnée pendant la marge avant le décompte. */
+/** GOAT : chaque réponse d'un questionnaire (expert ou Impossible) à 10 000 points, c'est-à-dire donnée pendant la marge avant le décompte. */
+export const GOAT_LEVELS: Tier[] = ['expert', 'impossible']
 export const GOAT_POINTS = 10000
 const ECLAIR_POINTS = 10000
 /** Niveau Impossible : à débloquer par un sans faute en expert, plus de 9 000 points à chaque question. */
@@ -336,8 +337,8 @@ export interface GameContext {
 /** Ce qu'il faut réussir pour gagner le diamant d'un jeu, à placer dans une phrase. */
 export function goatGoal(game: GameId): string {
   return SIGHT_GAMES.includes(game)
-    ? `marque ${SIGHT_GOAT_POINTS.toLocaleString('fr-FR')} points en une partie`
-    : `donne chaque réponse d'un questionnaire d'au moins ${MIN_REWARD_QUESTIONS} questions à ${GOAT_POINTS.toLocaleString('fr-FR')} points`
+    ? `marque ${SIGHT_GOAT_POINTS.toLocaleString('fr-FR')} points en une partie, en expert ou en Impossible`
+    : `donne chaque réponse d'un questionnaire d'au moins ${MIN_REWARD_QUESTIONS} questions à ${GOAT_POINTS.toLocaleString('fr-FR')} points, en expert ou en Impossible`
 }
 
 /** Fin d'un questionnaire : met à jour les compteurs et donne les trophées mérités. */
@@ -409,9 +410,9 @@ export function evaluateGame(ctx: GameContext): void {
     s.levelMedals = { ...s.levelMedals, [board.game]: [...won, medalTier] }
     state.pending.push({ id: `medal-${board.game}`, tier: medalTier })
   }
-  // Le diamant du GOAT s'ouvre avec la médaille d'or du jeu (gagnée avant, ou pendant cette partie).
+  // Le diamant du GOAT s'ouvre avec la médaille d'or du jeu (gagnée avant, ou pendant cette partie), et se gagne en expert ou en Impossible.
   const goldWon = s.levelMedals[board.game]?.includes('expert')
-  if (longEnough && goldWon && (sight ? runPoints >= SIGHT_GOAT_POINTS : atLeast(GOAT_POINTS)) && TIER_ORDER.includes(level)) award(state, `goat-${board.game}`, level)
+  if (longEnough && goldWon && (sight ? runPoints >= SIGHT_GOAT_POINTS : atLeast(GOAT_POINTS)) && GOAT_LEVELS.includes(level)) award(state, `goat-${board.game}`, level)
   // Exploit en expert (questionnaire complet, sans faute, plus de 9 000 points à chaque question) : le niveau Impossible se débloque.
   const exploit = level === 'expert' && results.length >= board.questions && results.every((r) => r.correct && r.points > IMPOSSIBLE_POINTS)
   if (longEnough && exploit && !NO_IMPOSSIBLE.includes(board.game) && !s.impossible.includes(board.game)) {

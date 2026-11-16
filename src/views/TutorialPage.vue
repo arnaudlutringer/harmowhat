@@ -181,7 +181,7 @@ const MEDALS: { kind: MedalKind; text: string }[] = [
   { kind: 'debutant', text: 'Un questionnaire sans faute en débutant' },
   { kind: 'normal', text: 'Sans faute en normal' },
   { kind: 'expert', text: 'Sans faute en expert' },
-  { kind: 'goat', text: 'Le GOAT, après l’or : chaque réponse à 10 000 points' },
+  { kind: 'goat', text: 'Le GOAT, après l’or : chaque réponse à 10 000 points, en expert ou en Impossible' },
 ]
 
 /** Écran des mini-jeux : un jeu par catégorie, aux couleurs de l'accueil. */
