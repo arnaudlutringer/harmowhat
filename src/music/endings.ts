@@ -42,6 +42,7 @@ import { CARMEN_ENTRACTE, CARMEN_ENTRACTE_BEAT } from './carmenEntracte'
 import { DANNY_BOY, DANNY_BOY_BEAT } from './dannyBoy'
 import { BLESSED_SPIRITS, BLESSED_SPIRITS_BEAT } from './blessedSpirits'
 import { HALLELUJAH, HALLELUJAH_BEAT } from './hallelujah'
+import { HAYDN_FINALE, HAYDN_FINALE_BEAT } from './haydnFinale'
 import { ODE_TO_JOY, ODE_TO_JOY_BEAT, SILENT_NIGHT, SILENT_NIGHT_BEAT, SWING_LOW, SWING_LOW_BEAT } from './choirTunes'
 
 /**
@@ -74,7 +75,7 @@ export interface Ending {
 export type EndingId =
   | 'elise'| 'moonlight' | 'turkish-march' | 'piano-jazz' | 'maple-leaf'
   | 'bach-prelude' | 'swan' | 'dvorak' | 'hedwig'
-  | 'te-deum' | 'taps' | 'saints' | 'la-cucaracha'
+  | 'te-deum' | 'taps' | 'saints' | 'la-cucaracha' | 'haydn-finale'
   | 'hallelujah' | 'ode-to-joy' | 'swing-low' | 'silent-night'
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
   | 'morning' | 'faune' | 'badinerie' | 'carmen-entracte' | 'danny-boy' | 'blessed-spirits'
@@ -135,6 +136,7 @@ const PIECES: Record<EndingId, Ending> = {
   taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
   saints: { id: 'saints', title: 'When the Saints Go Marching In', composer: 'Traditionnel', notes: SAINTS, unit: SAINTS_BEAT },
   'la-cucaracha': { id: 'la-cucaracha', title: 'La Cucaracha', composer: 'chanson populaire mexicaine', notes: LA_CUCARACHA, unit: LA_CUCARACHA_EIGHTH },
+  'haydn-finale': { id: 'haydn-finale', title: 'Concerto pour trompette, finale', composer: 'Haydn', notes: HAYDN_FINALE, unit: HAYDN_FINALE_BEAT },
   hallelujah: { id: 'hallelujah', title: 'Hallelujah (Le Messie)', composer: 'Haendel', notes: HALLELUJAH, unit: HALLELUJAH_BEAT },
   'ode-to-joy': { id: 'ode-to-joy', title: 'L’Ode à la joie', composer: 'Beethoven', notes: ODE_TO_JOY, unit: ODE_TO_JOY_BEAT },
   'swing-low': { id: 'swing-low', title: 'Swing Low, Sweet Chariot', composer: 'Gospel traditionnel', notes: SWING_LOW, unit: SWING_LOW_BEAT },
@@ -162,7 +164,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   violin: ['spring', 'mendelssohn', 'danse-macabre', 'csardas', 'irish-washerwoman'],
   cello: ['bach-prelude', 'swan', 'dvorak', 'hedwig'],
   clarinet: ['rhapsody', 'hava-nagila', 'bella-ciao', 'tico-tico'],
-  trumpet: ['te-deum', 'taps', 'saints', 'la-cucaracha'],
+  trumpet: ['te-deum', 'taps', 'saints', 'la-cucaracha', 'haydn-finale'],
   accordion: ['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'],
   guitar: ['romance', 'gran-vals', 'greensleeves', 'asturias'],
   flute: ['morning', 'faune', 'badinerie', 'carmen-entracte', 'danny-boy', 'blessed-spirits'],
