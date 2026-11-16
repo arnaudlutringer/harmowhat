@@ -42,6 +42,8 @@ export const GOAT_POINTS = 10000
 const ECLAIR_POINTS = 10000
 /** Niveau Impossible : à débloquer par un sans faute en expert, plus de 9 000 points à chaque question. */
 export const IMPOSSIBLE_POINTS = 9000
+/** Réflexe : bonnes réponses d'affilée à 9 000 points ou plus, comptées d'une partie à l'autre. */
+export const REFLEX_RUN = 20
 
 const GOAT_TITLES: Record<GameId, string> = {
   'grave-ou-aigu': 'Sismographe',
@@ -109,18 +111,18 @@ export const TROPHIES: Trophy[] = [
   { id: 'explorateur', family: 'decouverte', icon: '🗺️', title: 'Explorateur', condition: `Termine un questionnaire dans les ${ALL_GAMES.length} jeux` },
   { id: 'homme-orchestre', family: 'decouverte', icon: '🎺', title: 'Homme-orchestre', condition: 'Joue un questionnaire avec 5 instruments différents' },
 
-  { id: 'sans-faute', family: 'sans-faute', icon: '✅', title: 'Sans faute', condition: 'Termine un questionnaire sans aucune erreur' },
+  { id: 'sans-faute', family: 'sans-faute', icon: '✅', title: 'Sans faute', condition: 'Termine un questionnaire sans aucune erreur, en normal ou plus' },
   { id: 'oreille-de-lynx', family: 'sans-faute', icon: '🐆', title: 'Oreille de lynx', condition: 'Termine un questionnaire sans faute en expert' },
   { id: 'sans-filet', family: 'sans-faute', icon: '🎪', title: 'Sans filet', condition: 'Termine un questionnaire sans faute sans toucher au diapason (quand il est proposé)' },
   { id: 'marathonien', family: 'sans-faute', icon: '🏃', title: 'Marathonien', condition: 'Termine un questionnaire de 30 questions sans faute' },
   { id: 'impossible', family: 'sans-faute', icon: '💎', title: "L'impossible n'existe pas", condition: 'Débloque un niveau Impossible : un questionnaire expert d\'au moins 10 questions sans faute, à plus de 9 000 points par question' },
   { id: 'grand-chelem', family: 'sans-faute', icon: '👑', title: 'Grand chelem', condition: `Fais au moins un sans faute dans chacun des ${ALL_GAMES.length} jeux` },
 
-  { id: 'rapide', family: 'rapidite', icon: '🐇', title: 'Rapide', condition: "Donne toutes les réponses d'un questionnaire à 7 000 points ou plus" },
-  { id: 'tres-rapide', family: 'rapidite', icon: '🚀', title: 'Très rapide', condition: "Donne toutes les réponses d'un questionnaire à 8 000 points ou plus" },
-  { id: 'fulgurant', family: 'rapidite', icon: '☄️', title: 'Fulgurant', condition: "Donne toutes les réponses d'un questionnaire à 9 000 points ou plus" },
-  { id: 'eclair', family: 'rapidite', icon: '⚡', title: 'Éclair', condition: `Donne une bonne réponse à ${ECLAIR_POINTS.toLocaleString('fr-FR')} points` },
-  { id: 'reflexe', family: 'rapidite', icon: '🎯', title: 'Réflexe', condition: 'Enchaîne 10 bonnes réponses à 9 000 points ou plus' },
+  { id: 'rapide', family: 'rapidite', icon: '🐇', title: 'Rapide', condition: "Donne toutes les réponses d'un questionnaire à 7 000 points ou plus, en normal ou plus" },
+  { id: 'tres-rapide', family: 'rapidite', icon: '🚀', title: 'Très rapide', condition: "Donne toutes les réponses d'un questionnaire à 8 000 points ou plus, en normal ou plus" },
+  { id: 'fulgurant', family: 'rapidite', icon: '☄️', title: 'Fulgurant', condition: "Donne toutes les réponses d'un questionnaire à 9 000 points ou plus, en normal ou plus" },
+  { id: 'eclair', family: 'rapidite', icon: '⚡', title: 'Éclair', condition: `Donne une bonne réponse à ${ECLAIR_POINTS.toLocaleString('fr-FR')} points, en expert ou en Impossible` },
+  { id: 'reflexe', family: 'rapidite', icon: '🎯', title: 'Réflexe', condition: `Enchaîne ${REFLEX_RUN} bonnes réponses à 9 000 points ou plus, d’une partie à l’autre` },
 
   ...ALL_GAMES.map((game): Trophy => ({
     id: `goat-${game}`,
@@ -205,6 +207,8 @@ interface Stats {
   bestResults: Partial<Record<GameId, Record<string, number>>>
   /** Jeux dont le niveau Impossible est débloqué. */
   impossible: GameId[]
+  /** Bonnes réponses d'affilée à 9 000 points ou plus, d'une partie à l'autre (Réflexe). */
+  fastRun: number
 }
 
 interface State {
@@ -218,7 +222,7 @@ const STORAGE_KEY = 'harmowhat.trophies'
 
 const emptyStats = (): Stats => ({
   games: 0, correct: 0, lastDay: '', streak: 0, played: [], instruments: [], perfect: [], harmoniesSung: 0,
-  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], challengeScores: {}, plays: {}, levelMedals: {}, bestResults: {},
+  pitchClassesSung: [], modes: [], majorKeys: [], clefs: [], chords: 0, notesRead: 0, endingsHeard: [], impossible: [], temposFound: 0, challenges: [], challengeScores: {}, plays: {}, levelMedals: {}, bestResults: {}, fastRun: 0,
 })
 
 function load(): State {
@@ -379,23 +383,26 @@ export function evaluateGame(ctx: GameContext): void {
   // Compteurs d'abord : « Premiers pas » s'annonce avant les exploits de la partie.
   checkCounters(state)
   const atLeast = (points: number) => results.length > 0 && results.every((r) => r.correct && r.points >= points)
-  let run = 0
-  let bestRun = 0
+  // Série de réponses rapides, poursuivie depuis les parties précédentes (Réflexe).
+  let bestRun = s.fastRun
   for (const r of results) {
-    run = r.correct && r.points >= 9000 ? run + 1 : 0
-    bestRun = Math.max(bestRun, run)
+    s.fastRun = r.correct && r.points >= 9000 ? s.fastRun + 1 : 0
+    bestRun = Math.max(bestRun, s.fastRun)
   }
+  // Sans faute et rapidité à partir du niveau normal ; Éclair en expert ou en Impossible.
+  const fromNormal = TIER_ORDER.indexOf(((level as string) === 'intermediaire' ? 'normal' : level) as Tier) >= 1
+  const fromExpert = level === 'expert' || level === 'impossible'
   const rules: [string, boolean][] = [
-    ['sans-faute', allCorrect],
+    ['sans-faute', allCorrect && fromNormal],
     ['virtuose', allCorrect],
     ['oreille-de-lynx', allCorrect && level === 'expert'],
     ['sans-filet', allCorrect && ctx.forkAvailable && !ctx.forkUsed],
     ['marathonien', allCorrect && board.questions >= 30],
-    ['rapide', atLeast(7000)],
-    ['tres-rapide', atLeast(8000)],
-    ['fulgurant', atLeast(9000)],
-    ['eclair', results.some((r) => r.correct && r.points >= ECLAIR_POINTS)],
-    ['reflexe', bestRun >= 10],
+    ['rapide', fromNormal && atLeast(7000)],
+    ['tres-rapide', fromNormal && atLeast(8000)],
+    ['fulgurant', fromNormal && atLeast(9000)],
+    ['eclair', fromExpert && results.some((r) => r.correct && r.points >= ECLAIR_POINTS)],
+    ['reflexe', bestRun >= REFLEX_RUN],
     ['catastrophe', sight ? runPoints === 0 : results.length > 0 && correct === 0],
   ]
   for (const [id, ok] of rules) if (ok) award(state, id)

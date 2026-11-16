@@ -2,7 +2,17 @@
   <!-- Trophée débloqué : une popin blanche au milieu de l'écran, qui s'envole au bout de 2 s vers « Mes trophées »
        (le bouton marqué data-trophy-target de l'écran, sinon le coin haut droit). -->
   <div v-if="current" class="veil" :class="{ leaving }" aria-live="assertive">
-    <div :key="index" ref="popin" class="popin" :class="{ leaving }" :style="flight">
+    <!-- Beaucoup de trophées d'un coup : une seule fenêtre qui les liste tous. -->
+    <div v-if="group.length" :key="`group-${index}`" ref="popin" class="popin group" :class="{ leaving }" :style="flight">
+      <span class="label">{{ group.length }} trophées débloqués&nbsp;!</span>
+      <ul>
+        <li v-for="(t, i) in group" :key="i">
+          <span class="mini" aria-hidden="true"><medal-dot v-if="kindOf(t)" :kind="kindOf(t)!" :size="20" label="" /><template v-else>{{ t.trophy.icon }}</template></span>
+          <span>{{ t.trophy.title }}<template v-if="t.tier"> · {{ TIER_LABELS[t.tier].label }}</template></span>
+        </li>
+      </ul>
+    </div>
+    <div v-else :key="index" ref="popin" class="popin" :class="{ leaving }" :style="flight">
       <span class="label">Trophée débloqué&nbsp;!</span>
       <span class="icon" aria-hidden="true"><medal-ribbon v-if="medalKind && medalKind !== 'goat'" :kind="medalKind" :size="84" /><template v-else>{{ current.trophy.icon }}</template></span>
       <strong>{{ current.trophy.title }}</strong>
@@ -17,13 +27,10 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { TIER_LABELS, type Tier, type Trophy } from '@/games/trophies'
 import MedalDot, { type MedalKind } from './MedalDot.vue'
 import MedalRibbon from './MedalRibbon.vue'
+import { FLY_MS, GROUP_FROM, GROUP_SHOW_MS, SHOW_MS } from './trophyAnnounce'
 
-/** Trophées à annoncer, un par un ; la liste peut s'allonger pendant l'annonce. */
+/** Trophées à annoncer, un par un (ou tous ensemble s'il y en a beaucoup) ; la liste peut s'allonger pendant l'annonce. */
 const props = defineProps<{ queue: { trophy: Trophy; tier?: Tier }[] }>()
-
-/** Durée d'affichage, puis de l'envol vers « Mes trophées » (ms). */
-const SHOW_MS = 2000
-const FLY_MS = 700
 
 const index = ref(0)
 const leaving = ref(false)
@@ -33,7 +40,10 @@ const flight = ref<Record<string, string>>({})
 const current = computed(() => (running.value ? (props.queue[index.value] ?? null) : null))
 /** Médaille de niveau gagnée : son point de couleur à la place de l'emoji. */
 const MEDAL_KINDS: Record<string, MedalKind> = { '🥉': 'debutant', '🥈': 'normal', '🥇': 'expert', '👑': 'impossible' }
-const medalKind = computed(() => (current.value?.trophy.id.startsWith('medal-') ? MEDAL_KINDS[current.value.trophy.icon] : undefined))
+const kindOf = (t: { trophy: Trophy }) => (t.trophy.id.startsWith('medal-') ? MEDAL_KINDS[t.trophy.icon] : undefined)
+const medalKind = computed(() => (current.value ? kindOf(current.value) : undefined))
+/** Annonce groupée en cours : les trophées listés ensemble (vide pour une annonce un par un). */
+const group = ref<{ trophy: Trophy; tier?: Tier }[]>([])
 let timers: ReturnType<typeof setTimeout>[] = []
 
 /** Décalage du centre de la popin jusqu'au bouton « Mes trophées » visible (sinon le coin haut droit). */
@@ -55,15 +65,20 @@ function play() {
   running.value = true
   leaving.value = false
   flight.value = {}
+  // Au départ d'une annonce, beaucoup de trophées d'un coup : tous dans une seule fenêtre.
+  const rest = props.queue.slice(index.value)
+  group.value = index.value === 0 && rest.length >= GROUP_FROM ? rest : []
+  const show = group.value.length ? GROUP_SHOW_MS : SHOW_MS
   timers = [
     setTimeout(() => {
       aimAtTarget()
       leaving.value = true
-    }, SHOW_MS),
+    }, show),
     setTimeout(() => {
-      index.value++
+      index.value += group.value.length || 1
+      group.value = []
       play()
-    }, SHOW_MS + FLY_MS),
+    }, show + FLY_MS),
   ]
 }
 
@@ -155,5 +170,33 @@ strong {
 small {
   color: var(--ion-color-medium);
   font-size: 13px;
+}
+/* La liste de l'annonce groupée. */
+.group ul {
+  width: 100%;
+  max-height: 55vh;
+  margin: 6px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  text-align: left;
+}
+.group li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.group li + li {
+  border-top: 1px solid rgba(45, 48, 71, 0.08);
+}
+.mini {
+  flex: none;
+  width: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
 }
 </style>

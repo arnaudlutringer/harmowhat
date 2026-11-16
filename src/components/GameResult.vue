@@ -137,6 +137,7 @@ import { online } from '@/player/online'
 import { challengeDays, earnedTrophies, evaluateGame, goatGoal, levelMedalWon, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
 import TrophyUnlocked from './TrophyUnlocked.vue'
 import GameUnlocked from './GameUnlocked.vue'
+import { announceMs } from './trophyAnnounce'
 import { recordFinishedGame } from '@/games/unlocks'
 import MedalDot from './MedalDot.vue'
 import MatchResult from './MatchResult.vue'
@@ -192,7 +193,7 @@ function countTrophies() {
   // Jeux à découvrir : la partie compte, et le défi du jour relevé ouvre son jeu ; le nouveau jeu s'annonce après les trophées.
   const won = isTodaysChallenge(props.board) && challengeDays.value.includes(dayNumber()) ? props.board.game : undefined
   const opened = recordFinishedGame(won)
-  if (opened.length) unlockTimer = setTimeout(() => (newGame.value = opened[0]), 400 + unlocked.value.length * 2800)
+  if (opened.length) unlockTimer = setTimeout(() => (newGame.value = opened[0]), 400 + announceMs(unlocked.value.length))
   void askNotificationsOnce()
   // Si le diamant est gagné dans la même partie que l'or, il n'y a plus rien à débloquer.
   diamondUnlocked.value = !hadGold && levelMedalWon(game, 'expert') && !earnedTrophies.value[`goat-${game}`]

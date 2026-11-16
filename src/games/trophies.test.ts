@@ -120,13 +120,37 @@ describe('Trophées', () => {
     ids()
     game({ results: results(Array(10).fill(GOAT_POINTS)) })
     const fast = ids()
-    expect(fast).toEqual(expect.arrayContaining(['rapide', 'tres-rapide', 'fulgurant', 'reflexe']))
+    expect(fast).toEqual(expect.arrayContaining(['rapide', 'tres-rapide', 'fulgurant']))
     expect(fast).not.toContain('goat-grave-ou-aigu')
+    // Éclair : en expert seulement ; Réflexe : 20 réponses rapides d'affilée, d'une partie à l'autre.
+    expect(fast).not.toContain('eclair')
+    expect(fast).not.toContain('reflexe')
     game({ board: { game: 'grave-ou-aigu', level: 'debutant', questions: 10 }, results: results(Array(10).fill(GOAT_POINTS)) })
     expect(ids()).not.toContain('goat-grave-ou-aigu')
     game({ board: { game: 'grave-ou-aigu', level: 'expert', questions: 10 }, results: results(Array(10).fill(GOAT_POINTS)) })
     expect(ids()).toContain('goat-grave-ou-aigu')
     expect(earnedTrophies.value['goat-grave-ou-aigu'].tier).toBe('expert')
+  })
+
+  it('une première partie parfaite en débutant ne donne ni Sans faute ni rapidité ; Réflexe sur 20 réponses d’affilée', () => {
+    const debutant = { game: 'grave-ou-aigu' as const, level: 'debutant', questions: 10 }
+    game({ board: debutant, results: results(Array(10).fill(GOAT_POINTS)) })
+    const first = ids()
+    expect(first).toContain('premiers-pas')
+    expect(first).toContain('medal-grave-ou-aigu')
+    for (const id of ['sans-faute', 'rapide', 'tres-rapide', 'fulgurant', 'eclair']) expect(first).not.toContain(id)
+    // Les 10 réponses rapides de la première partie comptent : 10 de plus en font 20.
+    expect(first).not.toContain('reflexe')
+    game({ board: debutant, results: results(Array(10).fill(9500)) })
+    expect(ids()).toContain('reflexe')
+    game({ board: { ...debutant, level: 'expert' }, results: results(Array(10).fill(GOAT_POINTS)) })
+    expect(ids()).toEqual(expect.arrayContaining(['eclair', 'sans-faute', 'fulgurant']))
+  })
+
+  it('une réponse lente interrompt la série du Réflexe', () => {
+    game({ results: results(Array(15).fill(9500)), board: { game: 'grave-ou-aigu', level: 'normal', questions: 15 } })
+    game({ results: results([...Array(3).fill(9500), 5000, ...Array(6).fill(9500)]) })
+    expect(ids()).not.toContain('reflexe')
   })
 
   it('une mauvaise réponse empêche les trophées de rapidité', () => {
