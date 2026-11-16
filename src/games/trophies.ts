@@ -506,6 +506,12 @@ export function trophyEvent(e: TrophyEvent): void {
   save(state)
 }
 
+/** Jours de suite joués et dernier jour joué (date ISO) : pour le rappel « série en danger ». */
+export function playStreak(): { lastDay: string; streak: number } {
+  const s = load().stats
+  return { lastDay: s.lastDay, streak: s.streak }
+}
+
 /** Nombre de questionnaires terminés dans ce jeu (au moins 1 s'il y a déjà joué avant ce décompte). */
 export function gamesPlayed(game: GameId): number {
   const s = load().stats

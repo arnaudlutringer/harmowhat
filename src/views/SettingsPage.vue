@@ -2,7 +2,7 @@
   <ion-page>
     <ion-content class="ion-padding">
       <page-nav title="Paramètres" />
-      <!-- Trois onglets : l'instrument (et sa musique de fin), Mon compte (nom et pays du joueur), l'affichage (thème). -->
+      <!-- Trois onglets : l'instrument (et sa musique de fin), Mon compte (nom et pays du joueur), l'affichage (thème et rappels). -->
       <ion-segment :value="tab" class="tabs" @ion-change="switchTab($event.detail.value as Tab)">
         <ion-segment-button value="instrument">
           <ion-label>{{ instrument.emoji }} Instrument</ion-label>
@@ -28,6 +28,26 @@
             </ion-radio>
           </ion-item>
         </ion-radio-group>
+
+        <h2 class="section">Rappels</h2>
+        <ion-item lines="full">
+          <ion-toggle :checked="reminderSettings.enabled" justify="space-between" @ion-change="setReminderSettings({ enabled: $event.detail.checked })">
+            <ion-label class="ion-text-wrap">
+              <strong>Me rappeler de jouer</strong>
+              <p>Le défi du jour, et ta série de jours à ne pas casser.</p>
+            </ion-label>
+          </ion-toggle>
+        </ion-item>
+        <ion-item v-if="reminderSettings.enabled" lines="full">
+          <ion-select
+            label="Heure du défi du jour"
+            interface="popover"
+            :value="reminderSettings.hour"
+            @ion-change="setReminderSettings({ hour: Number($event.detail.value) })"
+          >
+            <ion-select-option v-for="h in REMINDER_HOURS" :key="h" :value="h">{{ h }} h</ion-select-option>
+          </ion-select>
+        </ion-item>
       </div>
       <div v-else class="settings hw-square">
         <!-- Changement en deux écrans, comme dans le tutoriel : l'instrument, puis le morceau. -->
@@ -97,7 +117,8 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import {
-  IonButton, IonContent, IonIcon, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, onIonViewWillEnter,
+  IonButton, IonContent, IonIcon, IonItem, IonLabel, IonPage, IonRadio, IonRadioGroup, IonSegment, IonSegmentButton, IonSelect,
+  IonSelectOption, IonToggle, onIonViewWillEnter,
   onIonViewWillLeave,
 } from '@ionic/vue'
 import { chevronBack, play, stop } from 'ionicons/icons'
@@ -113,6 +134,10 @@ import { usePlaying } from '@/composables/usePlaying'
 import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding, type Ending, type EndingId } from '@/music/endings'
 import { trophyEvent } from '@/games/trophies'
 import { setThemeMode, THEME_MODES, themeMode } from '@/theme/theme'
+import { reminderSettings, setReminderSettings } from '@/notifications/reminders'
+
+/** Heures proposées pour le rappel du défi du jour. */
+const REMINDER_HOURS = [8, 10, 12, 14, 16, 17, 18, 19, 20, 21]
 
 // Onglet ouvert : celui demandé par le lien (?onglet=joueur, depuis l'accueil ou la fin de partie), sinon l'instrument.
 type Tab = 'instrument' | 'joueur' | 'affichage'
@@ -287,5 +312,13 @@ onIonViewWillLeave(stopAll)
 }
 .list .piece small {
   display: block;
+}
+.section {
+  margin: 24px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ion-color-medium);
 }
 </style>

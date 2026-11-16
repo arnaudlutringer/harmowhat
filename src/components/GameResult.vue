@@ -138,6 +138,7 @@ import MedalDot from './MedalDot.vue'
 import MatchResult from './MatchResult.vue'
 import { shareImage } from '@/share/shareImage'
 import { track } from '@/games/tracking'
+import { askNotificationsOnce } from '@/notifications/reminders'
 import { dayNumber, isTodaysChallenge } from '@/games/dailyChallenge'
 
 const props = defineProps<{
@@ -176,6 +177,7 @@ function countTrophies() {
     challengeDay: isTodaysChallenge(props.board) ? dayNumber() : undefined,
   })
   unlocked.value = takePendingTrophies()
+  void askNotificationsOnce()
   // Si le diamant est gagné dans la même partie que l'or, il n'y a plus rien à débloquer.
   diamondUnlocked.value = !hadGold && levelMedalWon(game, 'expert') && !earnedTrophies.value[`goat-${game}`]
 }

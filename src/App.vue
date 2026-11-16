@@ -17,6 +17,8 @@ import { App } from '@capacitor/app'
 import { setAppInBackground, stopAll } from '@/audio/engine'
 import { syncWorldScores } from '@/games/worldScores'
 import { flushEvents } from '@/games/tracking'
+import { onReminderTapped, rescheduleReminders } from '@/notifications/reminders'
+import { todaysChallenge } from '@/games/dailyChallenge'
 import { online } from '@/player/online'
 import { featureEnabled } from '@/config/features'
 import { parseCode, refreshUnseen } from '@/games/matches'
@@ -46,6 +48,11 @@ void App.addListener('resume', () => void syncWorldScores()).catch(() => {})
 // Mesure d'utilisation : les actions notées hors connexion partent au lancement et au retour dans l'appli.
 void flushEvents()
 void App.addListener('resume', () => void flushEvents()).catch(() => {})
+
+// Rappels (notifications sur le téléphone) : reprogrammés à l'ouverture et au retour dans l'appli.
+void rescheduleReminders()
+void App.addListener('resume', () => void rescheduleReminders()).catch(() => {})
+onReminderTapped(() => void router.push(todaysChallenge().href))
 // Retour de la connexion : les scores en attente partent, et les classements en cache se rechargent.
 watch(online, (now) => now && void syncWorldScores())
 
