@@ -328,9 +328,27 @@ onIonViewWillLeave(stopAll)
   gap: 16px;
   text-align: center;
 }
+/* Le bouton principal de chaque étape : même style que « Commencer » et « Rejouer » dans les jeux. */
 .step > ion-button {
   width: 100%;
+  height: auto;
   margin-top: 16px;
+  --background: linear-gradient(135deg, #7d6cf2, #4b3fd1);
+  --background-activated: linear-gradient(135deg, #6b5ae6, #3f33c0);
+  --background-focused: linear-gradient(135deg, #7d6cf2, #4b3fd1);
+  --background-hover: linear-gradient(135deg, #7d6cf2, #4b3fd1);
+  --color: #fff;
+  --border-radius: 18px;
+  --box-shadow: 0 10px 22px rgba(76, 63, 209, 0.35);
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.step > ion-button[disabled] {
+  --box-shadow: none;
 }
 .logo {
   width: 96px;
