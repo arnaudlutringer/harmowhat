@@ -41,6 +41,8 @@ import { LA_CUCARACHA, LA_CUCARACHA_EIGHTH } from './laCucaracha'
 import { CARMEN_ENTRACTE, CARMEN_ENTRACTE_BEAT } from './carmenEntracte'
 import { DANNY_BOY, DANNY_BOY_BEAT } from './dannyBoy'
 import { BLESSED_SPIRITS, BLESSED_SPIRITS_BEAT } from './blessedSpirits'
+import { HALLELUJAH, HALLELUJAH_BEAT } from './hallelujah'
+import { ODE_TO_JOY, ODE_TO_JOY_BEAT, SILENT_NIGHT, SILENT_NIGHT_BEAT, SWING_LOW, SWING_LOW_BEAT } from './choirTunes'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -73,6 +75,7 @@ export type EndingId =
   | 'elise'| 'moonlight' | 'turkish-march' | 'piano-jazz' | 'maple-leaf'
   | 'bach-prelude' | 'swan' | 'dvorak' | 'hedwig'
   | 'te-deum' | 'taps' | 'saints' | 'la-cucaracha'
+  | 'hallelujah' | 'ode-to-joy' | 'swing-low' | 'silent-night'
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
   | 'morning' | 'faune' | 'badinerie' | 'carmen-entracte' | 'danny-boy' | 'blessed-spirits'
   | 'rising-sun' | 'paganini-24' | 'mountain-king'
@@ -132,6 +135,10 @@ const PIECES: Record<EndingId, Ending> = {
   taps: { id: 'taps', title: 'Taps (sonnerie aux morts américaine)', composer: 'Traditionnel', notes: TAPS, unit: TAPS_EIGHTH },
   saints: { id: 'saints', title: 'When the Saints Go Marching In', composer: 'Traditionnel', notes: SAINTS, unit: SAINTS_BEAT },
   'la-cucaracha': { id: 'la-cucaracha', title: 'La Cucaracha', composer: 'chanson populaire mexicaine', notes: LA_CUCARACHA, unit: LA_CUCARACHA_EIGHTH },
+  hallelujah: { id: 'hallelujah', title: 'Hallelujah (Le Messie)', composer: 'Haendel', notes: HALLELUJAH, unit: HALLELUJAH_BEAT },
+  'ode-to-joy': { id: 'ode-to-joy', title: 'L’Ode à la joie', composer: 'Beethoven', notes: ODE_TO_JOY, unit: ODE_TO_JOY_BEAT },
+  'swing-low': { id: 'swing-low', title: 'Swing Low, Sweet Chariot', composer: 'Gospel traditionnel', notes: SWING_LOW, unit: SWING_LOW_BEAT },
+  'silent-night': { id: 'silent-night', title: 'Douce nuit', composer: 'Gruber', notes: SILENT_NIGHT, unit: SILENT_NIGHT_BEAT },
   spring: { id: 'spring', title: 'Le Printemps', composer: 'Vivaldi', notes: SPRING, unit: SPRING_BEAT },
   skaters: { id: 'skaters', title: 'Les Patineurs', composer: 'Waldteufel', notes: SKATERS, unit: SKATERS_BEAT },
   'valse-musette': {
@@ -161,7 +168,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   flute: ['morning', 'faune', 'badinerie', 'carmen-entracte', 'danny-boy', 'blessed-spirits'],
   'electric-guitar': ['rising-sun', 'paganini-24', 'mountain-king'],
   // Au chœur, des morceaux dans sa tessiture : le Te Deum de Charpentier, Bella ciao, le Cygne en legato.
-  choir: ['te-deum'],
+  choir: ['te-deum', 'hallelujah', 'ode-to-joy', 'swing-low', 'silent-night'],
 }
 
 /**

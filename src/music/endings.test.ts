@@ -37,9 +37,26 @@ describe('Musique de fin', () => {
     expect(INSTRUMENT_ENDINGS.cello).toEqual(['bach-prelude', 'swan', 'dvorak', 'hedwig'])
     expect(INSTRUMENT_ENDINGS.trumpet).toEqual(['te-deum', 'taps', 'saints', 'la-cucaracha'])
     // Chœur : Bella ciao et le Cygne retirés ; un joueur qui les avait choisis revient au Te Deum.
-    expect(INSTRUMENT_ENDINGS.choir).toEqual(['te-deum'])
+    expect(INSTRUMENT_ENDINGS.choir).toEqual(['te-deum', 'hallelujah', 'ode-to-joy', 'swing-low', 'silent-night'])
     expect(endingFor('choir', { choir: 'swan' }).id).toBe('te-deum')
     expect(INSTRUMENT_ENDINGS.accordion).toEqual(['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'])
+  })
+
+  it('chœur : Hallelujah à quatre voix, l’Ode à la joie, Swing Low et Douce nuit, une dizaine de secondes', () => {
+    expect(ENDINGS.hallelujah.notes.filter((n) => n.at === 0).length).toBe(4)
+    expect(ENDINGS['ode-to-joy'].notes.slice(0, 4).map((n) => pitchClassName(n.midi))).toEqual(['Fa♯', 'Fa♯', 'Sol', 'La'])
+    expect(ENDINGS['swing-low'].notes.slice(0, 4).map((n) => pitchClassName(n.midi))).toEqual(['Si', 'Sol', 'Si', 'Sol'])
+    expect(ENDINGS['silent-night'].notes.slice(0, 4).map((n) => pitchClassName(n.midi))).toEqual(['Sol', 'La', 'Sol', 'Mi'])
+    for (const id of ['hallelujah', 'ode-to-joy', 'swing-low', 'silent-night'] as const) {
+      const { notes, unit } = ENDINGS[id]
+      const end = Math.max(...notes.map((n) => n.at + n.len)) * unit
+      expect(end).toBeGreaterThan(8)
+      expect(end).toBeLessThanOrEqual(10)
+      for (const n of notes) {
+        expect(n.midi).toBeGreaterThanOrEqual(INSTRUMENTS.choir.low)
+        expect(n.midi).toBeLessThanOrEqual(INSTRUMENTS.choir.high)
+      }
+    }
   })
 
   it('trompette : When the Saints (sol si do ré) et La Cucaracha (ré ré ré sol si), une dizaine de secondes', () => {
