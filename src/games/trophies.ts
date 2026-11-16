@@ -506,6 +506,12 @@ export function trophyEvent(e: TrophyEvent): void {
   save(state)
 }
 
+/** Le joueur a-t-il déjà terminé au moins une partie (quel que soit le jeu) ? */
+export function hasFinishedAnyGame(): boolean {
+  const s = load().stats
+  return s.games > 0 || s.played.length > 0
+}
+
 /** Jours de suite joués et dernier jour joué (date ISO) : pour le rappel « série en danger ». */
 export function playStreak(): { lastDay: string; streak: number } {
   const s = load().stats

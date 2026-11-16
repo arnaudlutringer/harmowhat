@@ -24,17 +24,35 @@
       <button v-else class="daily" @click="router.push(challenge.href)">
         <ion-icon class="daily-icon" :icon="GAME_ICONS[challenge.board.game]" aria-hidden="true" />
         <span class="daily-text">
-          <small>DÉFI DU JOUR · {{ challenge.board.questions }} QUESTIONS</small>
+          <small>DÉFI DU JOUR · {{ isUnlocked(challenge.board.game) ? `${challenge.board.questions} QUESTIONS` : 'DÉCOUVRE UN JEU' }}</small>
           <strong>{{ challenge.title }} · {{ challenge.level }}</strong>
         </span>
         <span class="daily-note" aria-hidden="true">♪</span>
+      </button>
+
+      <!-- Jeux à découvrir : l'avancée, tant que tous ne sont pas ouverts. -->
+      <button v-if="nextUnlock" type="button" class="discovery" @click="explainLocked(nextUnlock.game)">
+        <span aria-hidden="true">🗝️</span>
+        <span><b>{{ unlockProgress.open }} jeux sur {{ unlockProgress.total }}</b> · le prochain dans {{ nextUnlock.remaining }} partie{{ nextUnlock.remaining > 1 ? 's' : '' }}</span>
       </button>
 
       <!-- Tous les jeux, rangés par catégorie : une ligne par paire de jeux, pour les voir d'un coup d'œil. -->
       <section v-for="category in categories" :key="category.title" class="category">
         <h2>{{ category.title }}</h2>
         <div class="games">
-          <router-link v-for="game in category.games" :key="game.path" :to="game.path" class="card" :style="{ background: category.color }" :title="SUMMARIES[idOf(game.path)]">
+          <template v-for="game in category.games" :key="game.path">
+          <!-- Jeu encore fermé : grisé, avec un cadenas ; le prochain à s'ouvrir est mis en avant. -->
+          <button v-if="!category.tests && !isUnlocked(idOf(game.path))" type="button" class="card locked" :class="{ next: nextUnlock?.game === idOf(game.path) }" @click="explainLocked(idOf(game.path))">
+            <span class="head">
+              <span class="disc" aria-hidden="true">🔒</span>
+              <strong>{{ game.title }}</strong>
+            </span>
+            <span class="strip">
+              <small v-if="nextUnlock?.game === idOf(game.path)">🗝️ Encore {{ nextUnlock.remaining }} partie{{ nextUnlock.remaining > 1 ? 's' : '' }}</small>
+              <small v-else>À découvrir</small>
+            </span>
+          </button>
+          <router-link v-else :to="game.path" class="card" :style="{ background: category.color }" :title="SUMMARIES[idOf(game.path)]">
             <span class="head">
               <span class="disc"><ion-icon :icon="game.icon" aria-hidden="true" /></span>
               <strong>{{ game.title }}</strong>
@@ -49,6 +67,7 @@
               </span>
             </span>
           </router-link>
+          </template>
         </div>
       </section>
     </ion-content>
@@ -68,6 +87,7 @@ import { SUMMARIES } from '@/games/intros'
 import type { GameId } from '@/games/highScores'
 import { dayNumber, todaysChallenge } from '@/games/dailyChallenge'
 import { featureEnabled, gameEnabled } from '@/config/features'
+import { isUnlocked, nextUnlock, unlockProgress } from '@/games/unlocks'
 import { challengeDays, challengeScores, currentStreak, diamondShown, earnedTrophies, gamesPlayed, impossibleUnlocked, LEVEL_MEDALS, levelMedalWon, type Tier } from '@/games/trophies'
 
 const router = useIonRouter()
@@ -105,6 +125,16 @@ const streakText = computed(() => {
 })
 async function explainStreak() {
   const toast = await toastController.create({ message: `🔥 ${streakText.value}`, duration: 2500, position: 'top' })
+  await toast.present()
+}
+/** Toucher un jeu fermé : quand il s'ouvrira. */
+async function explainLocked(game: GameId) {
+  const next = nextUnlock.value
+  const message =
+    next?.game === game
+      ? `🔒 Encore ${next.remaining} partie${next.remaining > 1 ? 's' : ''} pour découvrir ce jeu !`
+      : '🔒 Un nouveau jeu s’ouvre toutes les 2 parties terminées : continue à jouer pour découvrir celui-ci.'
+  const toast = await toastController.create({ message, duration: 2500, position: 'top' })
   await toast.present()
 }
 function playsOf(path: string) {
@@ -449,5 +479,53 @@ h1 {
 .streak.none .flame {
   filter: grayscale(1);
   opacity: 0.45;
+}
+/* Jeux à découvrir : l'avancée, sous le défi du jour. */
+.discovery {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 14px;
+  background: var(--hw-button-active);
+  color: var(--hw-button-text);
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.discovery span:first-child {
+  font-size: 18px;
+}
+/* Jeu encore fermé : une tuile grise, le cadenas à la place de l'icône. */
+.card.locked {
+  border: none;
+  padding: 0;
+  background: #ebe7df;
+  color: #8a8597;
+  font-family: inherit;
+  text-align: left;
+  box-shadow: none;
+  cursor: pointer;
+}
+.card.locked .disc {
+  background: #f6f3ee;
+  font-size: 16px;
+}
+.card.locked .strip {
+  background: #f6f3ee;
+  color: #8a8597;
+}
+/* Le prochain à s'ouvrir : un peu plus marqué. */
+.card.locked.next {
+  background: #e2ddd3;
+}
+.card.locked.next .strip {
+  background: var(--hw-button-active);
+  color: var(--hw-button-text);
+  font-weight: 600;
 }
 </style>

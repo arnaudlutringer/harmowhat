@@ -48,6 +48,13 @@
             <ion-select-option v-for="h in REMINDER_HOURS" :key="h" :value="h">{{ h }} h</ion-select-option>
           </ion-select>
         </ion-item>
+
+        <!-- Jeux à découvrir : pour les musiciens qui ne veulent pas attendre. -->
+        <template v-if="!allUnlocked">
+          <h2 class="section">Jeux</h2>
+          <p class="unlock-info">{{ unlockProgress.open }} jeux ouverts sur {{ unlockProgress.total }} : un nouveau s'ouvre toutes les 2 parties.</p>
+          <ion-button expand="block" fill="outline" @click="confirmUnlockAll">Tout débloquer</ion-button>
+        </template>
       </div>
       <div v-else class="settings hw-square">
         <!-- Changement en deux écrans, comme dans le tutoriel : l'instrument, puis le morceau. -->
@@ -135,6 +142,20 @@ import { chooseEnding, chosenEndings, endingFor, endingsFor, playEnding, type En
 import { trophyEvent } from '@/games/trophies'
 import { setThemeMode, THEME_MODES, themeMode } from '@/theme/theme'
 import { reminderSettings, setReminderSettings } from '@/notifications/reminders'
+import { allUnlocked, unlockAll, unlockProgress } from '@/games/unlocks'
+import { alertController } from '@ionic/vue'
+
+async function confirmUnlockAll() {
+  const alert = await alertController.create({
+    header: 'Tout débloquer ?',
+    message: 'Les 16 jeux seront ouverts tout de suite, sans les découvrir au fil des parties.',
+    buttons: [
+      { text: 'Annuler', role: 'cancel' },
+      { text: 'Tout débloquer', role: 'confirm', handler: () => unlockAll() },
+    ],
+  })
+  await alert.present()
+}
 
 /** Heures proposées pour le rappel du défi du jour. */
 const REMINDER_HOURS = [8, 10, 12, 14, 16, 17, 18, 19, 20, 21]
@@ -319,6 +340,11 @@ onIonViewWillLeave(stopAll)
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
+  color: var(--ion-color-medium);
+}
+.unlock-info {
+  margin: 0 0 10px;
+  font-size: 14px;
   color: var(--ion-color-medium);
 }
 </style>

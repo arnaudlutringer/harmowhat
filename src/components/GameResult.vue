@@ -6,6 +6,8 @@
       Trophées
     </button>
     <trophy-unlocked :queue="unlocked" />
+    <!-- Nouveau jeu débloqué : annoncé après les trophées. -->
+    <game-unlocked :game="newGame" @try="tryNewGame" @close="newGame = null" />
     <img class="emoji" :src="tierImage" alt="" />
     <h1>{{ summary.points }} <span class="pts">pts</span></h1>
     <p v-if="answersLabel" class="answers">{{ answersLabel }}</p>
@@ -126,14 +128,16 @@ import { drunk } from '@/music/drunk'
 import { ENDING_SECONDS, endingFor } from '@/music/endings'
 import { selectedInstrument } from '@/audio/instruments'
 import {
-  cleanName, GAMES, getScores, lastPlayerName, levelLabel, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board,
+  cleanName, GAMES, getScores, lastPlayerName, levelLabel, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board, type GameId,
 } from '@/games/highScores'
 import { cachedBoard, fetchBoard, submitScore, worldEnabled } from '@/games/worldScores'
 import { countryByCode } from '@/player/countries'
 import { profile } from '@/player/profile'
 import { online } from '@/player/online'
-import { earnedTrophies, evaluateGame, goatGoal, levelMedalWon, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
+import { challengeDays, earnedTrophies, evaluateGame, goatGoal, levelMedalWon, takePendingTrophies, type Tier, type Trophy } from '@/games/trophies'
 import TrophyUnlocked from './TrophyUnlocked.vue'
+import GameUnlocked from './GameUnlocked.vue'
+import { recordFinishedGame } from '@/games/unlocks'
 import MedalDot from './MedalDot.vue'
 import MatchResult from './MatchResult.vue'
 import { shareImage } from '@/share/shareImage'
@@ -164,6 +168,14 @@ const summary = computed(() => summarize(props.results))
 
 // Trophées : la partie est comptée une fois, à l'arrivée sur cet écran ; les nouveaux trophées s'annoncent un par un.
 const unlocked = ref<{ trophy: Trophy; tier?: Tier }[]>([])
+const newGame = ref<GameId | null>(null)
+let unlockTimer: ReturnType<typeof setTimeout> | undefined
+onBeforeUnmount(() => clearTimeout(unlockTimer))
+function tryNewGame(game: GameId) {
+  newGame.value = null
+  stopAll()
+  router.push(`/games/${game}`)
+}
 const diamondUnlocked = ref(false)
 function countTrophies() {
   const game = props.board.game
@@ -177,6 +189,10 @@ function countTrophies() {
     challengeDay: isTodaysChallenge(props.board) ? dayNumber() : undefined,
   })
   unlocked.value = takePendingTrophies()
+  // Jeux à découvrir : la partie compte, et le défi du jour relevé ouvre son jeu ; le nouveau jeu s'annonce après les trophées.
+  const won = isTodaysChallenge(props.board) && challengeDays.value.includes(dayNumber()) ? props.board.game : undefined
+  const opened = recordFinishedGame(won)
+  if (opened.length) unlockTimer = setTimeout(() => (newGame.value = opened[0]), 400 + unlocked.value.length * 2800)
   void askNotificationsOnce()
   // Si le diamant est gagné dans la même partie que l'or, il n'y a plus rien à débloquer.
   diamondUnlocked.value = !hadGold && levelMedalWon(game, 'expert') && !earnedTrophies.value[`goat-${game}`]

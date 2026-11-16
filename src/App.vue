@@ -17,6 +17,8 @@ import { App } from '@capacitor/app'
 import { setAppInBackground, stopAll } from '@/audio/engine'
 import { syncWorldScores } from '@/games/worldScores'
 import { flushEvents } from '@/games/tracking'
+import { initUnlocks } from '@/games/unlocks'
+import { hasFinishedAnyGame } from '@/games/trophies'
 import { onReminderTapped, rescheduleReminders } from '@/notifications/reminders'
 import { todaysChallenge } from '@/games/dailyChallenge'
 import { online } from '@/player/online'
@@ -24,6 +26,9 @@ import { featureEnabled } from '@/config/features'
 import { parseCode, refreshUnseen } from '@/games/matches'
 
 const router = useRouter()
+
+// Jeux à découvrir : un joueur qui a déjà joué garde tous ses jeux ouverts.
+initUnlocks(hasFinishedAnyGame)
 const ionRouter = useIonRouter()
 
 // Bouton retour du téléphone (Android). Sans écouteur, Capacitor ne prévient pas Ionic et l'appli se ferme :
