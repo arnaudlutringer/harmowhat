@@ -78,7 +78,20 @@ describe('Musique de fin', () => {
     expect(first('morning', 6)).toEqual(['Si', 'Sol♯', 'Fa♯', 'Mi', 'Fa♯', 'Sol♯'])
     expect(first('faune', 7)).toEqual(['Do♯', 'Do', 'Si', 'La♯', 'La', 'Sol♯', 'Sol'])
     expect(first('badinerie', 6)).toEqual(['Si', 'Ré', 'Si', 'Fa♯', 'Si', 'Fa♯'])
-    expect(INSTRUMENT_ENDINGS.flute).toEqual(['morning', 'faune', 'badinerie'])
+    expect(INSTRUMENT_ENDINGS.flute).toEqual(['morning', 'faune', 'badinerie', 'carmen-entracte', 'danny-boy', 'blessed-spirits'])
+    expect(first('carmen-entracte', 6)).toEqual(['Ré♯', 'Fa', 'Sol♯', 'Sol', 'Fa', 'Ré♯'])
+    expect(first('danny-boy', 5)).toEqual(['Mi', 'Fa', 'Sol', 'La', 'Sol'])
+    expect(first('blessed-spirits', 6)).toEqual(['Do', 'La', 'La♯', 'Do', 'Fa', 'Fa'])
+    for (const id of ['carmen-entracte', 'danny-boy', 'blessed-spirits'] as const) {
+      const { notes, unit } = ENDINGS[id]
+      const end = Math.max(...notes.map((n) => n.at + n.len)) * unit
+      expect(end).toBeGreaterThan(9)
+      expect(end).toBeLessThanOrEqual(10)
+      for (const n of notes) {
+        expect(n.midi).toBeGreaterThanOrEqual(INSTRUMENTS.flute.low)
+        expect(n.midi).toBeLessThanOrEqual(INSTRUMENTS.flute.high)
+      }
+    }
     expect(first('rising-sun', 6)).toEqual(['La', 'Ré', 'Mi', 'Ré', 'Fa', 'Sol'])
     expect(first('paganini-24', 6)).toEqual(['La', 'La', 'La', 'Do', 'Si', 'La'])
     expect(first('mountain-king', 7)).toEqual(['Si', 'Do♯', 'Ré', 'Mi', 'Fa♯', 'Ré', 'Fa♯'])

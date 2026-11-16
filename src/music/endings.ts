@@ -38,6 +38,9 @@ import { CSARDAS, CSARDAS_SIXTEENTH } from './csardas'
 import { IRISH_WASHERWOMAN, IRISH_WASHERWOMAN_EIGHTH } from './irishWasherwoman'
 import { SAINTS, SAINTS_BEAT } from './saints'
 import { LA_CUCARACHA, LA_CUCARACHA_EIGHTH } from './laCucaracha'
+import { CARMEN_ENTRACTE, CARMEN_ENTRACTE_BEAT } from './carmenEntracte'
+import { DANNY_BOY, DANNY_BOY_BEAT } from './dannyBoy'
+import { BLESSED_SPIRITS, BLESSED_SPIRITS_BEAT } from './blessedSpirits'
 
 /**
  * Musiques de fin de partie : chaque instrument propose un ou plusieurs morceaux (les 10 premières
@@ -71,7 +74,7 @@ export type EndingId =
   | 'bach-prelude' | 'swan' | 'dvorak' | 'hedwig'
   | 'te-deum' | 'taps' | 'saints' | 'la-cucaracha'
   | 'skaters' | 'over-the-waves' | 'blue-danube' | 'valse-musette'
-  | 'morning' | 'faune' | 'badinerie'
+  | 'morning' | 'faune' | 'badinerie' | 'carmen-entracte' | 'danny-boy' | 'blessed-spirits'
   | 'rising-sun' | 'paganini-24' | 'mountain-king'
   | 'mendelssohn' | 'danse-macabre' | 'csardas' | 'irish-washerwoman'
   | 'rhapsody' | 'hava-nagila' | 'greensleeves' | 'gran-vals' | 'asturias'
@@ -105,6 +108,9 @@ const PIECES: Record<EndingId, Ending> = {
   morning: { id: 'morning', title: 'Au matin (Peer Gynt)', composer: 'Grieg', notes: MORNING_MOOD, unit: MORNING_EIGHTH },
   faune: { id: 'faune', title: 'Prélude à l’après-midi d’un faune', composer: 'Debussy', notes: FAUNE, unit: FAUNE_EIGHTH },
   badinerie: { id: 'badinerie', title: 'Badinerie', composer: 'Bach', notes: BADINERIE, unit: BADINERIE_SIXTEENTH },
+  'carmen-entracte': { id: 'carmen-entracte', title: 'Entracte de Carmen (acte III)', composer: 'Bizet', notes: CARMEN_ENTRACTE, unit: CARMEN_ENTRACTE_BEAT },
+  'danny-boy': { id: 'danny-boy', title: 'Danny Boy', composer: 'Traditionnel irlandais', notes: DANNY_BOY, unit: DANNY_BOY_BEAT },
+  'blessed-spirits': { id: 'blessed-spirits', title: 'Danse des esprits bienheureux', composer: 'Gluck', notes: BLESSED_SPIRITS, unit: BLESSED_SPIRITS_BEAT },
   'rising-sun': { id: 'rising-sun', title: 'The House of the Rising Sun', composer: 'Traditionnel', notes: RISING_SUN, unit: RISING_SUN_BEAT },
   'paganini-24': { id: 'paganini-24', title: 'Caprice n° 24', composer: 'Paganini', notes: PAGANINI_24, unit: PAGANINI_SIXTEENTH },
   'mountain-king': {
@@ -152,7 +158,7 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
   trumpet: ['te-deum', 'taps', 'saints', 'la-cucaracha'],
   accordion: ['skaters', 'over-the-waves', 'blue-danube', 'valse-musette'],
   guitar: ['romance', 'gran-vals', 'greensleeves', 'asturias'],
-  flute: ['morning', 'faune', 'badinerie'],
+  flute: ['morning', 'faune', 'badinerie', 'carmen-entracte', 'danny-boy', 'blessed-spirits'],
   'electric-guitar': ['rising-sun', 'paganini-24', 'mountain-king'],
   // Au chœur, des morceaux dans sa tessiture : le Te Deum de Charpentier, Bella ciao, le Cygne en legato.
   choir: ['te-deum', 'bella-ciao', 'swan'],
