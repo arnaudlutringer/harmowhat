@@ -196,11 +196,43 @@ onBeforeUnmount(stopListening)
 .error {
   color: var(--ion-color-danger);
 }
+/* Les boutons au style des jeux : le principal en dégradé violet, le secondaire en blanc, l'un sous l'autre. */
 .buttons {
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+.buttons ion-button {
+  width: 100%;
+  height: auto;
+  margin: 0;
+  --border-radius: 18px;
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.buttons ion-button.button-solid {
+  --background: linear-gradient(135deg, #7d6cf2, #4b3fd1);
+  --background-activated: linear-gradient(135deg, #6b5ae6, #3f33c0);
+  --background-focused: linear-gradient(135deg, #7d6cf2, #4b3fd1);
+  --background-hover: linear-gradient(135deg, #7d6cf2, #4b3fd1);
+  --color: #fff;
+  --box-shadow: 0 10px 22px rgba(76, 63, 209, 0.35);
+  font-size: 18px;
+}
+.buttons ion-button.button-outline {
+  --background: var(--hw-surface, #fff);
+  --color: var(--ion-color-primary);
+  --border-width: 0;
+  --box-shadow: 0 4px 10px rgba(45, 48, 71, 0.1);
+  --padding-top: 14px;
+  --padding-bottom: 14px;
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 /* Niveau du micro : s'il ne bouge pas quand tu parles, le son n'arrive pas. */
 .level {
