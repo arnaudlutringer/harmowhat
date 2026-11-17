@@ -55,7 +55,9 @@ describe('Meilleurs scores', () => {
     expect(playHref({ game: 'harmonies', level: 'normal-simple', questions: 10 })).toBe('/games/harmonies/jouer?questions=10&level=normal&precision=simple')
     expect(playHref({ game: 'quelle-note', level: 'expert', questions: 30 })).toBe('/games/quelle-note/pret?questions=30&level=expert')
     expect(playHref({ game: 'accords', level: 'expert', questions: 10 })).toBe('/games/accords/jouer?questions=10&level=expert')
-    expect(playHref({ game: 'grave-ou-aigu', level: 'normal', questions: 20 })).toBe('/games/grave-ou-aigu/jouer?questions=20&level=normal')
+    // Grave ou aigu en normal : le diapason seulement avant la partie, sur l'écran « Je suis prêt ».
+    expect(playHref({ game: 'grave-ou-aigu', level: 'normal', questions: 20 })).toBe('/games/grave-ou-aigu/pret?questions=20&level=normal')
+    expect(playHref({ game: 'grave-ou-aigu', level: 'debutant', questions: 20 })).toBe('/games/grave-ou-aigu/jouer?questions=20&level=debutant')
     expect(playHref({ game: 'lecture-note', level: 'intermediaire', questions: 30 })).toBe('/games/lecture-note/jouer?questions=30&level=intermediaire')
     expect(scoresHref({ game: 'accords', level: 'unique', questions: 20 }, 2)).toBe('/scores/accords?level=unique&questions=20&rang=2')
   })

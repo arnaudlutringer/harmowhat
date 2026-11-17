@@ -6,7 +6,7 @@
     :board="{ game: 'grave-ou-aigu', level: settings.level, questions: settings.questions }"
     settings-href="/games/grave-ou-aigu"
     :advance-bar="ADVANCE_DELAY"
-    :no-tuning-fork="level.randomReference"
+    :no-tuning-fork="level.randomReference || level.forkBeforeOnly"
     :reference-note="level.randomReference ? { midi: quiz.question.value.reference, instrument: referenceInstrument } : undefined"
   >
     <!-- La question nomme la note de référence, en gras violet. -->

@@ -7,7 +7,7 @@ import type { GameId } from './highScores'
 export const INTROS: Record<GameId, string[]> = {
   'grave-ou-aigu': [
     'Une note est jouée : dis si elle est plus grave ou plus aiguë que le La3 du diapason (440 Hz).',
-    'Le bouton diapason, en haut de l’écran, te fait réentendre le La3 pour comparer.',
+    'En débutant, le bouton diapason, en haut de l’écran, te fait réentendre le La3 pour comparer. En normal, tu ne l’entends qu’avant la partie.',
     'En expert et en Impossible, deux notes sont jouées : dis si la deuxième est plus grave ou plus aiguë que la première.',
   ],
   'quelle-note': [

@@ -209,6 +209,8 @@ export function cleanName(raw: string): string {
 export function playHref({ game, level, questions }: Board): string {
   if (game === 'quelle-note' || game === 'chante-note') return afterSettings(game, level === 'expert', `questions=${questions}&level=${level}`)
   if (game === 'lis-chante') return afterSettings(game, true, `questions=${questions}&level=${level}`)
+  // « Grave ou aigu ? » en normal : le diapason ne s'écoute qu'avant la partie.
+  if (game === 'grave-ou-aigu') return afterSettings(game, level === 'normal', `questions=${questions}&level=${level}`)
   if (game === 'harmonies') {
     const [lvl, precision] = level.split('-')
     return `/games/harmonies/jouer?questions=${questions}&level=${lvl}&precision=${precision}`

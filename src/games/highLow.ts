@@ -20,13 +20,21 @@ export interface LevelConfig {
   maxDistance?: number
   /** Une note de référence différente à chaque question, jouée avant la note à comparer (sinon le La3). */
   randomReference?: boolean
+  /** Le diapason (La3) ne s'écoute qu'avant la partie, sur l'écran « Je suis prêt » : il faut le retenir de mémoire. */
+  forkBeforeOnly?: boolean
   /** La référence et la note sont jouées par deux instruments différents, tirés au hasard. */
   twoInstruments?: boolean
 }
 
 export const LEVELS: Record<Level, LevelConfig> = {
   debutant: { label: 'Débutant', description: 'Au moins une quarte d’écart avec le La3 : la différence s’entend bien.', minDistance: 5 },
-  normal: { label: 'Normal', description: 'Entre un demi-ton et une quarte d’écart avec le La3.', minDistance: 1, maxDistance: 5 },
+  normal: {
+    label: 'Normal',
+    description: 'Entre un demi-ton et une quarte d’écart avec le La3, que tu n’entends qu’avant la partie.',
+    minDistance: 1,
+    maxDistance: 5,
+    forkBeforeOnly: true,
+  },
   expert: {
     label: 'Expert',
     description: 'Une note de départ différente à chaque question, puis une autre à un demi-ton ou un ton d’écart.',
