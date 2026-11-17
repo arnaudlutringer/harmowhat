@@ -1,13 +1,15 @@
 <template>
   <game-shell
     title="Grave ou aigu ?"
-    :prompt="level.randomReference ? 'La deuxième note est-elle plus grave ou plus aiguë que la première ?' : 'Plus grave ou plus aigu que le diapason ?'"
+    :prompt="`Cette note est-elle plus grave ou plus aiguë que le ${referenceName} ?`"
     :quiz="quiz"
     :board="{ game: 'grave-ou-aigu', level: settings.level, questions: settings.questions }"
     settings-href="/games/grave-ou-aigu"
     :advance-bar="ADVANCE_DELAY"
     :no-tuning-fork="level.randomReference"
   >
+    <!-- La question nomme la note de référence, en gras violet. -->
+    <template #prompt>Cette note est-elle plus grave ou plus aiguë que le <strong class="reference">{{ referenceName }}</strong>&nbsp;?</template>
     <div class="choices">
       <ion-button size="large" :disabled="!quiz.canAnswer.value" @click="choose('grave')">GRAVE</ion-button>
       <ion-button size="large" :disabled="!quiz.canAnswer.value" @click="choose('aigu')">AIGU</ion-button>
@@ -16,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
@@ -63,6 +66,9 @@ const quiz = useQuiz<HighLowQuestion>({
   answersOpen: level.randomReference ? () => GAP * 1000 : undefined,
 })
 
+/** La note de référence de la question en cours (le La3 en débutant et en normal). */
+const referenceName = computed(() => noteName(quiz.question.value.reference))
+
 function choose(guess: 'grave' | 'aigu') {
   const { reference, note } = quiz.question.value
   const truth = note < reference ? 'grave' : 'aigu'
@@ -75,6 +81,10 @@ function choose(guess: 'grave' | 'aigu') {
 </script>
 
 <style scoped>
+.reference {
+  color: var(--ion-color-primary);
+  font-weight: 800;
+}
 .choices {
   display: grid;
   grid-template-columns: 1fr 1fr;
