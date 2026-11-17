@@ -159,10 +159,22 @@ function loadSaved() {
 }
 
 const saved = loadSaved()
-const questions = ref<number>(saved.questions)
 // Le niveau Impossible n'apparaît qu'une fois débloqué.
 const shownLevels = computed(() => visibleLevels(props.game, props.levels))
-const level = ref<string>(saved.level in shownLevels.value ? saved.level : 'expert')
+/** Jeu jamais joué et sans réglages enregistrés : on commence en douceur, au premier niveau et à 10 questions. */
+function neverPlayed(): boolean {
+  try {
+    if (localStorage.getItem(props.storageKey) !== null) return false
+  } catch {
+    // Stockage indisponible : on s'en tient à l'historique des parties.
+  }
+  return !hasPlayed(props.game)
+}
+const FIRST_QUESTIONS = 10
+const fresh = neverPlayed()
+const questions = ref<number>(fresh && props.questionCounts.includes(FIRST_QUESTIONS) ? FIRST_QUESTIONS : saved.questions)
+const firstLevel = Object.keys(shownLevels.value)[0]
+const level = ref<string>(fresh && firstLevel ? firstLevel : saved.level in shownLevels.value ? saved.level : 'expert')
 const router = useIonRouter()
 
 // Première visite (aucune partie terminée, aucun score) : on ouvre sur les règles ; ensuite, directement sur Jouer.
