@@ -231,8 +231,11 @@ export function judgeTaps(expected: readonly number[], taps: readonly number[], 
   return { matches, extra: free, correct: matches.every((m) => m.onTime) && free.length === 0, meanError }
 }
 
-/** Écart en dessous duquel une frappe compte comme parfaite (la précision d'un doigt sur un écran). */
-const PERFECT = 0.02
+/**
+ * Écart moyen en dessous duquel les frappes comptent comme parfaites : la précision d'un doigt sur un écran tactile,
+ * dont le délai varie d'un téléphone à l'autre (40 ms, pour que les 10 000 points et le diamant restent accessibles).
+ */
+export const PERFECT = 0.04
 
 /** Points d'un rythme joué juste : 10 000 si chaque frappe est parfaite, jusqu'à 100 à la limite de la tolérance. */
 export function tapPoints(verdict: TapVerdict, tolerance: number): number {

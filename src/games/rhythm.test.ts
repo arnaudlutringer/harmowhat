@@ -33,6 +33,9 @@ describe('Jeux de rythme', () => {
   it('donne les points selon la précision', () => {
     const perfect = judgeTaps([0, 1], [0.01, 1.005], 0.1)
     expect(tapPoints(perfect, 0.1)).toBe(10000)
+    // Jusqu'à 40 ms d'écart moyen, c'est encore parfait (délai de l'écran tactile).
+    expect(tapPoints(judgeTaps([0, 1], [0.035, 0.965], 0.07), 0.07)).toBe(10000)
+    expect(tapPoints(judgeTaps([0, 1], [0.055, 0.945], 0.07), 0.07)).toBeLessThan(10000)
     const loose = judgeTaps([0, 1], [0.09, 1.09], 0.1)
     expect(tapPoints(loose, 0.1)).toBeLessThan(2000)
     expect(tapPoints(judgeTaps([0, 1], [0.5], 0.1), 0.1)).toBe(0)
