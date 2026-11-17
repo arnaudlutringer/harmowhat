@@ -1,11 +1,12 @@
 <template>
   <game-shell
     title="Grave ou aigu ?"
-    prompt="Plus grave ou plus aigu que le diapason ?"
+    :prompt="level.randomReference ? 'La deuxième note est-elle plus grave ou plus aiguë que la première ?' : 'Plus grave ou plus aigu que le diapason ?'"
     :quiz="quiz"
     :board="{ game: 'grave-ou-aigu', level: settings.level, questions: settings.questions }"
     settings-href="/games/grave-ou-aigu"
     :advance-bar="ADVANCE_DELAY"
+    :no-tuning-fork="level.randomReference"
   >
     <div class="choices">
       <ion-button size="large" :disabled="!quiz.canAnswer.value" @click="choose('grave')">GRAVE</ion-button>
@@ -21,29 +22,55 @@ import GameShell from '@/components/GameShell.vue'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
 import { A440, noteName } from '@/music/notes'
-import { createHighLowQuestion, LEVELS, parseSettings } from '@/games/highLow'
-import { randomInstrument, type Instrument } from '@/audio/instruments'
+import { createHighLowQuestion, LEVELS, parseSettings, type HighLowQuestion } from '@/games/highLow'
+import { currentInstrument, randomInstrument, type Instrument } from '@/audio/instruments'
 
 const settings = parseSettings(useRoute().query)
-let instrument: Instrument | undefined
+const level = LEVELS[settings.level]
 
-// La référence est le La3 du diapason ; la note jouée en est plus ou moins éloignée selon le niveau.
+/** Expert et Impossible : la note de départ, puis la note à comparer, à cet intervalle (secondes). */
+const GAP = 1.1
+let instruments: [Instrument, Instrument] = [currentInstrument(), currentInstrument()]
+
+// Débutant et normal : la référence est le La3 du diapason, seule la note est jouée.
+// Expert et Impossible : une note de départ au hasard, puis la note à comparer.
 // Après la réponse, une barre se remplit en 1,5 s, puis vient la question suivante.
-const quiz = useQuiz({
+const quiz = useQuiz<HighLowQuestion>({
   total: settings.questions,
   createQuestion: () => {
-    // Impossible : un instrument au hasard pour chaque question.
-    instrument = LEVELS[settings.level].quarterTone ? randomInstrument(A440) : undefined
-    return createHighLowQuestion(settings.level, instrument)
+    if (!level.twoInstruments) {
+      instruments = [currentInstrument(), currentInstrument()]
+      return createHighLowQuestion(settings.level)
+    }
+    // Impossible : deux instruments différents, tirés au hasard, pour la note de départ et la note à comparer.
+    const first = randomInstrument(A440)
+    const question = createHighLowQuestion(settings.level, first)
+    let second = randomInstrument(question.note)
+    for (let i = 0; i < 10 && second.id === first.id; i++) second = randomInstrument(question.note)
+    instruments = [first, second]
+    return question
   },
-  play: (note) => playPiano(note, { instrument }),
+  play: async (q) => {
+    if (!level.randomReference) return playPiano(q.note, { instrument: instruments[0] })
+    const started = performance.now()
+    await playPiano(q.reference, { instrument: instruments[0], duration: GAP })
+    const when = Math.max(0, GAP - (performance.now() - started) / 1000)
+    const duration = await playPiano(q.note, { instrument: instruments[1], when })
+    return GAP + duration
+  },
+  // Expert et Impossible : le décompte démarre avec la deuxième note.
+  countdownStart: level.randomReference ? () => GAP * 1000 : undefined,
+  answersOpen: level.randomReference ? () => GAP * 1000 : undefined,
 })
 
 function choose(guess: 'grave' | 'aigu') {
-  const note = quiz.question.value
-  const truth = note < A440 ? 'grave' : 'aigu'
-  const what = Number.isInteger(note) ? `un ${noteName(note)}` : `un La3 un quart de ton plus ${truth}`
-  quiz.answer(guess === truth, Number.isInteger(note) ? `C'était ${what}, plus ${truth} que le La3.` : `C'était ${what}.`)
+  const { reference, note } = quiz.question.value
+  const truth = note < reference ? 'grave' : 'aigu'
+  const ref = reference === A440 && !level.randomReference ? 'le La3' : `le ${noteName(reference)}`
+  quiz.answer(
+    guess === truth,
+    Number.isInteger(note) ? `C'était un ${noteName(note)}, plus ${truth} que ${ref}.` : `C'était un quart de ton plus ${truth} que ${ref}.`,
+  )
 }
 </script>
 
