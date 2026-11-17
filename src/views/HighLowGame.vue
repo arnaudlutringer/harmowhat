@@ -25,6 +25,7 @@ import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
 import { ADVANCE_DELAY, useQuiz } from '@/composables/useQuiz'
 import { playPiano } from '@/audio/engine'
+import { COUNTDOWN_DELAY_MS, GRACE_MS } from '@/games/scoring'
 import { A440, noteName } from '@/music/notes'
 import { createHighLowQuestion, LEVELS, parseSettings, type HighLowQuestion } from '@/games/highLow'
 import { currentInstrument, randomInstrument, type Instrument } from '@/audio/instruments'
@@ -63,12 +64,14 @@ const quiz = useQuiz<HighLowQuestion>({
     const started = performance.now()
     await playPiano(q.reference, { instrument: instruments[0], duration: GAP })
     const when = Math.max(0, GAP - (performance.now() - started) / 1000)
-    const duration = await playPiano(q.note, { instrument: instruments[1], when })
-    return GAP + duration
+    // Sans attendre : les délais (réponses, décompte) se comptent depuis le début de la première note.
+    void playPiano(q.note, { instrument: instruments[1], when })
+    return GAP + 2.5
   },
-  // Expert et Impossible : le décompte démarre avec la deuxième note.
-  countdownStart: level.randomReference ? () => GAP * 1000 : undefined,
+  // Expert et Impossible : les réponses s'ouvrent avec la deuxième note, et le décompte démarre un peu après,
+  // avec la même marge que les autres jeux (une réponse très rapide garde les 10 000 points).
   answersOpen: level.randomReference ? () => GAP * 1000 : undefined,
+  countdownStart: level.randomReference ? () => GAP * 1000 + COUNTDOWN_DELAY_MS + GRACE_MS : undefined,
 })
 
 /** La note de référence de la question en cours (le La3 en débutant et en normal). */
