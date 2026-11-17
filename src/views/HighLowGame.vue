@@ -7,6 +7,7 @@
     settings-href="/games/grave-ou-aigu"
     :advance-bar="ADVANCE_DELAY"
     :no-tuning-fork="level.randomReference"
+    :reference-note="level.randomReference ? { midi: quiz.question.value.reference, instrument: referenceInstrument } : undefined"
   >
     <!-- La question nomme la note de référence, en gras violet. -->
     <template #prompt>Cette note est-elle plus grave ou plus aiguë que le <strong class="reference">{{ referenceName }}</strong>&nbsp;?</template>
@@ -18,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, shallowRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonButton } from '@ionic/vue'
 import GameShell from '@/components/GameShell.vue'
@@ -34,6 +35,8 @@ const level = LEVELS[settings.level]
 /** Expert et Impossible : la note de départ, puis la note à comparer, à cet intervalle (secondes). */
 const GAP = 1.1
 let instruments: [Instrument, Instrument] = [currentInstrument(), currentInstrument()]
+/** Instrument de la note de référence de la question en cours (pour le bouton qui la rejoue). */
+const referenceInstrument = shallowRef<Instrument>(currentInstrument())
 
 // Débutant et normal : la référence est le La3 du diapason, seule la note est jouée.
 // Expert et Impossible : une note de départ au hasard, puis la note à comparer.
@@ -43,6 +46,7 @@ const quiz = useQuiz<HighLowQuestion>({
   createQuestion: () => {
     if (!level.twoInstruments) {
       instruments = [currentInstrument(), currentInstrument()]
+      referenceInstrument.value = instruments[0]
       return createHighLowQuestion(settings.level)
     }
     // Impossible : deux instruments différents, tirés au hasard, pour la note de départ et la note à comparer.
@@ -51,6 +55,7 @@ const quiz = useQuiz<HighLowQuestion>({
     let second = randomInstrument(question.note)
     for (let i = 0; i < 10 && second.id === first.id; i++) second = randomInstrument(question.note)
     instruments = [first, second]
+    referenceInstrument.value = first
     return question
   },
   play: async (q) => {

@@ -8,7 +8,8 @@
             <strong>{{ livePoints ?? quiz.points.value }} <span class="pts">pts</span></strong>
           </div>
           <!-- Le diapason n'est disponible que pendant les questions (et jamais en mode expert). -->
-          <tuning-fork-button v-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
+          <reference-note-button v-if="referenceNote" class="fork" :midi="referenceNote.midi" :instrument="referenceNote.instrument" @played="quiz.penalizeTuningFork()" />
+          <tuning-fork-button v-else-if="!noTuningFork" class="fork" @played="quiz.penalizeTuningFork()" />
           <div class="progress">
             <!-- Essai : une seule question, sans total ; « Essai » en grand à la place. -->
             <span v-if="quiz.trial" class="trial">Essai</span>
@@ -32,7 +33,7 @@
         :music-label="musicLabel"
         :board="board"
         :settings-href="settingsHref"
-        :fork-available="!noTuningFork"
+        :fork-available="!noTuningFork || !!referenceNote"
         :fork-used="quiz.forkUsed.value"
         @restart="quiz.restart"
       />
@@ -86,6 +87,8 @@ import {
 import { useRoute } from 'vue-router'
 import { play, volumeHigh } from 'ionicons/icons'
 import TuningForkButton from './TuningForkButton.vue'
+import ReferenceNoteButton from './ReferenceNoteButton.vue'
+import type { Instrument } from '@/audio/instruments'
 import GameResult from './GameResult.vue'
 import GameFeedback from './GameFeedback.vue'
 import type { useQuiz } from '@/composables/useQuiz'
@@ -106,6 +109,8 @@ const props = defineProps<{
   swipeToNext?: boolean
   /** Pas de diapason pendant les questions (mode expert, jeu des intervalles). */
   noTuningFork?: boolean
+  /** À la place du diapason : un bouton qui rejoue cette note de référence (« Grave ou aigu ? » en expert et en Impossible). */
+  referenceNote?: { midi: number; instrument?: Instrument }
   /** Délai du passage automatique à la question suivante (ms) : une barre se remplit pendant ce temps. */
   advanceBar?: number
   /** Partie sans nombre de questions (« Garde le tempo ») : « Palier n », et le bilan compte les paliers. */
