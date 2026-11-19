@@ -31,6 +31,18 @@ describe('Musique de fin jouée par un musicien éméché', () => {
     expect(clusters.length).toBeGreaterThan(5)
   })
 
+  it('instrument à vent : jamais deux notes attaquées ensemble par un doigt qui accroche', () => {
+    for (const seed of [2, 7, 8]) {
+      const played = drunk(FUR_ELISE, 1, seeded(seed), { neighbourKeys: false })
+      // Sans la touche voisine, le morceau ne gagne que des notes bégayées, rejouées bien après (0,4 temps au moins).
+      const clusters = played.filter((n, i) => i > 0 && Math.abs(n.at - played[i - 1].at) < 0.2 && n.midi !== played[i - 1].midi)
+      const withKeys = drunk(FUR_ELISE, 1, seeded(seed))
+      const keyClusters = withKeys.filter((n, i) => i > 0 && Math.abs(n.at - withKeys[i - 1].at) < 0.2 && n.midi !== withKeys[i - 1].midi)
+      expect(clusters.length).toBeLessThan(keyClusters.length)
+      expect(played.length).toBeLessThan(withKeys.length)
+    }
+  })
+
   it('reste reconnaissable : notes à deux demi-tons au plus, durée comparable, dans l’ordre', () => {
     for (const seed of [3, 4, 5]) {
       const played = drunk(FUR_ELISE, 1, seeded(seed))

@@ -179,7 +179,8 @@ export const INSTRUMENT_ENDINGS: Record<InstrumentId, EndingId[]> = {
  */
 export function playEnding(e: Ending, instrument: InstrumentId, wrongRatio = 0): Promise<number> {
   if (e.recording) return playRecording(e.recording, ENDING_SECONDS)
-  return playSequence(drunk(e.notes, wrongRatio), e.unit, undefined, INSTRUMENTS[instrument]).then((p) => p.duration)
+  const inst = INSTRUMENTS[instrument]
+  return playSequence(drunk(e.notes, wrongRatio, undefined, { neighbourKeys: !inst.wind }), e.unit, undefined, inst).then((p) => p.duration)
 }
 
 export function endingsFor(instrument: InstrumentId): Ending[] {

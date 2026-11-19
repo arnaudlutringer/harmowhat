@@ -26,6 +26,8 @@ export interface Instrument {
    * après le début de l'échantillon et déborde de `overlap` secondes sur la suivante.
    */
   legato?: { offset: number; overlap: number }
+  /** Instrument à vent : une seule note à la fois (pas de doigt qui accroche la touche voisine dans un morceau mal joué). */
+  wind?: boolean
 }
 
 /** Guitare électrique (tonejs-instruments) : mi grave, puis une note toutes les tierces mineures de fa♯ à do aigu. */
@@ -35,11 +37,11 @@ export const INSTRUMENTS: Record<InstrumentId, Instrument> = {
   piano: { id: 'piano', label: 'Piano', emoji: '🎹', low: PIANO_LOWEST, high: PIANO_HIGHEST, gain: 1 },
   violin: { id: 'violin', label: 'Violon', emoji: '🎻', low: 55, high: 100, gain: 1.2 },
   cello: { id: 'cello', label: 'Violoncelle', emoji: '🎻', low: 36, high: 81, gain: 1 },
-  clarinet: { id: 'clarinet', label: 'Clarinette', emoji: '🎶', low: 50, high: 91, gain: 0.95 },
-  trumpet: { id: 'trumpet', label: 'Trompette', emoji: '🎺', low: 52, high: 82, gain: 1 },
+  clarinet: { id: 'clarinet', label: 'Clarinette', emoji: '🎶', low: 50, high: 91, gain: 0.95, wind: true },
+  trumpet: { id: 'trumpet', label: 'Trompette', emoji: '🎺', low: 52, high: 82, gain: 1, wind: true },
   accordion: { id: 'accordion', label: 'Accordéon', emoji: '🪗', low: 53, high: 93, gain: 2 },
   guitar: { id: 'guitar', label: 'Guitare', emoji: '🎸', low: 40, high: 83, gain: 1.8 },
-  flute: { id: 'flute', label: 'Flûte traversière', emoji: '🪈', low: 60, high: 96, gain: 1.2 },
+  flute: { id: 'flute', label: 'Flûte traversière', emoji: '🪈', low: 60, high: 96, gain: 1.2, wind: true },
   'electric-guitar': { id: 'electric-guitar', label: 'Guitare électrique', emoji: '⚡', low: 40, high: 86, gain: 0.23, samples: ELECTRIC_GUITAR_SAMPLES },
   // Chœur mixte (Choir Aahs) : des basses aux sopranos, de Do2 à La4.
   choir: { id: 'choir', label: 'Chœur', emoji: '👥', low: 48, high: 81, gain: 1.3, legato: { offset: 0.25, overlap: 0.35 } },

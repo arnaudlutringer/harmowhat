@@ -9,11 +9,17 @@ import type { SequenceNote } from '@/audio/engine'
  * - le tempo titube : le musicien accélère, ralentit, et marque des hésitations ;
  * - les notes sont tenues trop longtemps ou lâchées trop tôt ;
  * - des notes sont fausses (un ou deux demi-tons à côté) ;
- * - des doigts accrochent les touches voisines (plusieurs notes en même temps) ;
+ * - des doigts accrochent les touches voisines (plusieurs notes en même temps), sauf aux instruments à vent
+ *   (clarinette, trompette, flûte), qui ne jouent qu'une note à la fois ;
  * - certaines notes bégaient (rejouées aussitôt), d'autres sont oubliées ;
  * - les nuances partent dans tous les sens.
  */
-export function drunk(notes: readonly SequenceNote[], ratio: number, random: () => number = Math.random): SequenceNote[] {
+export function drunk(
+  notes: readonly SequenceNote[],
+  ratio: number,
+  random: () => number = Math.random,
+  { neighbourKeys = true }: { neighbourKeys?: boolean } = {},
+): SequenceNote[] {
   const r = Math.max(0, Math.min(1, ratio))
   if (r === 0) return notes.map((n) => ({ ...n }))
   const chance = (p: number) => random() < p * r
@@ -45,7 +51,7 @@ export function drunk(notes: readonly SequenceNote[], ratio: number, random: () 
     const midi = chance(0.6) ? n.midi + step() : n.midi
     out.push({ midi, at, len, velocity })
     // Doigt qui accroche la touche voisine.
-    if (chance(0.35)) out.push({ midi: n.midi + step(), at: at + random() * 0.15 * r, len: len * 0.8, velocity: velocity * 0.7 })
+    if (neighbourKeys && chance(0.35)) out.push({ midi: n.midi + step(), at: at + random() * 0.15 * r, len: len * 0.8, velocity: velocity * 0.7 })
     // Note qui bégaie.
     if (chance(0.1)) out.push({ midi, at: at + 0.4 + random() * 0.4, len: len * 0.6, velocity: velocity * 0.8 })
   }

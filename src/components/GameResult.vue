@@ -126,7 +126,7 @@ import { usePlaying } from '@/composables/usePlaying'
 import { summarize, type QuestionResult } from '@/games/scoring'
 import { drunk } from '@/music/drunk'
 import { ENDING_SECONDS, endingFor } from '@/music/endings'
-import { selectedInstrument } from '@/audio/instruments'
+import { INSTRUMENTS, selectedInstrument } from '@/audio/instruments'
 import {
   cleanName, GAMES, getScores, lastPlayerName, levelLabel, MAX_NAME_LENGTH, qualifies, saveScore, scoresHref, type Board, type GameId,
 } from '@/games/highScores'
@@ -296,7 +296,8 @@ const wrongRatio = success !== undefined ? 1 - success : props.total ? (props.to
 const wrongPercent = Math.round(wrongRatio * 100)
 // Un enregistrement est joué tel quel, sans fausses notes.
 const ending = endingFor(selectedInstrument.value)
-const music = drunk(ending.notes, wrongRatio)
+// Instrument à vent : une seule note à la fois, pas de doigt qui accroche la touche voisine.
+const music = drunk(ending.notes, wrongRatio, undefined, { neighbourKeys: !INSTRUMENTS[selectedInstrument.value].wind })
 
 const elise = usePlaying()
 
