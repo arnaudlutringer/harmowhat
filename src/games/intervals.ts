@@ -5,7 +5,8 @@ import { STANDARD_QUESTION_COUNTS } from './questionCounts'
 
 /**
  * « Les harmonies » : deux notes jouées l'une après l'autre, on nomme l'intervalle.
- * Précision « simple » : seconde, tierce, quarte... ; « précise » : tierce mineure, quarte augmentée...
+ * La précision dépend du niveau : en débutant, « simple » (tierce, quarte, quinte, octave, sans mineure ni majeure) ;
+ * aux autres niveaux, « précise » (tierce mineure, quarte augmentée...).
  * En expert, on précise aussi le sens (ascendant ou descendant).
  */
 
@@ -55,21 +56,21 @@ export interface LevelConfig {
 export const LEVELS: Record<Level, LevelConfig> = {
   debutant: {
     label: 'Débutant',
-    description: 'Tierces, quarte, quinte et octave, en montant. 3 propositions.',
+    description: 'Tierce, quarte, quinte et octave, en montant, sans mineure ni majeure. 3 propositions.',
     semitones: [3, 4, 5, 7, 12],
     choices: { simple: 3, precise: 3 },
     directions: false,
   },
   normal: {
     label: 'Normal',
-    description: "Tous les intervalles jusqu'à l'octave, en montant. 4 à 5 propositions.",
+    description: "Tous les intervalles jusqu'à l'octave, en montant, avec leur qualité (tierce mineure, quarte augmentée…). 5 propositions.",
     semitones: INTERVALS.map((i) => i.semitones),
     choices: { simple: 4, precise: 5 },
     directions: false,
   },
   expert: {
     label: 'Expert',
-    description: 'Tous les intervalles, en montant ou en descendant : il faut aussi trouver le sens. 6 à 8 propositions.',
+    description: 'Tous les intervalles avec leur qualité, en montant ou en descendant : il faut aussi trouver le sens. 8 propositions.',
     semitones: INTERVALS.map((i) => i.semitones),
     choices: { simple: 6, precise: 8 },
     directions: true,
@@ -89,6 +90,11 @@ export const PRECISIONS: Record<Precision, { label: string; description: string 
   precise: { label: 'Précise', description: 'Avec la qualité : tierce mineure, quarte augmentée, sixte majeure...' },
 }
 
+/** La précision de chaque niveau : simple en débutant (pas de mineure, majeure ni augmentée), précise ensuite. */
+export function precisionFor(level: Level): Precision {
+  return level === 'debutant' ? 'simple' : 'precise'
+}
+
 export const QUESTION_COUNTS = STANDARD_QUESTION_COUNTS
 
 export interface IntervalSettings {
@@ -97,17 +103,17 @@ export interface IntervalSettings {
   precision: Precision
 }
 
-export const DEFAULT_SETTINGS: IntervalSettings = { questions: 20, level: 'normal', precision: 'precise' }
+export const DEFAULT_SETTINGS: IntervalSettings = { questions: 20, level: 'normal', precision: precisionFor('normal') }
 
-/** Lit des réglages depuis une source non fiable (URL, stockage), avec repli sur les valeurs par défaut. */
-export function parseSettings(raw: { questions?: unknown; level?: unknown; precision?: unknown }): IntervalSettings {
+/** Lit des réglages depuis une source non fiable (URL, stockage), avec repli sur les valeurs par défaut. La précision suit le niveau. */
+export function parseSettings(raw: { questions?: unknown; level?: unknown }): IntervalSettings {
   const questions = Number(raw.questions)
-  const level = String(raw.level)
-  const precision = String(raw.precision)
+  const rawLevel = String(raw.level)
+  const level = rawLevel in LEVELS ? (rawLevel as Level) : DEFAULT_SETTINGS.level
   return {
     questions: (QUESTION_COUNTS as readonly number[]).includes(questions) ? questions : DEFAULT_SETTINGS.questions,
-    level: level in LEVELS ? (level as Level) : DEFAULT_SETTINGS.level,
-    precision: precision in PRECISIONS ? (precision as Precision) : DEFAULT_SETTINGS.precision,
+    level,
+    precision: precisionFor(level),
   }
 }
 

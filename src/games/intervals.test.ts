@@ -44,8 +44,15 @@ describe('Les harmonies', () => {
         expect(allAnswers(level, precision).length).toBeGreaterThanOrEqual(LEVELS[level].choices[precision])
   })
 
-  it('ignore des réglages invalides', () => {
-    expect(parseSettings({ questions: '10', level: 'expert', precision: 'simple' })).toEqual({ questions: 10, level: 'expert', precision: 'simple' })
-    expect(parseSettings({ questions: 'x', level: 'x', precision: 'x' })).toEqual({ questions: 20, level: 'normal', precision: 'precise' })
+  it('fixe la précision selon le niveau : simple en débutant, précise ensuite', () => {
+    expect(parseSettings({ questions: '10', level: 'debutant' })).toEqual({ questions: 10, level: 'debutant', precision: 'simple' })
+    // Une ancienne précision enregistrée est ignorée.
+    expect(parseSettings({ questions: '10', level: 'expert', precision: 'simple' } as never)).toEqual({ questions: 10, level: 'expert', precision: 'precise' })
+    expect(parseSettings({ questions: 'x', level: 'x' })).toEqual({ questions: 20, level: 'normal', precision: 'precise' })
+    // En débutant, pas de mineure, majeure ni augmentée dans les réponses.
+    for (let i = 0; i < 50; i++) {
+      const q = createIntervalQuestion(parseSettings({ level: 'debutant' }))
+      for (const c of q.choices) expect(c.label).not.toMatch(/mineure|majeure|augmentée/)
+    }
   })
 })

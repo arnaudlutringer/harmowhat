@@ -30,9 +30,10 @@ describe('Meilleurs scores', () => {
 
   it('un classement par jeu, niveau et nombre de questions', () => {
     expect(GAMES['quelle-note'].levels.map((l) => l.id)).toEqual(['debutant', 'normal', 'expert', 'impossible'])
-    expect(GAMES.harmonies.levels).toHaveLength(8)
+    // Harmonies : la précision suit le niveau (simple en débutant, précise ensuite).
+    expect(GAMES.harmonies.levels.map((l) => l.id)).toEqual(['debutant-simple', 'normal-precise', 'expert-precise', 'impossible-precise'])
     expect(GAMES['lecture-note'].levels.map((l) => l.id)).toEqual(['debutant', 'intermediaire', 'expert', 'impossible'])
-    expect(levelLabel({ game: 'harmonies', level: 'expert-precise', questions: 20 })).toBe('Expert · Précise')
+    expect(levelLabel({ game: 'harmonies', level: 'expert-precise', questions: 20 })).toBe('Expert')
     expect(parseBoard('quelle-note', { level: 'toto', questions: '7' })).toEqual({ game: 'quelle-note', level: 'debutant', questions: 20 })
     expect(parseBoard('accords', {})).toEqual({ game: 'accords', level: 'debutant', questions: 20 })
     expect(GAMES['grave-ou-aigu'].levels.map((l) => l.id)).toEqual(['debutant', 'normal', 'expert', 'impossible'])
@@ -52,7 +53,7 @@ describe('Meilleurs scores', () => {
   })
 
   it('rejoue avec les mêmes réglages et ouvre la bonne page des scores', () => {
-    expect(playHref({ game: 'harmonies', level: 'normal-simple', questions: 10 })).toBe('/games/harmonies/jouer?questions=10&level=normal&precision=simple')
+    expect(playHref({ game: 'harmonies', level: 'normal-precise', questions: 10 })).toBe('/games/harmonies/jouer?questions=10&level=normal')
     expect(playHref({ game: 'quelle-note', level: 'expert', questions: 30 })).toBe('/games/quelle-note/pret?questions=30&level=expert')
     expect(playHref({ game: 'accords', level: 'expert', questions: 10 })).toBe('/games/accords/jouer?questions=10&level=expert')
     // Grave ou aigu en normal : le diapason seulement avant la partie, sur l'écran « Je suis prêt ».

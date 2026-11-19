@@ -1,6 +1,6 @@
 import { afterSettings } from './ready'
 import { LEVELS as NOTE_LEVELS, QUESTION_COUNTS as NOTE_COUNTS } from './nameTheNote'
-import { LEVELS as INTERVAL_LEVELS, PRECISIONS, QUESTION_COUNTS as INTERVAL_COUNTS } from './intervals'
+import { LEVELS as INTERVAL_LEVELS, precisionFor, QUESTION_COUNTS as INTERVAL_COUNTS, type Level as IntervalLevel } from './intervals'
 import { LEVELS as READ_LEVELS, QUESTION_COUNTS as READ_COUNTS } from './readNote'
 import { LEVELS as HIGH_LOW_LEVELS, QUESTION_COUNTS as HIGH_LOW_COUNTS } from './highLow'
 import { LEVELS as CHORD_LEVELS, QUESTION_COUNTS as CHORD_COUNTS } from './chords'
@@ -72,13 +72,11 @@ export const GAMES: Record<GameId, GameInfo> = {
     levels: Object.entries(CHORD_LEVELS).map(([id, cfg]) => ({ id, label: cfg.label })),
     questionCounts: CHORD_COUNTS,
   },
-  // Aux harmonies, la précision fait partie du niveau : « Normal · Précise » n'est pas comparable à « Normal · Simple ».
+  // Aux harmonies, la précision fait partie du niveau (simple en débutant, précise ensuite) : elle reste dans l'identifiant du classement.
   harmonies: {
     title: 'Les harmonies',
     emoji: '🎵',
-    levels: Object.entries(INTERVAL_LEVELS).flatMap(([level, cfg]) =>
-      Object.entries(PRECISIONS).map(([precision, p]) => ({ id: `${level}-${precision}`, label: `${cfg.label} · ${p.label}` })),
-    ),
+    levels: Object.entries(INTERVAL_LEVELS).map(([level, cfg]) => ({ id: `${level}-${precisionFor(level as IntervalLevel)}`, label: cfg.label })),
     questionCounts: INTERVAL_COUNTS,
   },
   'lecture-note': {
@@ -212,8 +210,7 @@ export function playHref({ game, level, questions }: Board): string {
   // « Grave ou aigu ? » en normal : le diapason ne s'écoute qu'avant la partie.
   if (game === 'grave-ou-aigu') return afterSettings(game, level === 'normal', `questions=${questions}&level=${level}`)
   if (game === 'harmonies') {
-    const [lvl, precision] = level.split('-')
-    return `/games/harmonies/jouer?questions=${questions}&level=${lvl}&precision=${precision}`
+    return `/games/harmonies/jouer?questions=${questions}&level=${level.split('-')[0]}`
   }
   return `/games/${game}/jouer?questions=${questions}&level=${level}`
 }
