@@ -40,11 +40,13 @@
       <!-- Sous le bilan, ce qu'un jeu veut y ajouter (le compte rendu de « Lecture continue »). -->
       <slot v-if="quiz.finished.value" name="result" />
 
-      <div v-else-if="quiz.countdown.value !== null" class="countdown" aria-live="assertive">
-        <p v-if="quiz.trial" class="trial countdown-trial">Essai</p>
-        <p>Prêt ?</p>
-        <span :key="quiz.countdown.value" class="count">{{ quiz.countdown.value }}</span>
-      </div>
+      <game-countdown
+        v-else-if="quiz.countdown.value !== null"
+        :board="board"
+        :count="quiz.countdown.value"
+        :trial="quiz.trial"
+        :show-questions="!endless && !progressLabel && board.questions > 1"
+      />
 
       <div
         v-else
@@ -88,6 +90,7 @@ import { useRoute } from 'vue-router'
 import { play, volumeHigh } from 'ionicons/icons'
 import TuningForkButton from './TuningForkButton.vue'
 import ReferenceNoteButton from './ReferenceNoteButton.vue'
+import GameCountdown from './GameCountdown.vue'
 import type { Instrument } from '@/audio/instruments'
 import GameResult from './GameResult.vue'
 import GameFeedback from './GameFeedback.vue'
@@ -258,37 +261,6 @@ useBackButton(20, (processNextHandler) => {
 ion-content.with-result-actions {
   --padding-bottom: calc(150px + var(--ion-safe-area-bottom, 0px));
 }
-/* Compte à rebours avant la première question : un grand chiffre qui apparaît à chaque seconde,
-   centré sur toute la hauteur de l'écran (moins les marges du contenu). */
-.countdown {
-  min-height: calc(100vh - 2 * var(--ion-padding, 16px) - var(--ion-safe-area-top, 0px));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.countdown p {
-  margin: 0 0 8px;
-  font-size: 22px;
-  color: var(--ion-color-medium);
-}
-.count {
-  font-size: 160px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--ion-color-primary);
-  animation: pop 1s ease-out;
-}
-@keyframes pop {
-  0% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-  25% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
 /* La question remplit la hauteur entre l'en-tête et le pied : ses éléments se répartissent, sans vide en bas. */
 .game {
   display: flex;
@@ -369,10 +341,6 @@ ion-content.with-result-actions {
   font-size: 28px;
   font-weight: 700;
   line-height: normal;
-}
-.countdown .countdown-trial {
-  color: var(--ion-color-danger);
-  font-size: 26px;
 }
 .total.bump {
   animation: bump 0.25s ease-out;
